@@ -1,0 +1,19 @@
+# Example crontab line for nightly retraining of HeartScan.
+#
+# - Run at 03:30 server time, when traffic is low.
+# - Auto-promote when F1 macro improves by >= 2 pts over the recorded baseline.
+# - Pin a stable RUN_ID per day so a retry the next morning resumes the run
+#   from where it crashed (e.g. transient PhysioNet 503).
+# - Send stdout/stderr to a per-day log file kept under runs/cron/.
+#
+# Install with:  crontab -e   and paste the line below adjusted to your paths.
+
+# m  h  dom mon dow   command
+30 3 * * *  cd /opt/heartscan && \
+  RUN_ID="nightly_$(date -u +\%Y\%m\%d)" \
+  RUNS_DIR=runs \
+  EPOCHS=10 \
+  PROMOTE=1 \
+  BASELINE=eval/baselines/synth_v1.json \
+  scripts/train_autonomous.sh \
+  >> runs/cron/nightly_$(date -u +\%Y\%m\%d).log 2>&1

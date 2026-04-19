@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="HeartScan — análisis educativo de ECG desde una foto. No sustituye valoración clínica." />
+    <title>HeartScan — Análisis educativo de ECG</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/saas.css" />
+  </head>
+  <body>
+    <header class="nav">
+      <div class="nav-inner">
+        <div class="logo">
+          <a href="/">HeartScan</a><span class="badge-beta">BETA</span>
+        </div>
+        <nav class="nav-links" aria-label="Principal">
+          <a href="#features">Producto</a>
+          <a href="#pricing">Planes</a>
+          <a href="/faq.html">FAQ</a>
+          <a href="/faq.html#feedback">Feedback</a>
+          <a href="/app">Abrir app</a>
+        </nav>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="container">
+        <h1>ECG en la nube, listo para integrar</h1>
+        <p class="hero-lead">
+          Informe educativo a partir de una foto de electrocardiograma: ritmo orientativo, calidad de lectura y trazabilidad de versiones. Misma API para web y móvil.
+        </p>
+        <div class="hero-cta">
+          <a class="btn btn-primary" href="/app">Probar ahora</a>
+          <a class="btn btn-secondary" href="/docs">Documentación API</a>
+        </div>
+        <div class="trust-row" role="list">
+          <span class="trust-pill" role="listitem">Privacidad por diseño</span>
+          <span class="trust-pill" role="listitem">No es diagnóstico clínico</span>
+          <span class="trust-pill" role="listitem">Exportación PDF / JSON</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="features" id="features">
+      <div class="container">
+        <h2 class="section-title">Qué incluye</h2>
+        <div class="grid-3">
+          <div class="card">
+            <h3>Pipeline OpenCV</h3>
+            <p>Extracción de trazo, calidad de lectura y análisis R-R documentados.</p>
+          </div>
+          <div class="card">
+            <h3>ML CNN-1D</h3>
+            <p>Clasificación en categorías educativas; pesos versionados en el servidor.</p>
+          </div>
+          <div class="card">
+            <h3>Exportación</h3>
+            <p>PDF y JSON desde la app móvil; informe en servidor opcional.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="pricing" id="pricing">
+      <div class="container">
+        <h2 class="section-title">Planes (roadmap)</h2>
+        <div class="pricing-inner">
+          <div class="price-card">
+            <h3>Free</h3>
+            <p class="amount">0€</p>
+            <p>Análisis limitados por día, uso educativo.</p>
+          </div>
+          <div class="price-card featured">
+            <h3>Pro</h3>
+            <p class="amount">—</p>
+            <p>Mayor cuota, prioridad de cola, historial con consentimiento.</p>
+          </div>
+          <div class="price-card">
+            <h3>Team</h3>
+            <p class="amount">—</p>
+            <p>Facturación centralizada y SSO (fase posterior).</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <p class="disclaimer">
+      HeartScan es un producto informativo y educativo. No sustituye un electrocardiograma clínico ni el juicio de un profesional sanitario. Lee <a href="https://github.com/heartscan/heartscan/blob/main/docs/WHEN_NOT_TO_USE.md">cuándo NO usarlo</a> y revisa los términos legales antes de cualquier uso en producción.
+    </p>
+
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <span>© HeartScan beta</span>
+        <nav class="footer-links" aria-label="Legal">
+          <a href="/legal/terms.html">Términos</a>
+          <a href="/legal/privacy.html">Privacidad</a>
+          <a href="/legal/cookies.html">Cookies</a>
+          <a href="/faq.html">Ayuda</a>
+          <a href="mailto:support@heartscan.example">Soporte</a>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>

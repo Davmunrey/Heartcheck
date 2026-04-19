@@ -1,0 +1,7 @@
+topics:
+  - id: rhythm_arrhythmia_intro
+    title: "Ritmo y arritmia (educativo)"
+    summary: "El ECG refleja la actividad eléctrica. El espaciado irregular entre latidos puede tener muchas causas; solo un profesional puede interpretarlo en contexto."
+  - id: capture_quality
+    title: "Consejos de captura"
+    summary: "Use luz uniforme, evite reflejos, mantenga la tira plana e incluya suficiente trazo para el análisis."

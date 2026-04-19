@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>HeartScan eval — trained-smoke</title>
+<style>
+body{font-family:system-ui,sans-serif;max-width:920px;margin:2rem auto;padding:1rem;color:#111}
+h1{font-size:1.4rem} table{border-collapse:collapse;margin:1rem 0}
+th,td{border:1px solid #ccc;padding:0.4rem 0.7rem;text-align:right}
+th:first-child{text-align:left;background:#f7f7f7}
+.kv{display:grid;grid-template-columns:200px 1fr;gap:0.4rem 1rem;margin:1rem 0}
+.kv dt{color:#555} .kv dd{margin:0;font-weight:600}
+</style></head><body>
+<h1>HeartScan eval — trained-smoke</h1>
+<p>2026-04-19T06:38:13.747423+00:00 · 9 samples</p>
+<dl class="kv">
+  <dt>Accuracy</dt><dd>0.3333</dd>
+  <dt>F1 macro</dt><dd>0.1667</dd>
+  <dt>ECE</dt><dd>0.2167</dd>
+  <dt>Brier</dt><dd>0.7371</dd>
+  <dt>Confidence vs correctness AUROC</dt><dd>0.0000</dd>
+  <dt>Abstention rate</dt><dd>0.0000</dd>
+  <dt>Latency p50 / p95 / mean (ms)</dt><dd>19.9 / 30.2 / 21.9</dd>
+</dl>
+<h2>F1 per class</h2>
+<table><tr><th>Class</th><th>F1</th><th>Support</th></tr>
+<tr><th>normal</th><td>0.0000</td><td>3</td></tr><tr><th>arrhythmia</th><td>0.5000</td><td>3</td></tr><tr><th>noise</th><td>0.0000</td><td>3</td></tr>
+</table>
+<h2>Confusion matrix (rows=true, cols=pred)</h2>
+<table><tr><th></th><th>normal</th><th>arrhythmia</th><th>noise</th></tr><tr><th>normal</th><td>0</td><td>3</td><td>0</td></tr><tr><th>arrhythmia</th><td>0</td><td>3</td><td>0</td></tr><tr><th>noise</th><td>0</td><td>3</td><td>0</td></tr></table>
+</body></html>

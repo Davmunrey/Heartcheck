@@ -1,0 +1,65 @@
+name: auto-train
+
+# Weekly autonomous re-training on a self-hosted GPU runner.
+# Idempotent: skips steps whose outputs already exist.
+# Promotes the new checkpoint only if it beats the previous champion.
+
+on:
+  schedule:
+    - cron: "17 5 * * 1"   # every Monday 05:17 UTC
+  workflow_dispatch:
+    inputs:
+      model_version:
+        description: "model version tag (default: timestamp)"
+        required: false
+      image_datasets:
+        description: "image datasets to include (comma-separated, default: none)"
+        required: false
+        default: ""
+
+jobs:
+  train:
+    runs-on: [self-hosted, gpu]
+    timeout-minutes: 720
+    env:
+      PY: apps/ml-api/.venv/bin/python
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install backend deps
+        run: |
+          python -m venv apps/ml-api/.venv
+          apps/ml-api/.venv/bin/pip install -r apps/ml-api/requirements.txt
+      - name: Run autonomous trainer
+        env:
+          MODEL_VERSION: ${{ github.event.inputs.model_version }}
+          IMAGE_DATASETS: ${{ github.event.inputs.image_datasets }}
+        run: |
+          scripts/train_autonomous.sh --allow-no-promote
+      - name: Upload candidate artefacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: training-run
+          path: |
+            runs/auto/**/*.json
+            runs/auto/**/checkpoint.pt.yaml
+            apps/ml-api/weights/active/
+      - name: Open PR if a new champion was promoted
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [[ -d apps/ml-api/weights/active && -n $(git status --porcelain apps/ml-api/weights/active) ]]; then
+            BRANCH="auto-train/$(date +%Y%m%dT%H%M%S)"
+            git checkout -b "$BRANCH"
+            git config user.email "auto-train@heartscan"
+            git config user.name "auto-train"
+            git add apps/ml-api/weights/active
+            git commit -m "auto-train: promote new checkpoint"
+            git push -u origin "$BRANCH"
+            gh pr create --title "auto-train: promote new checkpoint" \
+              --body "Automatic promotion from the weekly trainer. See artefacts." \
+              --label "auto-train"
+          else
+            echo "No promotion this run."
+          fi

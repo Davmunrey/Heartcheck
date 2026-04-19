@@ -1,0 +1,99 @@
+# Example Prometheus rules for HeartScan.
+#
+# Operational metrics:
+#   heartscan_analyze_total{status=ok|bad_request|too_large|...}
+#   heartscan_analyze_latency_seconds_*
+#
+# Quality / drift metrics (plan v2):
+#   heartscan_analyze_status_total{status=green|yellow|red}
+#   heartscan_analyze_class_total{class_label=normal|arrhythmia|noise}
+#   heartscan_analyze_confidence (histogram)
+#   heartscan_analyze_extraction_quality (histogram)
+#   heartscan_analyze_non_reportable_total{reason=PHOTO_BLURRY|...}
+#   heartscan_analyze_prediction_set_size (histogram)
+#   heartscan_analyze_grid_calibrated_total{basis=GRID_CALIBRATED|ASSUMED_UNIFORM_TIME_AXIS}
+
+groups:
+  - name: heartscan-api
+    rules:
+      - alert: HeartScanAnalyzeFailureRate
+        expr: |
+          sum(rate(heartscan_analyze_total{status!="ok"}[5m]))
+            / clamp_min(sum(rate(heartscan_analyze_total[5m])), 0.001) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Many analyze responses are non-OK (heartscan_analyze_total)"
+
+      - alert: HeartScanAnalyzeLatencyP95
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(heartscan_analyze_latency_seconds_bucket[5m])) by (le)
+          ) > 10
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "p95 analyze latency elevated (heartscan_analyze_latency_seconds)"
+
+  - name: heartscan-quality
+    rules:
+      # Drift on class distribution: alert if the share of any class jumps by
+      # more than 30 percentage points week over week.
+      - alert: HeartScanClassDistributionDrift
+        expr: |
+          (
+            sum by (class_label) (rate(heartscan_analyze_class_total[1h]))
+              / clamp_min(sum(rate(heartscan_analyze_class_total[1h])), 0.001)
+          )
+          -
+          (
+            sum by (class_label) (rate(heartscan_analyze_class_total[1h] offset 1w))
+              / clamp_min(sum(rate(heartscan_analyze_class_total[1h] offset 1w)), 0.001)
+          ) > 0.30
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Predicted class distribution drifted >30pp WoW for {{ $labels.class_label }}"
+
+      # Drift on confidence: median confidence dropped by more than 0.15 WoW.
+      - alert: HeartScanConfidenceMedianDrop
+        expr: |
+          histogram_quantile(0.5,
+            sum(rate(heartscan_analyze_confidence_bucket[1h])) by (le)
+          )
+          -
+          histogram_quantile(0.5,
+            sum(rate(heartscan_analyze_confidence_bucket[1h] offset 1w)) by (le)
+          ) < -0.15
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Median calibrated confidence dropped >0.15 WoW (possible model drift)"
+
+      # Surge in non-reportable outcomes (photo or signal quality) — usually a
+      # client-side problem (UI change, camera regression).
+      - alert: HeartScanNonReportableSurge
+        expr: |
+          sum(rate(heartscan_analyze_non_reportable_total[15m]))
+            / clamp_min(sum(rate(heartscan_analyze_total[15m])), 0.001) > 0.40
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "More than 40% of analyses are non-reportable (check client capture)"
+
+      # Track how often BPM is grid-calibrated vs assumed; sustained drop hints
+      # at a regression in the grid detector.
+      - alert: HeartScanGridCalibrationCollapsed
+        expr: |
+          sum(rate(heartscan_analyze_grid_calibrated_total{basis="GRID_CALIBRATED"}[15m]))
+            / clamp_min(sum(rate(heartscan_analyze_grid_calibrated_total[15m])), 0.001) < 0.10
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Grid-calibrated BPM share fell below 10% (FFT detector may be regressing)"

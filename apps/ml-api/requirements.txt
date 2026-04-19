@@ -1,0 +1,31 @@
+fastapi>=0.109.0,<1
+uvicorn[standard]>=0.27.0,<1
+python-multipart>=0.0.6,<1
+pydantic>=2.5.0,<3
+pydantic-settings>=2.1.0,<3
+numpy>=1.26.0,<3
+opencv-python-headless>=4.9.0,<5
+scipy>=1.11.0,<2
+torch>=2.1.0,<3
+prometheus-client>=0.19.0,<1
+structlog>=24.1.0,<26
+httpx>=0.26.0,<1
+reportlab>=4.0.0,<5
+PyYAML>=6.0.0,<7
+pyarrow>=15.0.0,<22  # used by ml.datasets.cli manifest and ml.training.data
+sqlalchemy>=2.0.0,<3
+psycopg2-binary>=2.9.9,<3
+passlib[bcrypt]>=1.7.4,<2
+# passlib 1.7.x (último release) sigue acoplado a la API antigua de bcrypt;
+# bcrypt>=4 expone módulos sin __about__ y rompe `passlib.handlers.bcrypt`.
+# Pinear hasta que passlib publique 2.x o se migre a argon2/bcrypt directo.
+bcrypt>=3.2.0,<4
+python-jose[cryptography]>=3.3.0,<4
+email-validator>=2.0.0,<3
+slowapi>=0.1.9,<1
+sentry-sdk[fastapi]>=1.39.0,<3
+
+# dev
+pytest>=9.0.3,<10
+pytest-asyncio>=1.0.0,<2
+ruff>=0.2.0,<1

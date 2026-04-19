@@ -1,0 +1,21 @@
+{
+  "name": "heartscan",
+  "private": true,
+  "packageManager": "npm@10.9.2",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev --filter=@heartscan/web",
+    "dev:stack": "bash scripts/dev_stack.sh",
+    "build": "npm run build:web",
+    "build:web": "npm run build -w @heartscan/web",
+    "build:turbo": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.3"
+  }
+}

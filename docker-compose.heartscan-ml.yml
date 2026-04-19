@@ -1,0 +1,12 @@
+services:
+  heartscan-api:
+    build:
+      context: ./ml
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      HEARTSCAN_HOST: "0.0.0.0"
+      HEARTSCAN_PORT: "8000"
+    volumes:
+      - ./ml/checkpoints:/app/checkpoints:ro

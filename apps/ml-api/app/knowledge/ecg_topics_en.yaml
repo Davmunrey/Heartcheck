@@ -1,0 +1,7 @@
+topics:
+  - id: rhythm_arrhythmia_intro
+    title: "Rhythm and arrhythmia (educational)"
+    summary: "The ECG reflects electrical activity. Irregular spacing between beats can have many causes; only a clinician can interpret this in context."
+  - id: capture_quality
+    title: "Image capture tips"
+    summary: "Use even lighting, avoid glare, keep the strip flat, and include enough of the trace for analysis."

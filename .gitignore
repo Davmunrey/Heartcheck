@@ -1,0 +1,27 @@
+# Eval datasets (real photos never committed; synth regenerated locally)
+data/real_eval/images/
+data/real_eval/manifest.jsonl
+data/synth_*/
+
+# Local DB and venv
+apps/ml-api/data/*.db
+apps/ml-api/.venv/
+.venv/
+
+# API secrets (use apps/ml-api/.env.example as template)
+apps/ml-api/.env
+apps/ml-api/.env.local
+
+# Reports
+eval/reports/
+
+# Turborepo (local cache; not for VCS)
+.turbo/
+
+# OS / IDE noise
+.DS_Store
+*.pyc
+__pycache__/
+.pytest_cache/
+node_modules/
+dist/

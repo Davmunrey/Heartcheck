@@ -1,0 +1,43 @@
+name: eval-gate
+
+# Optional CI gate: runs the deterministic synth eval on every PR and blocks
+# merges that regress F1 macro by >2pts or worsen ECE by >0.05.
+# Adjust ``BASELINE`` to point to the report you treat as "production".
+
+on:
+  pull_request:
+    paths:
+      - "apps/ml-api/**"
+      - "ml/**"
+      - ".github/workflows/eval-gate.yml"
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: apps/ml-api/requirements.txt
+      - name: Install backend deps
+        run: |
+          python -m venv apps/ml-api/.venv
+          apps/ml-api/.venv/bin/pip install -r apps/ml-api/requirements.txt
+      - name: Generate synthetic dataset
+        run: make eval-synth
+      - name: Run eval (no gate when no baseline)
+        if: ${{ !hashFiles('eval/baselines/synth_v1.json') }}
+        run: make eval EVAL_LABEL=ci
+      - name: Run eval with regression gate
+        if: ${{ hashFiles('eval/baselines/synth_v1.json') }}
+        run: make eval-gate BASELINE=eval/baselines/synth_v1.json EVAL_LABEL=ci
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-report
+          path: eval/reports/

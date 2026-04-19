@@ -1,0 +1,11 @@
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    avoid_print: true
+    prefer_const_constructors: true
+    require_trailing_commas: true
+
+analyzer:
+  exclude:
+    - "**/*.g.dart"

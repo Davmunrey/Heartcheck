@@ -1,0 +1,19 @@
+# flyctl launch — set secrets: HEARTSCAN_* , model path, DATABASE_URL (Supabase pooler)
+app = "heartscan-ml-api"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = "suspend"
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+[[vm]]
+  memory = "2gb"
+  cpu_kind = "shared"
+  cpus = 2

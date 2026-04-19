@@ -1,0 +1,1 @@
+"""HeartScan API application package."""

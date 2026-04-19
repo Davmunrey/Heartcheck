@@ -1,0 +1,53 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: heartscan
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-heartscan_dev}
+      POSTGRES_DB: heartscan
+    ports:
+      - "5432:5432"
+    volumes:
+      - heartscan_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U heartscan -d heartscan"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - heartscan_redis_data:/data
+
+  api:
+    build:
+      context: ..
+      dockerfile: apps/ml-api/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      HEARTSCAN_ENV: ${HEARTSCAN_ENV:-development}
+      HEARTSCAN_API_KEY: ${HEARTSCAN_API_KEY:-dev-key-change-me}
+      HEARTSCAN_ALLOW_LEGACY_API_KEY: ${HEARTSCAN_ALLOW_LEGACY_API_KEY:-true}
+      HEARTSCAN_CORS_ORIGINS: ${HEARTSCAN_CORS_ORIGINS:-*}
+      HEARTSCAN_MAX_UPLOAD_BYTES: "10485760"
+      HEARTSCAN_PIPELINE_VERSION: "0.1.0"
+      HEARTSCAN_DATABASE_URL: ${HEARTSCAN_DATABASE_URL:-postgresql+psycopg2://heartscan:heartscan_dev@postgres:5432/heartscan}
+      HEARTSCAN_JWT_SECRET_KEY: ${HEARTSCAN_JWT_SECRET_KEY:-change-me-in-production-min-32-chars-long!!}
+      HEARTSCAN_SENTRY_DSN: ${HEARTSCAN_SENTRY_DSN:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  heartscan_pg_data:
+  heartscan_redis_data:

@@ -1,0 +1,3 @@
+{"file": "real_000001.jpg", "label": "normal", "label_id": 0, "source": "internal", "consent": "signed-YYYY-MM"}
+{"file": "real_000002.jpg", "label": "arrhythmia", "label_id": 1, "source": "internal", "consent": "signed-YYYY-MM"}
+{"file": "real_000003.jpg", "label": "noise", "label_id": 2, "source": "internal", "consent": "signed-YYYY-MM"}

@@ -1,0 +1,5 @@
+[console_scripts]
+heartscan-eval = heartscan_ml.evaluate:main
+heartscan-infer = heartscan_ml.inference:main
+heartscan-serve = heartscan_ml.api:run_server
+heartscan-train = heartscan_ml.train:main

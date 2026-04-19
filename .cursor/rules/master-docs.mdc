@@ -1,0 +1,64 @@
+---
+description: All HeartScan documentation lives under docs/ and must be indexed in docs/MASTER_DOCS.md
+alwaysApply: true
+globs:
+  - "docs/**/*.md"
+  - "**/*.md"
+---
+
+# Master docs rule
+
+HeartScan keeps **all** narrative documentation under
+[`docs/`](mdc:docs) and indexes every file from
+[`docs/MASTER_DOCS.md`](mdc:docs/MASTER_DOCS.md). Treat that index as the
+single source of truth for what documentation exists.
+
+## When you create or modify a doc
+
+1. **Place it under `docs/`.** Use the existing subfolders when they fit:
+   - `docs/algorithms/`
+   - `docs/runbooks/`
+   - `docs/legal/`
+   - `docs/adr/`
+   - `docs/prometheus/`
+   - `docs/grafana/`
+2. **Link it from `docs/MASTER_DOCS.md`** in the same change. If the
+   matching section doesn't exist, add a new section heading there. A PR
+   that touches docs without touching `docs/MASTER_DOCS.md` is incomplete.
+3. **Cite it from related docs** when it complements them (cross-link).
+4. **Do not duplicate.** If similar content already exists, update the
+   existing doc instead of creating a parallel one.
+
+## Allowed exceptions (and only these)
+
+These files may live outside `docs/` and only document package-local
+setup. They must still be linked from `docs/MASTER_DOCS.md` section 8.
+
+- `README.md` (repo root)
+- `CONTRIBUTING.md` (repo root)
+- `mobile/README.md`
+- `ml/README.md`
+- `backend/weights/README.md`
+- `data/real_eval/README.md`
+- `references/README.md`
+- Any `.cursor/**/*.md` that is purely tooling.
+
+If you find yourself wanting to add a new `README.md` deeper in the tree,
+move the content into `docs/` and link it from the master index instead.
+
+## Never
+
+- Do not create `*.md` files at the repo root other than `README.md` and
+  `CONTRIBUTING.md`.
+- Do not park architectural notes, runbooks, or specs inside source
+  folders (`backend/app/...`, `ml/...`, `web/src/...`). Those go to
+  `docs/` and are referenced from code via comments + URL.
+- Do not assume a doc exists just because it's mentioned somewhere; check
+  `docs/MASTER_DOCS.md` first. If a referenced doc is missing, either
+  create it (and index it) or remove the reference.
+
+## When in doubt
+
+Open `docs/MASTER_DOCS.md`, find the closest section, and add the new
+file there. The Master Docs index is what stops the project's
+documentation from drifting into folders nobody reads.
