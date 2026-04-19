@@ -17,6 +17,11 @@ eval/reports/
 
 # Turborepo (local cache; not for VCS)
 .turbo/
+**/.turbo/
+
+# Python packaging / TypeScript build info
+*.egg-info/
+*.tsbuildinfo
 
 # OS / IDE noise
 .DS_Store
