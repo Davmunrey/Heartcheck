@@ -4,7 +4,11 @@ HeartScan uses [Clerk](https://clerk.com) for **users** and **Organizations** (m
 
 ## JWT template `supabase`
 
-Create a JWT template named **`supabase`** in the Clerk dashboard so the Supabase client can pass a token that includes RLS claims:
+Create a JWT template named **`supabase`** so the Supabase client can pass a token that includes RLS claims.
+
+**From the repo (idempotent):** run `./scripts/ensure_clerk_jwt_template_supabase.sh` from the monorepo root (requires `CLERK_SECRET_KEY` in `apps/web/.env.local`). Or create the template manually in the [Clerk JWT templates](https://dashboard.clerk.com/~/jwt-templates) UI with the same name and claims below.
+
+Claims to include:
 
 - `org_id` — active Clerk Organization ID (required for row-level security)
 - `org_role` — optional role string

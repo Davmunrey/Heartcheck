@@ -16,12 +16,21 @@ Configuración de entornos y checklist: [`docs/DEPLOYMENT.md`](../../docs/DEPLOY
 
 ## Checklist (tras `NEXT_PUBLIC_SUPABASE_*` en `apps/web/.env.local`)
 
-1. **Migración SQL** — En Supabase: **SQL Editor → New query**, pega el contenido completo de [`migrations/20250419120000_heartscan_multitenant.sql`](./migrations/20250419120000_heartscan_multitenant.sql) y **Run**. Crea tablas, RLS, políticas de Storage y el bucket `ecg-uploads`.
+1. **Migración SQL** — En Supabase: **SQL Editor → New query**, pega el contenido completo de [`migrations/20250419120000_heartscan_multitenant.sql`](./migrations/20250419120000_heartscan_multitenant.sql) y **Run**. Crea tablas, RLS, políticas de Storage y el bucket `ecg-uploads`.  
+   También puedes aplicarla con la CLI de Supabase o el MCP del proyecto; si ya existen las tablas, verás errores de “policy already exists” y puedes ignorar la repetición.
 
-2. **Clerk ↔ Supabase (imprescindible para que `auth.jwt()` vea tu token)** — Flujo recomendado por la plataforma:
+2. **Plantilla JWT `supabase` en Clerk** — Idempotente desde la raíz del repo (usa `CLERK_SECRET_KEY` en `apps/web/.env.local`):
+
+   ```bash
+   ./scripts/ensure_clerk_jwt_template_supabase.sh
+   ```
+
+   Crea la plantilla **`supabase`** con claims `org_id`, `org_role`, `org_slug` (shortcodes `{{org.*}}`). Requiere **Organizations** en Clerk y un usuario en una organización para que `org_id` no venga vacío.
+
+3. **Clerk ↔ Supabase (imprescindible para que PostgREST valide el JWT de Clerk)** — Solo en el dashboard (no automatizable por API aquí); flujo recomendado:
    - En Clerk: [Connect with Supabase](https://dashboard.clerk.com/setup/supabase) (ajusta claims compatibles con Supabase).
-   - En Supabase: **Authentication → Sign In / Third Party → Add provider → Clerk** (o [Third-party auth](https://supabase.com/docs/guides/auth/third-party/clerk) en la doc). Sustituye `/_/auth/third-party` en la URL del dashboard por el ID de tu proyecto.
+   - En Supabase: **Authentication → Sign In / Third Party → Add provider → Clerk** (o [Third-party auth](https://supabase.com/docs/guides/auth/third-party/clerk) en la doc). Sustituye `/_/auth/third-party` en la URL del dashboard por el ID de tu proyecto. Pega el **dominio Clerk** que te indica Clerk (suele ser `*.clerk.accounts.dev`).
 
-3. **JWT template `supabase` en Clerk** — Nombre exacto **`supabase`**, con claim **`org_id`** (organización activa). Lo usa [`apps/web/lib/supabase/server.ts`](../../apps/web/lib/supabase/server.ts) vía `getToken({ template: 'supabase' })`. Detalle: [`docs/AUTH_CLERK.md`](../../docs/AUTH_CLERK.md).
+   El cliente Next.js usa [`apps/web/lib/supabase/server.ts`](../../apps/web/lib/supabase/server.ts) con `getToken({ template: 'supabase' })`. Más detalle: [`docs/AUTH_CLERK.md`](../../docs/AUTH_CLERK.md).
 
 4. **Probar** — `pnpm dev` desde la raíz del monorepo (o `pnpm --filter web dev`). Opcional: ejecutar comprobaciones RLS desde [`tests/rls.sql`](./tests/rls.sql).
