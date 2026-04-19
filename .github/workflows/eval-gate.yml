@@ -37,7 +37,7 @@ jobs:
         run: make eval-gate BASELINE=eval/baselines/synth_v1.json EVAL_LABEL=ci
       - name: Upload report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: eval-report
           path: eval/reports/
