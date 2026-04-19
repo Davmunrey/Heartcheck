@@ -34,3 +34,15 @@ Configuración de entornos y checklist: [`docs/DEPLOYMENT.md`](../../docs/DEPLOY
    El cliente Next.js usa [`apps/web/lib/supabase/server.ts`](../../apps/web/lib/supabase/server.ts) con `getToken({ template: 'supabase' })`. Más detalle: [`docs/AUTH_CLERK.md`](../../docs/AUTH_CLERK.md).
 
 4. **Probar** — `pnpm dev` desde la raíz del monorepo (o `pnpm --filter web dev`). Opcional: ejecutar comprobaciones RLS desde [`tests/rls.sql`](./tests/rls.sql).
+
+## Automatización (sin clics en el dashboard)
+
+| Paso | Cómo |
+|------|------|
+| Plantilla JWT `supabase` en Clerk | [`scripts/ensure_clerk_jwt_template_supabase.sh`](../../scripts/ensure_clerk_jwt_template_supabase.sh) (usa `CLERK_SECRET_KEY`) |
+| Third-party Clerk en Supabase (issuer + JWKS) | [`scripts/ensure_supabase_clerk_third_party.py`](../../scripts/ensure_supabase_clerk_third_party.py) — requiere [`SUPABASE_ACCESS_TOKEN`](https://supabase.com/dashboard/account/tokens) (PAT con permisos de auth) en `apps/web/.env.local` |
+| Ambos | `./scripts/bootstrap_clerk_supabase.sh` |
+
+**CI:** workflow manual [`.github/workflows/clerk-supabase-integrations.yml`](../../.github/workflows/clerk-supabase-integrations.yml) (`workflow_dispatch`) con secretos `CLERK_SECRET_KEY`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_ACCESS_TOKEN`.
+
+La **migración SQL** sigue siendo un paso aparte (editor SQL, CLI o pipeline que ejecute el `.sql`).
