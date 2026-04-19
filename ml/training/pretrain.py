@@ -34,7 +34,7 @@ import torch
 from torch.utils.data import DataLoader, WeightedRandomSampler
 
 # Reuse the production model so the checkpoint loads back without surprises.
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "backend"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "apps" / "ml-api"))
 from app.ml.cnn1d import ECGResNet1D, default_model_version  # noqa: E402
 
 from ml.training.data import CLASS_NAMES, ParquetECGDataset  # noqa: E402

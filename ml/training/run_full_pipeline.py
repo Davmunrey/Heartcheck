@@ -312,7 +312,7 @@ def step_eval(cfg: RunConfig, state: PipelineState, log: Path, ckpt: Path) -> di
             cmd,
             stdout=f,
             stderr=subprocess.STDOUT,
-            cwd=REPO_ROOT / "backend",
+            cwd=REPO_ROOT / "apps" / "ml-api",
             env={**dict(__import__("os").environ), **env},
         )
     if proc.returncode != 0:
@@ -380,7 +380,7 @@ def step_promote(cfg: RunConfig, state: PipelineState, ckpt: Path, yaml_path: Pa
         )
         print(f"[promote] skipped: delta {delta:.4f} < min {cfg.promote_min_delta}")
         return False
-    weights_dir = REPO_ROOT / "backend" / "weights"
+    weights_dir = REPO_ROOT / "apps" / "ml-api" / "weights"
     weights_dir.mkdir(parents=True, exist_ok=True)
     name = cfg.model_version or f"ecg-resnet1d-{cfg.run_id}"
     dst_ckpt = weights_dir / f"{name}.pt"
