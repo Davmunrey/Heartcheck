@@ -37,7 +37,7 @@ jobs:
           scripts/train_autonomous.sh --allow-no-promote
       - name: Upload candidate artefacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: training-run
           path: |
