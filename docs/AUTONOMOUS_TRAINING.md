@@ -54,6 +54,30 @@ mejora mínima (`--promote-min-delta`, por defecto 0.02).
 
 Cuando no existe baseline aún, el primer run exitoso lo crea.
 
+### Run "en condiciones" en una GPU rentada (recomendado)
+
+CPU en un Mac toma 24-48 h para tier 1 + image. Una A100 lo hace en
+~3-5 h y cuesta ~$8-10 en Lambda Labs / RunPod.
+
+```bash
+# en la VM recién provisionada
+git clone <tu-repo> && cd Heartcheck
+chmod +x scripts/lambda_setup.sh
+./scripts/lambda_setup.sh
+
+# luego, el run de verdad:
+EPOCHS=30 BATCH_SIZE=256 WORKERS=8 \
+  IMAGE_DATASETS="ecg_image_database ptb_xl_image_17k" \
+  PROMOTE=1 BASELINE=eval/baselines/synth_v1.json \
+  MODEL_VERSION=ecg-resnet1d-v1.0.0 \
+  ./scripts/train_autonomous.sh
+```
+
+[`scripts/lambda_setup.sh`](../scripts/lambda_setup.sh) hace el bootstrap
+completo: `apt` deps, venv, reinstala torch con CUDA si no detecta GPU,
+corre un dry-run sintético de 1 época para validar y luego imprime el
+comando del run real.
+
 ### Cron diario
 
 Plantilla en [`scripts/train_autonomous_cron.example`](../scripts/train_autonomous_cron.example):
@@ -67,9 +91,36 @@ Plantilla en [`scripts/train_autonomous_cron.example`](../scripts/train_autonomo
 
 ### En CI / GitHub Actions
 
-`PROMOTE=0` (no tocar pesos desde CI). El job sirve como gate de regresión:
-si el `make eval` interno falla, el PR se bloquea. Reusa el cache de
-PhysioNet entre runs si el runner persiste `data/raw/`.
+Dos workflows ya cubren esto:
+
+- [`.github/workflows/eval-gate.yml`](../.github/workflows/eval-gate.yml)
+  corre en cada PR que toca `apps/ml-api/**` o `ml/**`. Genera el dataset
+  sintético, corre `make eval` y bloquea el merge si F1-macro regresiona
+  >2 pts o ECE empeora >0.05 vs `eval/baselines/synth_v1.json`. **No
+  necesita GPU**, runner público de GitHub.
+- [`.github/workflows/auto-train.yml`](../.github/workflows/auto-train.yml)
+  corre cada lunes 05:17 UTC sobre un runner self-hosted con label `gpu`.
+  Hace el pipeline completo (descarga + pretrain + fine-tune + eval +
+  promote) y abre un PR si el nuevo checkpoint mejora al baseline. Para
+  activarlo necesitas registrar el runner self-hosted (ver siguiente
+  sección).
+
+### Self-hosted GPU runner
+
+Si quieres que el cron de GitHub use tu propia GPU (workstation con
+RTX 4090, instancia de Lambda persistente, etc.):
+
+```bash
+# en la máquina con GPU, una vez:
+mkdir actions-runner && cd actions-runner
+curl -O -L https://github.com/actions/runner/releases/latest/download/actions-runner-linux-x64-2.319.1.tar.gz
+tar xzf actions-runner-linux-x64-2.319.1.tar.gz
+./config.sh --url https://github.com/<tu-org>/Heartcheck --token <runner_token> --labels gpu
+sudo ./svc.sh install && sudo ./svc.sh start
+```
+
+Para crons sin máquina dedicada, mejor migrar `auto-train.yml` a un
+disparador serverless (Modal, RunPod API). Pendiente.
 
 ## Variables de entorno
 

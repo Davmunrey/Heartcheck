@@ -1,8 +1,9 @@
 .PHONY: install test eval eval-synth eval-gate lint help
 
 ML := apps/ml-api
-PY := $(ML)/.venv/bin/python
-PIP := $(ML)/.venv/bin/pip
+ROOT := $(abspath .)
+PY := $(ROOT)/$(ML)/.venv/bin/python
+PIP := $(ROOT)/$(ML)/.venv/bin/pip
 SYNTH_DIR ?= data/synth_v1
 EVAL_OUT ?= eval/reports
 EVAL_LABEL ?= candidate

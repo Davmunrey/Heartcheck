@@ -29,36 +29,44 @@ jobs:
         run: |
           python -m venv apps/ml-api/.venv
           apps/ml-api/.venv/bin/pip install -r apps/ml-api/requirements.txt
+      - name: Install training-only deps (wfdb for PhysioNet)
+        run: apps/ml-api/.venv/bin/pip install wfdb 'tqdm>=4.65'
       - name: Run autonomous trainer
         env:
           MODEL_VERSION: ${{ github.event.inputs.model_version }}
           IMAGE_DATASETS: ${{ github.event.inputs.image_datasets }}
-        run: |
-          scripts/train_autonomous.sh --allow-no-promote
+          EPOCHS: "30"
+          BATCH_SIZE: "256"
+          WORKERS: "8"
+          PROMOTE: "1"
+          BASELINE: eval/baselines/synth_v1.json
+        run: scripts/train_autonomous.sh
       - name: Upload candidate artefacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: training-run
           path: |
-            runs/auto/**/*.json
-            runs/auto/**/checkpoint.pt.yaml
-            apps/ml-api/weights/active/
+            runs/**/state.json
+            runs/**/eval/*.json
+            runs/**/eval/*.html
+            runs/**/pretrain/checkpoint.pt.yaml
+            apps/ml-api/weights/*.pt.yaml
       - name: Open PR if a new champion was promoted
         if: success()
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [[ -d apps/ml-api/weights/active && -n $(git status --porcelain apps/ml-api/weights/active) ]]; then
+          if [[ -n $(git status --porcelain apps/ml-api/weights/) ]]; then
             BRANCH="auto-train/$(date +%Y%m%dT%H%M%S)"
             git checkout -b "$BRANCH"
             git config user.email "auto-train@heartscan"
             git config user.name "auto-train"
-            git add apps/ml-api/weights/active
+            git add apps/ml-api/weights/
             git commit -m "auto-train: promote new checkpoint"
             git push -u origin "$BRANCH"
             gh pr create --title "auto-train: promote new checkpoint" \
-              --body "Automatic promotion from the weekly trainer. See artefacts." \
+              --body "Automatic promotion from the weekly trainer. Compare eval reports in the run artefacts." \
               --label "auto-train"
           else
             echo "No promotion this run."
