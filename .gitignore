@@ -1,7 +1,10 @@
 # Eval datasets (real photos never committed; synth regenerated locally)
+data/raw/
 data/real_eval/images/
 data/real_eval/manifest.jsonl
 data/synth_*/
+runs/auto/
+apps/ml-api/weights/
 
 # Local DB and venv
 apps/ml-api/data/*.db
