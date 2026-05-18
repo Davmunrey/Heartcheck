@@ -11,7 +11,7 @@ jobs:
   ensure:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Write env for scripts
         env:
           CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
