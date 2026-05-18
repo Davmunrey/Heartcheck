@@ -217,7 +217,7 @@ class ExportService {
     if (r.measurementBasis != null) {
       data.add(['BPM basis', r.measurementBasis!]);
     }
-    return pw.Table.fromTextArray(
+    return pw.TableHelper.fromTextArray(
       data: data,
       border: pw.TableBorder.all(color: PdfColors.grey400, width: 0.35),
       headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9),
@@ -233,9 +233,9 @@ class ExportService {
 
   PdfColor _statusPdfColor(String status) {
     return switch (status) {
-      'green' => PdfColor.fromInt(0xFFE8F5E9),
-      'red' => PdfColor.fromInt(0xFFFFEBEE),
-      _ => PdfColor.fromInt(0xFFFFF8E1),
+      'green' => const PdfColor.fromInt(0xFFE8F5E9),
+      'red' => const PdfColor.fromInt(0xFFFFEBEE),
+      _ => const PdfColor.fromInt(0xFFFFF8E1),
     };
   }
 

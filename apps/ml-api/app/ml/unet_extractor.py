@@ -21,7 +21,6 @@ from pathlib import Path
 import numpy as np
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 
 def _conv_block(in_ch: int, out_ch: int) -> nn.Sequential:

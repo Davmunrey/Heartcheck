@@ -33,7 +33,7 @@ import torch
 from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 
 # Production-side imports (analysis pipeline + model).
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "backend"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "apps" / "ml-api"))
 from app.ml.cnn1d import ECGResNet1D, default_model_version  # noqa: E402
 from app.services import (  # noqa: E402
     grid_suppression,

@@ -9,3 +9,10 @@ abstract final class AppColors {
   static const Color textMuted = Color(0xFF424242);
   static const Color outlineSoft = Color(0xFFE0E0E0);
 }
+
+extension ColorCompat on Color {
+  Color withValues({double? alpha}) {
+    if (alpha == null) return this;
+    return withOpacity(alpha);
+  }
+}

@@ -35,7 +35,7 @@ this index.
 - [`ml_eval.md`](ml_eval.md) — evaluation harness, metrics, release gate.
 - [`algorithms/quality_gate.md`](algorithms/quality_gate.md) — extraction quality v1 + v2 thresholds.
 - [`MODEL_CARD.md`](MODEL_CARD.md) — model card (Mitchell et al. format).
-- [`AUTONOMOUS_TRAINING.md`](AUTONOMOUS_TRAINING.md) — one-command training orchestrator + cron template.
+- [`AUTONOMOUS_TRAINING.md`](AUTONOMOUS_TRAINING.md) — one-command training orchestrator, GPU rental setup ([`scripts/lambda_setup.sh`](../scripts/lambda_setup.sh)), CI gate ([`.github/workflows/eval-gate.yml`](../.github/workflows/eval-gate.yml)) and weekly trainer ([`.github/workflows/auto-train.yml`](../.github/workflows/auto-train.yml)).
 
 ## 3. Datasets and labels
 

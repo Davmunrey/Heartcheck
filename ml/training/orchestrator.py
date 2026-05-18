@@ -41,7 +41,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-PY = REPO_ROOT / "backend" / ".venv" / "bin" / "python"
+PY = REPO_ROOT / "apps" / "ml-api" / ".venv" / "bin" / "python"
 
 
 @dataclass
@@ -163,7 +163,7 @@ def step_eval(checkpoint: Path, out_dir: Path) -> StepResult:
         ]
         _log(f"$ HEARTSCAN_MODEL_PATH={checkpoint} {' '.join(env_cmd)}")
         env = {"HEARTSCAN_MODEL_PATH": str(checkpoint)}
-        subprocess.check_call(env_cmd, cwd=str(REPO_ROOT / "backend"), env={**_inherit_env(), **env})
+        subprocess.check_call(env_cmd, cwd=str(REPO_ROOT / "apps" / "ml-api"), env={**_inherit_env(), **env})
         # Pick the most recent JSON in eval_dir.
         latest = max(eval_dir.glob("*.json"), key=lambda p: p.stat().st_mtime)
         shutil.copy2(latest, target)

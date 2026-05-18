@@ -252,9 +252,9 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
                 ),
               ),
             ),
-          ColoredBox(
+          const ColoredBox(
             color: AppColors.surfaceMuted,
-            child: const LegalFooter(),
+            child: LegalFooter(),
           ),
         ],
       ),

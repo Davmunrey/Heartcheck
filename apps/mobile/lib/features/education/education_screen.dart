@@ -90,10 +90,10 @@ class _EducationScreenState extends State<EducationScreen> {
               return Card(
                 child: ListTile(
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  leading: CircleAvatar(
+                  leading: const CircleAvatar(
                     backgroundColor: AppColors.brandLight,
                     foregroundColor: AppColors.brand,
-                    child: const Icon(Icons.article_outlined, size: 22),
+                    child: Icon(Icons.article_outlined, size: 22),
                   ),
                   title: Text(
                     title,

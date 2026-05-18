@@ -24,7 +24,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "backend"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "apps" / "ml-api"))
 from app.eval.metrics import expected_calibration_error  # noqa: E402
 from app.ml.calibration import ConformalClassifier, TemperatureScaler  # noqa: E402
 
