@@ -1,7 +1,14 @@
+import path from "node:path";
+
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   transpilePackages: ["@heartscan/api-client"],
+  turbopack: {
+    // Keep workspace root anchored to this monorepo; avoids Next auto-picking
+    // unrelated lockfiles from parent folders on developer machines.
+    root: path.join(__dirname, "../.."),
+  },
   async headers() {
     return [
       {
