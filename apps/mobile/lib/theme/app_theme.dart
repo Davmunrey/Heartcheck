@@ -61,7 +61,7 @@ ThemeData buildAppTheme() {
       foregroundColor: AppColors.brandDark,
       titleTextStyle: text.titleLarge,
     ),
-    cardTheme: CardThemeData(
+    cardTheme: CardTheme(
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
