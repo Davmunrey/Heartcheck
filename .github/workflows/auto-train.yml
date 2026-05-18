@@ -24,7 +24,7 @@ jobs:
     env:
       PY: apps/ml-api/.venv/bin/python
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install backend deps
         run: |
           python -m venv apps/ml-api/.venv
