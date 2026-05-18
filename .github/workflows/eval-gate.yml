@@ -40,4 +40,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: eval-report
-          path: eval/reports/
+          path: apps/eval/reports/
