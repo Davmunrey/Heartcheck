@@ -20,7 +20,10 @@ from pathlib import Path
 import numpy as np
 import torch
 
+from app.core.logging import get_logger
 from app.ml.cnn1d import build_default_model
+
+_logger = get_logger(__name__)
 
 _MEMBERS: list[torch.nn.Module] = []
 
@@ -38,12 +41,14 @@ def load_ensemble(directory: str | Path | None) -> int:
         try:
             state = torch.load(path, map_location="cpu", weights_only=True)
         except Exception:  # noqa: BLE001
+            _logger.warning("ensemble_ckpt_load_failed", path=str(path))
             continue
         m = build_default_model()
         try:
             payload = state["state_dict"] if isinstance(state, dict) and "state_dict" in state else state
             m.load_state_dict(payload, strict=False)
         except Exception:  # noqa: BLE001
+            _logger.warning("ensemble_state_dict_load_failed", path=str(path))
             continue
         m.eval()
         _MEMBERS.append(m)

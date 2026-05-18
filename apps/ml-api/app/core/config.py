@@ -22,18 +22,20 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./data/heartscan.db"
     jwt_secret_key: str = "dev-jwt-secret-change-in-production-min-32-chars!!"
     jwt_algorithm: str = "HS256"
-    jwt_expire_minutes: int = 10080
-    allow_legacy_api_key: bool = True
+    jwt_expire_minutes: int = 60
+    allow_legacy_api_key: bool = False
     beta_daily_analysis_quota: int = 100
     sentry_dsn: str | None = None
 
     # Clerk (optional — when set, Bearer tokens are verified via JWKS first)
     clerk_jwks_url: str | None = None
     clerk_issuer: str | None = None
+    # Expected `aud` claim for Clerk tokens. When set, `aud` is verified.
+    clerk_audience: str | None = None
     # Shared secret between Next.js and ML API (X-Internal-Token)
     ml_internal_token: str | None = None
     # Email/password auth routes (tests / local dev). Disable in Clerk-only prod.
-    auth_legacy_enabled: bool = True
+    auth_legacy_enabled: bool = False
 
     # Hard-case storage (plan v2 §G2). Disabled until legal review approves the
     # consent UX. When enabled, images flagged for review are encrypted with

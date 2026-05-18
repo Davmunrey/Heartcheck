@@ -6,9 +6,9 @@ import time
 from dataclasses import dataclass
 from typing import Any
 
-import httpx
-from jose import jwk, jwt
-from jose.exceptions import JWTError as JoseJWTError
+import jwt
+from jwt import PyJWKClient
+from jwt.exceptions import PyJWTError
 
 from app.core.config import Settings
 
@@ -20,52 +20,55 @@ class ClerkClaims:
     org_role: str | None
 
 
-_jwks_cache: dict[str, Any] = {"keys": None, "fetched_at": 0.0}
+_jwk_client_cache: dict[str, Any] = {"client": None, "url": None, "fetched_at": 0.0}
 _JWKS_TTL_SEC = 3600
 
 
-def _get_jwks(jwks_url: str) -> dict[str, Any]:
+def _get_jwk_client(jwks_url: str) -> PyJWKClient:
+    """Return a cached PyJWKClient for the given JWKS URL."""
     now = time.time()
-    if _jwks_cache["keys"] is not None and now - float(_jwks_cache["fetched_at"]) < _JWKS_TTL_SEC:
-        return _jwks_cache["keys"]
-    r = httpx.get(jwks_url, timeout=15.0)
-    r.raise_for_status()
-    data = r.json()
-    _jwks_cache["keys"] = data
-    _jwks_cache["fetched_at"] = now
-    return data
+    if (
+        _jwk_client_cache["client"] is not None
+        and _jwk_client_cache["url"] == jwks_url
+        and now - float(_jwk_client_cache["fetched_at"]) < _JWKS_TTL_SEC
+    ):
+        return _jwk_client_cache["client"]
+    client = PyJWKClient(jwks_url, cache_keys=True, lifespan=_JWKS_TTL_SEC)
+    _jwk_client_cache["client"] = client
+    _jwk_client_cache["url"] = jwks_url
+    _jwk_client_cache["fetched_at"] = now
+    return client
 
 
 def verify_clerk_bearer(token: str, settings: Settings) -> ClerkClaims:
     """Validate Authorization Bearer token issued by Clerk."""
     if not settings.clerk_jwks_url:
         raise ValueError("Clerk JWKS URL not configured")
-    jwks = _get_jwks(settings.clerk_jwks_url)
+    client = _get_jwk_client(settings.clerk_jwks_url)
     try:
-        headers = jwt.get_unverified_header(token)
-    except JoseJWTError as e:
+        signing_key = client.get_signing_key_from_jwt(token)
+    except PyJWTError as e:
         raise ValueError("invalid token header") from e
-    kid = headers.get("kid")
-    if not kid:
-        raise ValueError("missing kid")
-    key_dict = None
-    for k in jwks.get("keys", []):
-        if k.get("kid") == kid:
-            key_dict = k
-            break
-    if key_dict is None:
-        raise ValueError("unknown signing key")
-    public_key = jwk.construct(key_dict)
+    except Exception as e:  # JWKS fetch / network errors
+        raise ValueError("unable to resolve signing key") from e
+
     decode_kw: dict[str, Any] = {
         "algorithms": ["RS256"],
-        "options": {"verify_aud": False},
+        "options": {"verify_aud": True, "require": ["exp", "sub"]},
     }
     if settings.clerk_issuer:
         decode_kw["issuer"] = settings.clerk_issuer
+    if settings.clerk_audience:
+        decode_kw["audience"] = settings.clerk_audience
+    else:
+        # No audience configured: cannot verify `aud`. Disable the aud check
+        # explicitly instead of silently trusting any audience.
+        decode_kw["options"]["verify_aud"] = False
     try:
-        payload = jwt.decode(token, public_key, **decode_kw)
-    except JoseJWTError as e:
+        payload = jwt.decode(token, signing_key.key, **decode_kw)
+    except PyJWTError as e:
         raise ValueError("invalid token") from e
+
     sub = payload.get("sub")
     if not sub or not isinstance(sub, str):
         raise ValueError("missing sub")

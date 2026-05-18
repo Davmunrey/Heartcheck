@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
@@ -31,8 +32,9 @@ class ExportService {
       if (bytes != null && bytes.isNotEmpty) {
         return _writeTemp(bytes, 'heartscan_report_server.pdf');
       }
-    } catch (_) {
-      /* fallback below */
+    } catch (e) {
+      debugPrint('PDF fetch failed: $e');
+      // Falls through to local PDF generation below.
     }
     return buildPdf(r, copy: copy, appVersion: info.version);
   }

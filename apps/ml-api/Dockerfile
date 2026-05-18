@@ -13,6 +13,10 @@ COPY apps/ml-api/app ./app
 COPY apps/ml-api/weights ./weights
 COPY web_public ./web_public
 
+RUN useradd --create-home --uid 10001 --no-log-init appuser \
+    && chown -R appuser:appuser /app
+USER 10001
+
 ENV PYTHONPATH=/app
 EXPOSE 8000
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

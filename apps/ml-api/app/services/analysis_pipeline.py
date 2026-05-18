@@ -45,7 +45,10 @@ ARRHYTHMIA_DOWNGRADE_BELOW = 0.60
 NORMAL_GREEN_AT_LEAST = 0.55
 NORMAL_GREEN_REQUIRES_QUALITY = 0.45
 ABSTAIN_QUALITY_BELOW = 0.30
-BPM_PHYSIOLOGICAL = (25.0, 220.0)
+# Clinical rationale: 250 BPM covers ventricular tachycardia (VT, up to ~250)
+# and Wolff-Parkinson-White (WPW) pre-excitation, while remaining below noise
+# artefact rates.  Matches GuardConfig.max_bpm_human_plausible in config.py.
+BPM_PHYSIOLOGICAL = (25.0, 250.0)
 
 
 @dataclass

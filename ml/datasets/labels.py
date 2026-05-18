@@ -33,6 +33,10 @@ PTBXL_ARRHYTHMIA_SCP = {
     # ischemia / infarct (not strictly arrhythmia but flagged for caution)
     "AMI", "IMI", "LMI", "PMI", "ASMI", "ALMI", "ILMI", "IPMI", "IPLMI",
     "ISC_", "ISCAL", "ISCAS", "ISCIN", "ISCIL", "ISCAN", "ISCLA",
+    # morphological codes previously falling through to "noise"
+    "LNGQT",    # long QT interval — risk of torsades de pointes
+    "ABQRS",    # abnormal QRS morphology
+    "PRC(S)",   # ventricular pre-excitation / Wolff-Parkinson-White pattern
 }
 
 
@@ -64,7 +68,7 @@ CHAPMAN_ARRHYTHMIA_SNOMED = {
     "284470004",  # premature atrial contraction
     "427172004",  # premature ventricular contractions
     "164917005",  # q wave abnormal
-    "55827005",   # left ventricular hypertrophy
+    # "55827005" removed — duplicate LVH code; 164873001 is the canonical SNOMED-CT code
     "428750005",  # nonspecific st-t abnormality
     "63593006",   # supraventricular premature beats
     "17338001",   # ventricular premature beats

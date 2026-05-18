@@ -7,6 +7,7 @@ Requires PhysioNet credentialed access (CITI training certificate).
 from __future__ import annotations
 
 import csv
+import os
 import sys
 from pathlib import Path
 from typing import Iterator
@@ -16,6 +17,11 @@ from ml.datasets.labels import map_chapman_codes
 from ml.datasets.registry import CLASS_TO_ID, Dataset, Sample
 
 _PHYSIONET_SLUG = "mimic-iv-ecg/1.0"
+
+# Sentinel: set MIMIC_IV_ECG_HARMONIZED=1 (or place a .harmonized file next
+# to machine_measurements.csv) after running NLP label harmonisation.
+_HARMONIZED_ENV = "MIMIC_IV_ECG_HARMONIZED"
+_HARMONIZED_SENTINEL = ".harmonized"
 
 
 def _download(target_dir: Path) -> None:
@@ -30,12 +36,30 @@ def _download(target_dir: Path) -> None:
     physionet_wget(_PHYSIONET_SLUG, target_dir)
 
 
+def _is_harmonized(target_dir: Path) -> bool:
+    """Return True only when NLP label harmonisation has been performed."""
+    if os.environ.get(_HARMONIZED_ENV, "").strip() in {"1", "true", "yes", "y", "on"}:
+        return True
+    if (target_dir / _HARMONIZED_SENTINEL).is_file():
+        return True
+    return False
+
+
 def _parse(target_dir: Path) -> Iterator[Sample]:
     meta = target_dir / "machine_measurements.csv"
     if not meta.is_file():
         raise FileNotFoundError(
             f"MIMIC-IV-ECG metadata not found at {meta}; ensure access + download completed."
         )
+
+    if not _is_harmonized(target_dir):
+        raise RuntimeError(
+            "MIMIC-IV-ECG loader requires NLP label harmonization before use. "
+            "Run 'python -m ml.datasets.mimic_iv_ecg --harmonize' first, or "
+            "set MIMIC_IV_ECG_HARMONIZED=1 if you have pre-processed labels. "
+            "See docs/RESTRICTED_DATASETS.md for details."
+        )
+
     with meta.open("r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:

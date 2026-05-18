@@ -25,6 +25,8 @@ jobs:
       PY: apps/ml-api/.venv/bin/python
     steps:
       - uses: actions/checkout@v4
+      - name: Verify GPU available
+        run: python -c "import torch; assert torch.cuda.is_available(), 'No GPU detected -- aborting training job'"
       - name: Install backend deps
         run: |
           python -m venv apps/ml-api/.venv
@@ -66,8 +68,19 @@ jobs:
             git commit -m "auto-train: promote new checkpoint"
             git push -u origin "$BRANCH"
             gh pr create --title "auto-train: promote new checkpoint" \
-              --body "Automatic promotion from the weekly trainer. Compare eval reports in the run artefacts." \
-              --label "auto-train"
+              --body "Automatic promotion from the weekly trainer. Compare eval reports in the run artefacts.
+
+## IMPORTANT: Cardiology Sign-Off Required
+
+This PR promotes a new ML model checkpoint for clinical ECG classification.
+A qualified cardiologist MUST review and approve this PR before merging.
+
+- [ ] Cardiologist has reviewed the eval report and confusion matrix
+- [ ] Performance regressions on known arrhythmia classes have been investigated
+- [ ] Model has been validated against held-out clinical test set
+- [ ] Sign-off documented in PR comments by @cardiology-reviewers" \
+              --label "auto-train" \
+              --label "requires-cardiology-review"
           else
             echo "No promotion this run."
           fi

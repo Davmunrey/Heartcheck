@@ -1,0 +1,9 @@
+{
+  "temperature": 5.59819562804107,
+  "conformal_threshold": 0.6714732646942139,
+  "alpha": 0.1,
+  "ece_raw": 0.0553061266740163,
+  "ece_calibrated": 0.04413860042889911,
+  "empirical_coverage": 1.0,
+  "n_val": 24
+}

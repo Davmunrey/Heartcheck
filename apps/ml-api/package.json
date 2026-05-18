@@ -1,0 +1,10 @@
+{
+  "name": "@heartscan/ml-api",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "echo '@heartscan/ml-api: Python service — no JS build step'",
+    "lint": ".venv/bin/python -m ruff check app tests",
+    "test": ".venv/bin/python -m pytest -q"
+  }
+}

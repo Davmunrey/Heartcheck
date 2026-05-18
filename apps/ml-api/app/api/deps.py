@@ -52,7 +52,14 @@ async def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={"error_code": "INVALID_TOKEN", "message": "Invalid token payload"},
         )
-    user = get_user_by_id(db, int(uid))
+    try:
+        uid_int = int(uid)
+    except (TypeError, ValueError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"error_code": "INVALID_TOKEN", "message": "Invalid token payload"},
+        ) from None
+    user = get_user_by_id(db, uid_int)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -79,8 +86,9 @@ class AnalyzeAuth:
 
 
 def _internal_token_ok(settings: Settings, x_internal_token: str | None) -> bool:
+    """Fail-closed: returns False unless a configured token matches exactly."""
     if not settings.ml_internal_token:
-        return True
+        return False
     if not x_internal_token:
         return False
     return hmac.compare_digest(
@@ -116,7 +124,12 @@ async def require_analyze_auth(
                 ) from None
             org = claims.org_id
             if not org and x_organization_id and x_organization_id.strip():
-                if not _internal_token_ok(settings, x_internal_token):
+                # Header-based org identity is only trusted when this request
+                # comes from the trusted Next.js backend: the internal token
+                # must be configured AND match. Fail-closed otherwise.
+                if not settings.ml_internal_token or not _internal_token_ok(
+                    settings, x_internal_token
+                ):
                     raise HTTPException(
                         status_code=status.HTTP_401_UNAUTHORIZED,
                         detail={
@@ -167,7 +180,14 @@ async def require_analyze_auth(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail={"error_code": "INVALID_TOKEN", "message": "Invalid token", "request_id": rid},
             )
-        user = get_user_by_id(db, int(uid))
+        try:
+            uid_int = int(uid)
+        except (TypeError, ValueError):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail={"error_code": "INVALID_TOKEN", "message": "Invalid token", "request_id": rid},
+            ) from None
+        user = get_user_by_id(db, uid_int)
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,

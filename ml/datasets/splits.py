@@ -20,6 +20,8 @@ from __future__ import annotations
 
 import argparse
 import sys
+import uuid
+import warnings
 from collections import defaultdict
 from pathlib import Path
 
@@ -47,6 +49,12 @@ def stratify(
     by_patient: dict[str, list[dict]] = defaultdict(list)
     for r in rows:
         pid = r.get("patient_id") or r.get("record_id")
+        if pid is None:
+            pid = f"unknown_{uuid.uuid4().hex[:8]}"
+            warnings.warn(
+                f"Record missing patient_id and record_id, assigning synthetic ID: {pid}",
+                stacklevel=2,
+            )
         by_patient[pid].append(r)
     by_class: dict[str, list[str]] = defaultdict(list)
     for pid, rs in by_patient.items():
@@ -83,6 +91,8 @@ def _cmd(args: argparse.Namespace) -> int:
     assignment = stratify(rows, train=args.train, val=args.val, seed=args.seed)
     for r in rows:
         pid = r.get("patient_id") or r.get("record_id")
+        if pid is None:
+            pid = f"unknown_{uuid.uuid4().hex[:8]}"
         r["split"] = assignment.get(pid, "train")
     out_path = Path(args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)

@@ -43,6 +43,10 @@ class EvalReport:
     calibration: dict[str, float]
     abstention_rate: float
     latency_ms: dict[str, float]
+    # Gating metric: arrhythmia recall is the most safety-critical threshold.
+    # A model must not be promoted if arrhythmia_sensitivity falls below the
+    # minimum acceptable rate.
+    arrhythmia_sensitivity: float = 0.0
     per_sample: list[dict[str, Any]] = field(default_factory=list)
 
 
@@ -134,6 +138,9 @@ def run_eval(cfg: EvalConfig) -> EvalReport:
     brier = M.brier_score_multiclass(yt, probs, len(CLASS_NAMES)) if len(yt) else 0.0
     auroc = M.confidence_correctness_auroc(yt, probs) if len(yt) else 0.5
 
+    # Gating: arrhythmia sensitivity is the key safety metric for promotion.
+    arrhythmia_sens = cls.sensitivity_per_class.get("arrhythmia", 0.0)
+
     report = EvalReport(
         label=cfg.label,
         timestamp=datetime.now(timezone.utc).isoformat(),
@@ -142,6 +149,9 @@ def run_eval(cfg: EvalConfig) -> EvalReport:
             "accuracy": cls.accuracy,
             "f1_macro": cls.f1_macro,
             "f1_per_class": cls.f1_per_class,
+            "sensitivity_per_class": cls.sensitivity_per_class,
+            "specificity_per_class": cls.specificity_per_class,
+            "ppv_per_class": cls.ppv_per_class,
             "confusion": cls.confusion,
             "support": cls.support,
             "class_names": list(CLASS_NAMES),
@@ -157,6 +167,7 @@ def run_eval(cfg: EvalConfig) -> EvalReport:
             "p95": M.percentile(latencies_ms, 95),
             "mean": float(np.mean(latencies_ms)) if latencies_ms else 0.0,
         },
+        arrhythmia_sensitivity=arrhythmia_sens,
         per_sample=per_sample,
     )
     return report
@@ -175,6 +186,7 @@ def write_report(report: EvalReport, out_dir: Path) -> tuple[Path, Path]:
         "calibration": report.calibration,
         "abstention_rate": report.abstention_rate,
         "latency_ms": report.latency_ms,
+        "arrhythmia_sensitivity": report.arrhythmia_sensitivity,
         "per_sample": report.per_sample,
     }
     json_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
@@ -212,11 +224,12 @@ th:first-child{{text-align:left;background:#f7f7f7}}
   <dt>Brier</dt><dd>{cal['brier']:.4f}</dd>
   <dt>Confidence vs correctness AUROC</dt><dd>{cal['confidence_correctness_auroc']:.4f}</dd>
   <dt>Abstention rate</dt><dd>{payload['abstention_rate']:.4f}</dd>
+  <dt>Arrhythmia sensitivity</dt><dd>{payload['arrhythmia_sensitivity']:.4f}</dd>
   <dt>Latency p50 / p95 / mean (ms)</dt><dd>{lat['p50']:.1f} / {lat['p95']:.1f} / {lat['mean']:.1f}</dd>
 </dl>
-<h2>F1 per class</h2>
-<table><tr><th>Class</th><th>F1</th><th>Support</th></tr>
-{''.join(f"<tr><th>{n}</th><td>{cls['f1_per_class'][n]:.4f}</td><td>{cls['support'][i]}</td></tr>" for i, n in enumerate(cls['class_names']))}
+<h2>Per-class metrics</h2>
+<table><tr><th>Class</th><th>F1</th><th>Sensitivity</th><th>Specificity</th><th>PPV</th><th>Support</th></tr>
+{''.join(f"<tr><th>{n}</th><td>{cls['f1_per_class'][n]:.4f}</td><td>{cls['sensitivity_per_class'][n]:.4f}</td><td>{cls['specificity_per_class'][n]:.4f}</td><td>{cls['ppv_per_class'][n]:.4f}</td><td>{cls['support'][i]}</td></tr>" for i, n in enumerate(cls['class_names']))}
 </table>
 <h2>Confusion matrix (rows=true, cols=pred)</h2>
 <table><tr><th></th>{confusion_header}</tr>{confusion_rows}</table>

@@ -20,7 +20,8 @@ passlib[bcrypt]>=1.7.4,<2
 # bcrypt>=4 expone módulos sin __about__ y rompe `passlib.handlers.bcrypt`.
 # Pinear hasta que passlib publique 2.x o se migre a argon2/bcrypt directo.
 bcrypt>=3.2.0,<4
-python-jose[cryptography]>=3.3.0,<4
+PyJWT>=2.8.0,<3
+cryptography>=42.0.0,<45
 email-validator>=2.0.0,<3
 slowapi>=0.1.9,<1
 sentry-sdk[fastapi]>=1.39.0,<3

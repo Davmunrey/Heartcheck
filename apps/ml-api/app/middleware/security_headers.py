@@ -10,7 +10,7 @@ _CSP_STATIC = (
     "img-src 'self' data: blob:; "
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
     "font-src 'self' https://fonts.gstatic.com; "
-    "script-src 'self' 'unsafe-inline'; "
+    "script-src 'self'; "
     "connect-src 'self'; "
     "frame-ancestors 'none'"
 )
@@ -21,8 +21,12 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         path = request.url.path
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("X-Frame-Options", "DENY")
         response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
         response.headers.setdefault("Permissions-Policy", "camera=(self), microphone=()")
+        response.headers.setdefault(
+            "Strict-Transport-Security", "max-age=31536000; includeSubDomains"
+        )
         if path.startswith("/docs") or path.startswith("/redoc") or path.startswith("/openapi"):
             response.headers.setdefault(
                 "Content-Security-Policy",

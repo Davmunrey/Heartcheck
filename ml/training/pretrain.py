@@ -23,7 +23,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import sys
 import time
 from collections import Counter
 from dataclasses import asdict, dataclass
@@ -33,11 +32,8 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, WeightedRandomSampler
 
-# Reuse the production model so the checkpoint loads back without surprises.
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "apps" / "ml-api"))
-from app.ml.cnn1d import ECGResNet1D, default_model_version  # noqa: E402
-
-from ml.training.data import CLASS_NAMES, ParquetECGDataset  # noqa: E402
+from heartscan_ml.cnn1d import ECGResNet1D, default_model_version
+from ml.training.data import CLASS_NAMES, ParquetECGDataset
 
 
 @dataclass
@@ -98,6 +94,7 @@ def run(cfg: TrainConfig) -> dict:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = ECGResNet1D(num_classes=len(CLASS_NAMES), length=cfg.target_len).to(device)
     optim = torch.optim.AdamW(model.parameters(), lr=cfg.lr, weight_decay=cfg.weight_decay)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optim, T_max=cfg.epochs)
     loss_fn = torch.nn.CrossEntropyLoss()
 
     log_path = out_dir / "training_log.jsonl"
@@ -136,6 +133,7 @@ def run(cfg: TrainConfig) -> dict:
         else:
             f1, acc = 0.0, 0.0
 
+        scheduler.step()
         elapsed = time.perf_counter() - t0
         rec = {
             "epoch": epoch,
@@ -143,10 +141,11 @@ def run(cfg: TrainConfig) -> dict:
             "val_f1_macro": f1,
             "val_accuracy": acc,
             "seconds": round(elapsed, 2),
+            "lr": float(scheduler.get_last_lr()[0]),
         }
         log_f.write(json.dumps(rec) + "\n")
         log_f.flush()
-        print(f"[epoch {epoch:>3}] loss={rec['train_loss']:.4f} val_f1={f1:.4f} val_acc={acc:.4f} ({elapsed:.0f}s)")
+        print(f"[epoch {epoch:>3}] loss={rec['train_loss']:.4f} val_f1={f1:.4f} val_acc={acc:.4f} lr={rec['lr']:.2e} ({elapsed:.0f}s)")
 
         if f1 > best_f1:
             best_f1 = f1
@@ -169,8 +168,29 @@ def run(cfg: TrainConfig) -> dict:
         "device": str(device),
     }
     if val_logits_buf is not None:
+        # 3-way split: avoid calibration leakage by splitting the validation
+        # logits into two halves.
+        #   cal_logits.npz  — used by calibrate.py to fit temperature T*
+        #   held_logits.npz — used by calibrate.py to report final ECE
+        # The checkpoint-selection loop above already consumed val_logits for
+        # early stopping, so both halves are strictly held-out from training.
+        n = len(val_labels_buf)
+        mid = n // 2
+        np.savez(
+            out_dir / "cal_logits.npz",
+            logits=val_logits_buf[:mid],
+            labels=val_labels_buf[:mid],
+        )
+        np.savez(
+            out_dir / "held_logits.npz",
+            logits=val_logits_buf[mid:],
+            labels=val_labels_buf[mid:],
+        )
+        # Keep the full file as well for backward compatibility.
         np.savez(out_dir / "val_logits.npz", logits=val_logits_buf, labels=val_labels_buf)
         summary["val_logits_path"] = "val_logits.npz"
+        summary["cal_logits_path"] = "cal_logits.npz"
+        summary["held_logits_path"] = "held_logits.npz"
     (out_dir / "training_summary.json").write_text(json.dumps(summary, indent=2))
     print(f"[done] best val F1 macro = {best_f1:.4f}; checkpoint at {out_dir / 'checkpoint.pt'}")
     return summary

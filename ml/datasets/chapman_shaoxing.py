@@ -46,7 +46,7 @@ def _parse(target_dir: Path) -> Iterator[Sample]:
                 sampling_rate_hz=500,
                 n_leads=12,
                 duration_s=10.0,
-                patient_id=file_id,
+                patient_id=row.get("PatientID") or row.get("patient_id") or file_id,
                 metadata={"age": row.get("PatientAge"), "sex": row.get("Gender")},
             )
     # cond_csv kept for reference; not used at parse time
