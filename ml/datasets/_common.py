@@ -39,8 +39,13 @@ def verify_sha(path: Path, expected_sha256: str) -> None:
         )
 
 
-def http_download(url: str, target: Path) -> None:
-    """Resilient wget; prints to stderr so the CLI can capture progress."""
+def http_download(url: str, target: Path, expected_sha256: str | None = None) -> None:
+    """Resilient wget; prints to stderr so the CLI can capture progress.
+
+    If *expected_sha256* is provided the downloaded file's digest is verified
+    and a RuntimeError is raised on mismatch. Pass ``None`` (default) to skip
+    the check, preserving backward compatibility.
+    """
     ensure_dir(target.parent)
     print(f"[download] {url} -> {target}", file=sys.stderr)
     if shutil.which("wget"):
@@ -53,6 +58,9 @@ def http_download(url: str, target: Path) -> None:
         import urllib.request
 
         urllib.request.urlretrieve(url, target)
+
+    if expected_sha256 is not None:
+        verify_sha(target, expected_sha256)
 
 
 def physionet_wget(slug: str, target_dir: Path) -> None:

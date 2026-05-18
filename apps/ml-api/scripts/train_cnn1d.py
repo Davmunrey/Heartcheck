@@ -15,12 +15,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 
-# Run from backend root: python scripts/train_cnn1d.py
-import sys
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-
-from app.ml.cnn1d import ECGCNN1D  # noqa: E402
+from app.ml.cnn1d import ECGCNN1D
 
 
 def main() -> None:

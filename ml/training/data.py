@@ -18,6 +18,7 @@ PTB-XL's ``filename_lr`` and the 100 Hz heartscan_ml pipeline.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
@@ -25,6 +26,8 @@ from typing import Literal
 import numpy as np
 import torch
 from torch.utils.data import Dataset
+
+_logger = logging.getLogger(__name__)
 
 CLASS_NAMES = ("normal", "arrhythmia", "noise")
 
@@ -87,7 +90,8 @@ class ParquetECGDataset(Dataset):
 
                 rec = wfdb.rdrecord(str(path.with_suffix("")))
                 return np.asarray(rec.p_signal, dtype=np.float32)
-            except Exception:
+            except Exception:  # noqa: BLE001
+                _logger.warning("ecg_load_failed", extra={"path": str(row.file_path), "suffix": path.suffix})
                 return np.zeros((self.target_len, max(1, row.n_leads)), dtype=np.float32)
         if path.suffix == ".mat":
             try:
@@ -99,7 +103,8 @@ class ParquetECGDataset(Dataset):
                 if arr.ndim == 2 and arr.shape[0] < arr.shape[1]:
                     arr = arr.T  # (samples, channels)
                 return arr
-            except Exception:
+            except Exception:  # noqa: BLE001
+                _logger.warning("ecg_load_failed", extra={"path": str(row.file_path), "suffix": path.suffix})
                 return np.zeros((self.target_len, max(1, row.n_leads)), dtype=np.float32)
         if path.suffix in {".npy", ".npz"}:
             try:
@@ -107,8 +112,8 @@ class ParquetECGDataset(Dataset):
                 if hasattr(arr, "files"):
                     arr = arr[arr.files[0]]
                 return np.asarray(arr, dtype=np.float32)
-            except Exception:
-                pass
+            except Exception:  # noqa: BLE001
+                _logger.warning("ecg_load_failed", extra={"path": str(row.file_path), "suffix": path.suffix})
         return np.zeros((self.target_len, max(1, row.n_leads)), dtype=np.float32)
 
     def _select_lead(self, raw: np.ndarray) -> np.ndarray:

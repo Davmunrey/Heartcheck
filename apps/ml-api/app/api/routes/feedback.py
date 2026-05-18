@@ -52,7 +52,11 @@ def _maybe_actor(request: Request) -> tuple[str | None, str | None, int | None]:
     uid = payload.get("uid")
     if uid is None:
         return None, None, None
-    return f"legacy:{uid}", None, int(uid)
+    try:
+        uid_int = int(uid)
+    except (TypeError, ValueError):
+        return None, None, None
+    return f"legacy:{uid_int}", None, uid_int
 
 
 @router.post("/feedback", response_model=FeedbackResponse, status_code=status.HTTP_201_CREATED)

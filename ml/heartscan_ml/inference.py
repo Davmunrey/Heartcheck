@@ -7,6 +7,7 @@ from typing import Any
 
 import numpy as np
 import torch
+import torch.nn as nn
 import wfdb
 
 from heartscan_ml import MODEL_FAMILY, PIPELINE_VERSION
@@ -15,9 +16,10 @@ from heartscan_ml.config import GuardConfig, TrainConfig, default_guard_config
 from heartscan_ml.guards import apply_guards
 from heartscan_ml.labels import CLASS_NAMES
 from heartscan_ml.messages import DISCLAIMER_ES, screening_message
-from heartscan_ml.model_cnn1d import CNN1D12Lead
 from heartscan_ml.preprocess import crop_center, resample_linear, zscore_per_lead
 from heartscan_ml.rhythm import estimate_bpm_multilead, estimate_rr_regularity
+
+from heartscan_ml.cnn1d import ECGResNet1D, default_model_version
 
 
 def load_signal_from_wfdb(path_without_ext: str, target_fs: int, crop_len: int) -> np.ndarray:
@@ -34,15 +36,34 @@ def load_signal_from_wfdb(path_without_ext: str, target_fs: int, crop_len: int) 
 def run_inference(
     signal_12: np.ndarray,
     fs: float,
-    model: CNN1D12Lead,
+    model: nn.Module,
     device: torch.device,
     guard_cfg: GuardConfig | None = None,
     extraction_quality: int = 3,
     model_version_label: str | None = None,
 ) -> dict[str, Any]:
-    """Inferencia base; `model_version_label` sobreescribe el sufijo de versión si se pasa."""
+    """Inferencia base; `model_version_label` sobreescribe el sufijo de version si se pasa.
+
+    ``signal_12`` may be a (12, L) multi-lead array or a (1, L) / (L,) single-lead
+    array.  The model expects shape (B, 1, L) — we pick lead II when 12 leads are
+    available, then z-score the single channel.
+    """
     guard_cfg = guard_cfg or default_guard_config()
-    x = torch.from_numpy(signal_12).unsqueeze(0).to(device)
+
+    # Select a single lead for the 1-channel ECGResNet1D model.
+    if signal_12.ndim == 2 and signal_12.shape[0] >= 2:
+        lead = signal_12[1]  # lead II — most rhythm-informative
+    elif signal_12.ndim == 2:
+        lead = signal_12[0]
+    else:
+        lead = signal_12
+
+    # z-score the 1D signal before passing to model
+    mean, std = lead.mean(), lead.std()
+    if std > 1e-6:
+        lead = (lead - mean) / std
+
+    x = torch.from_numpy(lead.astype(np.float32)).unsqueeze(0).unsqueeze(0).to(device)
     with torch.no_grad():
         logits = model(x)
         probs = torch.softmax(logits, dim=1).squeeze(0).cpu().numpy()
@@ -54,7 +75,12 @@ def run_inference(
     if n_beats < 3:
         raw_bpm = None
 
-    lead_ii = signal_12[1] if signal_12.shape[0] > 1 else signal_12[0]
+    if signal_12.ndim == 2 and signal_12.shape[0] > 1:
+        lead_ii = signal_12[1]
+    elif signal_12.ndim == 2:
+        lead_ii = signal_12[0]
+    else:
+        lead_ii = signal_12
     rhythm_regularity = estimate_rr_regularity(lead_ii, fs)
     if raw_bpm is None:
         rhythm_regularity = "unknown"
@@ -141,27 +167,32 @@ def build_full_response(
 
 def analyze_photo_bytes(
     data: bytes,
-    model: CNN1D12Lead,
+    model: nn.Module,
     device: torch.device,
     crop_len: int = 1000,
     assumed_fs: float = 100.0,
     guard_cfg: GuardConfig | None = None,
     model_version_label: str | None = None,
 ) -> dict[str, Any]:
+    """Analyse a photo of an ECG strip.
+
+    The extraction pipeline returns a single 1D lead.  The model is
+    ECGResNet1D which expects (B, 1, L), so we pass the single lead directly
+    without replicating it to 12 channels.
+    """
     from heartscan_ml.image_extract import (
         bytes_to_gray,
         extract_lead_1d_from_gray,
         extraction_quality_score,
-        single_lead_to_12,
     )
 
     gray = bytes_to_gray(data)
     lead, coverage = extract_lead_1d_from_gray(gray, target_len=crop_len)
     q = extraction_quality_score(coverage)
-    sig12 = single_lead_to_12(lead)
-    sig12 = zscore_per_lead(sig12)
+    # Shape as (1, L) for run_inference lead-selection logic
+    sig = lead[np.newaxis, :]
     core = run_inference(
-        sig12,
+        sig,
         assumed_fs,
         model,
         device,
@@ -174,7 +205,7 @@ def analyze_photo_bytes(
 
 def analyze_wfdb_path(
     path_without_ext: str,
-    model: CNN1D12Lead,
+    model: nn.Module,
     device: torch.device,
     cfg: TrainConfig,
     guard_cfg: GuardConfig | None = None,
@@ -204,12 +235,12 @@ def main() -> None:
     cfg = TrainConfig(ptbxl_dir=".")
     device = torch.device(args.device)
     ckpt = load_torch(args.checkpoint, device)
-    mv = None
-    if isinstance(ckpt.get("meta"), dict):
-        mv = f"{ckpt['meta'].get('model_family', MODEL_FAMILY)}-trained"
-    model = CNN1D12Lead(seq_len=cfg.crop_len, num_classes=3).to(device)
-    model.load_state_dict(ckpt["model_state"])
-    model.eval()
+    mv = str(ckpt.get("version", default_model_version())).replace("-untrained", "-trained")
+    model = ECGResNet1D(num_classes=3, length=cfg.crop_len).to(device)
+    payload = ckpt.get("state_dict") or ckpt.get("model_state") or ckpt
+    if isinstance(payload, dict):
+        model.load_state_dict(payload, strict=False)
+    model.train(False)
 
     path = args.record
     if path.endswith(".hea"):

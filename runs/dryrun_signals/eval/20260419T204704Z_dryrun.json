@@ -1,0 +1,234 @@
+{
+  "label": "dryrun",
+  "timestamp": "2026-04-19T20:47:04.261265+00:00",
+  "n_samples": 18,
+  "classification": {
+    "accuracy": 0.3333333333333333,
+    "f1_macro": 0.16666666666666666,
+    "f1_per_class": {
+      "normal": 0.0,
+      "arrhythmia": 0.5,
+      "noise": 0.0
+    },
+    "confusion": [
+      [
+        0,
+        6,
+        0
+      ],
+      [
+        0,
+        6,
+        0
+      ],
+      [
+        0,
+        6,
+        0
+      ]
+    ],
+    "support": [
+      6,
+      6,
+      6
+    ],
+    "class_names": [
+      "normal",
+      "arrhythmia",
+      "noise"
+    ]
+  },
+  "calibration": {
+    "ece": 0.21666666666666684,
+    "brier": 0.7370833333333332,
+    "confidence_correctness_auroc": 0.6944444444444444
+  },
+  "abstention_rate": 0.0,
+  "latency_ms": {
+    "p50": 20.74214600088453,
+    "p95": 23.092300000280375,
+    "mean": 20.796817111355875
+  },
+  "per_sample": [
+    {
+      "file": "synth_000001.png",
+      "label": "normal",
+      "predicted": "arrhythmia",
+      "status": "red",
+      "confidence": 0.55,
+      "extraction_quality": 0.7865,
+      "bpm": null,
+      "latency_ms": 23.565749999761465
+    },
+    {
+      "file": "synth_000002.png",
+      "label": "normal",
+      "predicted": "arrhythmia",
+      "status": "red",
+      "confidence": 0.55,
+      "extraction_quality": 0.8064,
+      "bpm": null,
+      "latency_ms": 20.03616699948907
+    },
+    {
+      "file": "synth_000003.png",
+      "label": "normal",
+      "predicted": "arrhythmia",
+      "status": "red",
+      "confidence": 0.55,
+      "extraction_quality": 0.8763,
+      "bpm": null,
+      "latency_ms": 18.80325000092853
+    },
+    {
+      "file": "synth_000004.png",
+      "label": "normal",
+      "predicted": "arrhythmia",
+      "status": "red",
+      "confidence": 0.55,
+      "extraction_quality": 0.8044,
+      "bpm": null,
+      "latency_ms": 20.050249999258085
+    },
+    {
+      "file": "synth_000005.png",
+      "label": "normal",
+      "predicted": "arrhythmia",
+      "status": "red",
+      "confidence": 0.55,
+      "extraction_quality": 0.8006,
+      "bpm": null,
+      "latency_ms": 21.623791000820347
+    },
+    {
+      "file": "synth_000006.png",
+      "label": "normal",
+      "predicted": "arrhythmia",
+      "status": "red",
+      "confidence": 0.55,
+      "extraction_quality": 0.6865,
+      "bpm": null,
+      "latency_ms": 21.37370899981761
+    },
+    {
+      "file": "synth_000007.png",
+      "label": "arrhythmia",
+      "predicted": "arrhythmia",
+      "status": "red",
+      "confidence": 0.55,
+      "extraction_quality": 0.8753,
+      "bpm": null,
+      "latency_ms": 20.740667001518887
+    },
+    {
+      "file": "synth_000008.png",
+      "label": "arrhythmia",
+      "predicted": "arrhythmia",
+      "status": "red",
+      "confidence": 0.55,
+      "extraction_quality": 0.8205,
+      "bpm": null,
+      "latency_ms": 23.008750000371947
+    },
+    {
+      "file": "synth_000009.png",
+      "label": "arrhythmia",
+      "predicted": "arrhythmia",
+      "status": "red",
+      "confidence": 0.55,
+      "extraction_quality": 0.8056,
+      "bpm": null,
+      "latency_ms": 21.888667000894202
+    },
+    {
+      "file": "synth_000010.png",
+      "label": "arrhythmia",
+      "predicted": "arrhythmia",
+      "status": "red",
+      "confidence": 0.55,
+      "extraction_quality": 0.8718,
+      "bpm": null,
+      "latency_ms": 20.743625000250177
+    },
+    {
+      "file": "synth_000011.png",
+      "label": "arrhythmia",
+      "predicted": "arrhythmia",
+      "status": "red",
+      "confidence": 0.55,
+      "extraction_quality": 0.8445,
+      "bpm": null,
+      "latency_ms": 19.29500000005646
+    },
+    {
+      "file": "synth_000012.png",
+      "label": "arrhythmia",
+      "predicted": "arrhythmia",
+      "status": "red",
+      "confidence": 0.55,
+      "extraction_quality": 0.8057,
+      "bpm": null,
+      "latency_ms": 20.11179199871549
+    },
+    {
+      "file": "synth_000013.png",
+      "label": "noise",
+      "predicted": "arrhythmia",
+      "status": "red",
+      "confidence": 0.55,
+      "extraction_quality": 0.8915,
+      "bpm": null,
+      "latency_ms": 20.623124999474385
+    },
+    {
+      "file": "synth_000014.png",
+      "label": "noise",
+      "predicted": "arrhythmia",
+      "status": "red",
+      "confidence": 0.55,
+      "extraction_quality": 0.8564,
+      "bpm": null,
+      "latency_ms": 21.256166000966914
+    },
+    {
+      "file": "synth_000015.png",
+      "label": "noise",
+      "predicted": "arrhythmia",
+      "status": "red",
+      "confidence": 0.55,
+      "extraction_quality": 0.8789,
+      "bpm": null,
+      "latency_ms": 21.527000000787666
+    },
+    {
+      "file": "synth_000016.png",
+      "label": "noise",
+      "predicted": "arrhythmia",
+      "status": "red",
+      "confidence": 0.55,
+      "extraction_quality": 0.8692,
+      "bpm": null,
+      "latency_ms": 20.800416001293343
+    },
+    {
+      "file": "synth_000017.png",
+      "label": "noise",
+      "predicted": "arrhythmia",
+      "status": "red",
+      "confidence": 0.55,
+      "extraction_quality": 0.8674,
+      "bpm": null,
+      "latency_ms": 19.624082999143866
+    },
+    {
+      "file": "synth_000018.png",
+      "label": "noise",
+      "predicted": "arrhythmia",
+      "status": "red",
+      "confidence": 0.55,
+      "extraction_quality": 0.7931,
+      "bpm": null,
+      "latency_ms": 19.270500000857282
+    }
+  ]
+}

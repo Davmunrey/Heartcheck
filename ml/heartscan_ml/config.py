@@ -31,7 +31,10 @@ def default_train_config() -> TrainConfig:
 @dataclass(frozen=True)
 class GuardConfig:
     min_confidence: float = 0.55
-    max_bpm_human_plausible: float = 280.0
+    # Clinical rationale: 250 BPM covers VT and WPW pre-excitation without
+    # producing false negatives on valid high-rate signals.  Matches
+    # BPM_PHYSIOLOGICAL in apps/ml-api/app/services/analysis_pipeline.py.
+    max_bpm_human_plausible: float = 250.0
     min_bpm_human_plausible: float = 25.0
     min_extraction_quality: int = 2
     min_rr_samples: int = 50

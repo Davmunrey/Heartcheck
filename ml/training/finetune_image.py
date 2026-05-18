@@ -22,7 +22,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import sys
 import time
 from collections import Counter
 from dataclasses import asdict, dataclass
@@ -32,15 +31,12 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 
-# Production-side imports (analysis pipeline + model).
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "apps" / "ml-api"))
-from app.ml.cnn1d import ECGResNet1D, default_model_version  # noqa: E402
-from app.services import (  # noqa: E402
-    grid_suppression,
-    photo_geometry,
-    preprocess as svc_preprocess,
-    trace_extract,
-)
+from heartscan_ml.cnn1d import ECGResNet1D, default_model_version
+from heartscan_ml.image_pipeline import grid_suppression, photo_geometry
+from heartscan_ml.image_pipeline import preprocess as svc_preprocess
+from heartscan_ml.image_pipeline import trace_extract
+
+from ml.training.utils import macro_f1 as _macro_f1  # noqa: E402
 
 
 CLASS_NAMES = ("normal", "arrhythmia", "noise")
@@ -111,20 +107,9 @@ def _balanced_sampler(ds: HeartScanImageDataset) -> WeightedRandomSampler:
     return WeightedRandomSampler(weights, num_samples=len(weights), replacement=True)
 
 
-def _macro_f1(true: np.ndarray, pred: np.ndarray, n: int) -> float:
-    f1s = []
-    for c in range(n):
-        tp = int(((pred == c) & (true == c)).sum())
-        fp = int(((pred == c) & (true != c)).sum())
-        fn = int(((pred != c) & (true == c)).sum())
-        prec = tp / (tp + fp) if (tp + fp) else 0.0
-        rec = tp / (tp + fn) if (tp + fn) else 0.0
-        f1s.append(2 * prec * rec / (prec + rec) if (prec + rec) else 0.0)
-    return float(np.mean(f1s))
-
-
 def run(cfg: FinetuneConfig) -> dict:
     torch.manual_seed(cfg.seed)
+    np.random.seed(cfg.seed)
     out_dir = Path(cfg.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 

@@ -23,6 +23,9 @@ class ClassificationReport:
     accuracy: float
     f1_macro: float
     f1_per_class: dict[str, float]
+    sensitivity_per_class: dict[str, float]  # recall / true positive rate
+    specificity_per_class: dict[str, float]  # true negative rate
+    ppv_per_class: dict[str, float]          # precision / positive predictive value
     confusion: list[list[int]]
     support: list[int]
 
@@ -48,20 +51,32 @@ def classification_report(
     accuracy = correct / total if total else 0.0
 
     f1_per: dict[str, float] = {}
+    sensitivity_per: dict[str, float] = {}  # recall = TP / (TP + FN)
+    specificity_per: dict[str, float] = {}  # TN / (TN + FP)
+    ppv_per: dict[str, float] = {}          # precision = TP / (TP + FP)
+    total = int(cm.sum())
     for i, name in enumerate(class_names):
         tp = int(cm[i, i])
         fp = int(cm[:, i].sum() - tp)
         fn = int(cm[i, :].sum() - tp)
+        tn = total - tp - fp - fn
         prec = tp / (tp + fp) if (tp + fp) else 0.0
         rec = tp / (tp + fn) if (tp + fn) else 0.0
+        spec = tn / (tn + fp) if (tn + fp) else 0.0
         f1 = 2 * prec * rec / (prec + rec) if (prec + rec) else 0.0
         f1_per[name] = float(f1)
+        sensitivity_per[name] = float(rec)
+        specificity_per[name] = float(spec)
+        ppv_per[name] = float(prec)
 
     f1_macro = float(np.mean(list(f1_per.values()))) if f1_per else 0.0
     return ClassificationReport(
         accuracy=float(accuracy),
         f1_macro=f1_macro,
         f1_per_class=f1_per,
+        sensitivity_per_class=sensitivity_per,
+        specificity_per_class=specificity_per,
+        ppv_per_class=ppv_per,
         confusion=cm.tolist(),
         support=support,
     )

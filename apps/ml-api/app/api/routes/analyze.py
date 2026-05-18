@@ -18,9 +18,20 @@ from app.core.metrics import (
     ANALYZE_TOTAL,
     REQUEST_LATENCY,
 )
+from app.db.models import AuditLog
 from app.schemas.analysis import AnalysisResponse
 from app.services.analysis_pipeline import run_analysis
 from app.services.usage_service import get_today_count, increment_today
+
+def _resolve_actor(auth: AnalyzeAuth) -> str:
+    """Derive a stable, non-PHI actor identifier for the audit trail."""
+    if auth.clerk_user_id:
+        return auth.clerk_user_id
+    if auth.legacy_api_key:
+        return "api-key"
+    if auth.legacy_user_id is not None:
+        return f"legacy-user:{auth.legacy_user_id}"
+    return "unknown"
 
 router = APIRouter(prefix="/api/v1", tags=["analyze"])
 
@@ -120,6 +131,26 @@ async def analyze(
             ANALYZE_GRID_CALIBRATED.labels(basis=result.measurement_basis).inc()
         for reason in (result.quality_reasons or []):
             ANALYZE_NON_REPORTABLE.labels(reason=reason).inc()
+
+        # PHI access audit trail (no image bytes / PHI content stored).
+        try:
+            client_ip = request.client.host if request.client else None
+            db.add(
+                AuditLog(
+                    request_id=rid,
+                    actor=_resolve_actor(auth),
+                    company_id=auth.company_id,
+                    action="analyze",
+                    client_ip=client_ip,
+                    result_status=result.status,
+                )
+            )
+            db.commit()
+        except Exception:
+            # Audit write must never break the response; surface via metrics.
+            db.rollback()
+            ANALYZE_TOTAL.labels(status="audit_error").inc()
+
         return result
     finally:
         REQUEST_LATENCY.observe(time.perf_counter() - t0)

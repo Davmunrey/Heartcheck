@@ -7,6 +7,7 @@ weights never ship to the production app.
 
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 from typing import Iterator
@@ -33,6 +34,10 @@ def _parse(target_dir: Path) -> Iterator[Sample]:
         raise FileNotFoundError(f"No WFDB headers found under {target_dir}")
     for hea in records:
         rec_id = hea.stem
+        # Icentia11k organizes files as p{NNNNN}/...; extract the patient ID
+        # from the parent directory name (e.g. p00001 -> icentia_00001).
+        patient_match = re.search(r'p(\d+)', str(hea.parent))
+        patient_id = f"icentia_{patient_match.group(1)}" if patient_match else None
         yield Sample(
             record_id=rec_id,
             label="arrhythmia",  # Holter from arrhythmia screening cohort
@@ -43,6 +48,7 @@ def _parse(target_dir: Path) -> Iterator[Sample]:
             sampling_rate_hz=250,
             n_leads=1,
             duration_s=1209600.0,  # up to 2 weeks
+            patient_id=patient_id,
         )
 
 

@@ -1,8 +1,9 @@
+import hmac
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
@@ -50,6 +51,17 @@ _INSECURE_JWT_DEFAULTS = {
 }
 _INSECURE_API_KEY_DEFAULTS = {"dev-key-change-me", "change-me-in-production", ""}
 
+_CORS_METHODS = ["GET", "POST", "OPTIONS"]
+_CORS_HEADERS = [
+    "Authorization",
+    "Content-Type",
+    "X-API-Key",
+    "X-Internal-Token",
+    "X-Organization-Id",
+    "X-Request-Id",
+    "Accept-Language",
+]
+
 
 def _refuse_insecure_production_defaults(settings) -> None:
     """Fail fast if production runs with placeholder secrets or open CORS.
@@ -58,7 +70,7 @@ def _refuse_insecure_production_defaults(settings) -> None:
     ``HEARTSCAN_*`` env vars baked into ``apps/ml-api/.env.example``).
     """
     env = os.getenv("HEARTSCAN_ENV", "development").lower()
-    if env != "production":
+    if env not in {"production", "staging"}:
         return
     problems: list[str] = []
     if settings.jwt_secret_key in _INSECURE_JWT_DEFAULTS or len(settings.jwt_secret_key) < 32:
@@ -71,6 +83,27 @@ def _refuse_insecure_production_defaults(settings) -> None:
         raise RuntimeError(
             "Refusing to start in production with insecure defaults: " + "; ".join(problems)
         )
+
+
+_SENSITIVE_HEADERS = {
+    "authorization",
+    "x-api-key",
+    "x-internal-token",
+    "cookie",
+}
+
+
+def _before_send(event, hint):
+    """Strip auth/PHI-bearing headers before sending events to Sentry."""
+    request = event.get("request")
+    if isinstance(request, dict):
+        headers = request.get("headers")
+        if isinstance(headers, dict):
+            for key in list(headers.keys()):
+                if key.lower() in _SENSITIVE_HEADERS:
+                    headers.pop(key, None)
+        request.pop("cookies", None)
+    return event
 
 
 @asynccontextmanager
@@ -90,6 +123,8 @@ async def lifespan(app: FastAPI):
             dsn=settings.sentry_dsn,
             traces_sample_rate=0.1,
             environment=os.getenv("HEARTSCAN_ENV", "development"),
+            send_default_pii=False,
+            before_send=_before_send,
         )
     if settings.model_path:
         p = Path(settings.model_path)
@@ -105,10 +140,14 @@ async def lifespan(app: FastAPI):
 
 def create_app() -> FastAPI:
     settings = get_settings()
+    _production = os.getenv("HEARTSCAN_ENV", "development").lower() == "production"
     app = FastAPI(
         title="HeartScan API",
         version="0.1.0",
         lifespan=lifespan,
+        docs_url=None if _production else "/docs",
+        redoc_url=None if _production else "/redoc",
+        openapi_url=None if _production else "/openapi.json",
     )
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
@@ -123,16 +162,16 @@ def create_app() -> FastAPI:
             CORSMiddleware,
             allow_origins=["*"],
             allow_credentials=False,
-            allow_methods=["*"],
-            allow_headers=["*"],
+            allow_methods=_CORS_METHODS,
+            allow_headers=_CORS_HEADERS,
         )
     else:
         app.add_middleware(
             CORSMiddleware,
             allow_origins=origins,
             allow_credentials=True,
-            allow_methods=["*"],
-            allow_headers=["*"],
+            allow_methods=_CORS_METHODS,
+            allow_headers=_CORS_HEADERS,
         )
 
     app.add_middleware(SecurityHeadersMiddleware)
@@ -178,8 +217,18 @@ def create_app() -> FastAPI:
             },
         )
 
-    @app.get("/metrics")
-    def metrics() -> Response:
+    @app.get("/metrics", include_in_schema=False)
+    def metrics(x_internal_token: str | None = Header(default=None)) -> Response:
+        # Fail-closed: never expose metrics unless a configured internal token
+        # is present and matches exactly.
+        configured = settings.ml_internal_token
+        if not configured or not x_internal_token or not hmac.compare_digest(
+            x_internal_token.encode("utf-8"), configured.encode("utf-8")
+        ):
+            raise HTTPException(
+                status_code=403,
+                detail={"error_code": "FORBIDDEN", "message": "Metrics endpoint is restricted"},
+            )
         return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
     return app

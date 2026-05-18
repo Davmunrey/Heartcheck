@@ -22,6 +22,10 @@ import numpy as np
 import torch
 import torch.nn as nn
 
+from app.core.logging import get_logger
+
+_logger = get_logger(__name__)
+
 
 def _conv_block(in_ch: int, out_ch: int) -> nn.Sequential:
     return nn.Sequential(
@@ -74,12 +78,14 @@ def load_unet(weights_path: str | Path | None) -> TinyUNet | None:
     try:
         state = torch.load(p, map_location="cpu", weights_only=True)
     except Exception:  # noqa: BLE001
+        _logger.warning("unet_ckpt_load_failed", path=str(p))
         _LOADED = None
         return None
     model = TinyUNet()
     try:
         model.load_state_dict(state if isinstance(state, dict) and "weight" not in state.keys() else state, strict=False)
     except Exception:  # noqa: BLE001
+        _logger.warning("unet_state_dict_load_failed", path=str(p))
         _LOADED = None
         return None
     model.eval()

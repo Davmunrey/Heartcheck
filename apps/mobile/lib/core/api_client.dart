@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -40,7 +41,11 @@ class HeartscanApiClient {
       ..files.add(
         http.MultipartFile.fromBytes('file', bytes, filename: filename),
       );
-    final streamed = await _http.send(req);
+    final streamed = await _http.send(req).timeout(
+          const Duration(seconds: 30),
+          onTimeout: () =>
+              throw TimeoutException('Request timed out', const Duration(seconds: 30)),
+        );
     final body = await streamed.stream.bytesToString();
     if (streamed.statusCode < 200 || streamed.statusCode >= 300) {
       throw ApiException(body, statusCode: streamed.statusCode);
@@ -56,19 +61,25 @@ class HeartscanApiClient {
     String appVersion = '0.1.0',
   }) async {
     final uri = Uri.parse('${ApiConfig.baseUrl}/api/v1/reports/pdf');
-    final res = await _http.post(
-      uri,
-      headers: {
-        ..._authHeaders(),
-        'Content-Type': 'application/json',
-        'Accept': 'application/pdf',
-      },
-      body: jsonEncode({
-        'analysis': result.toJson(),
-        'app_version': appVersion,
-        'locale': locale,
-      }),
-    );
+    final res = await _http
+        .post(
+          uri,
+          headers: {
+            ..._authHeaders(),
+            'Content-Type': 'application/json',
+            'Accept': 'application/pdf',
+          },
+          body: jsonEncode({
+            'analysis': result.toJson(),
+            'app_version': appVersion,
+            'locale': locale,
+          }),
+        )
+        .timeout(
+          const Duration(seconds: 30),
+          onTimeout: () =>
+              throw TimeoutException('Request timed out', const Duration(seconds: 30)),
+        );
     if (res.statusCode >= 200 && res.statusCode < 300) {
       return res.bodyBytes;
     }

@@ -13,6 +13,12 @@ from ml.datasets.registry import CLASS_TO_ID, Dataset, Sample
 
 _PHYSIONET_SLUG = "mitdb/1.0.0"
 
+# MIT-BIH records whose dominant rhythm is normal sinus rhythm (NSR).
+# These 8 records were selected from the 48 total as predominantly NSR by
+# Moody & Mark; the remaining 40 were specifically selected for arrhythmia
+# content and should remain labelled "arrhythmia".
+MIT_BIH_NSR_RECORDS = {100, 103, 105, 111, 112, 113, 121, 122}
+
 
 def _download(target_dir: Path) -> None:
     physionet_wget(_PHYSIONET_SLUG, target_dir)
@@ -26,16 +32,19 @@ def _parse(target_dir: Path) -> Iterator[Sample]:
         rec = rec.strip()
         if not rec:
             continue
-        # Beat-level labels live in the .atr; for record-level harmonisation
-        # to the 3 HeartScan classes, we conservatively label every record as
-        # `arrhythmia` (the database is curated for arrhythmia detection).
-        label = "arrhythmia"
+        # Derive label from record number: a small subset of MIT-BIH records
+        # are predominantly normal sinus rhythm; the rest are arrhythmia.
+        try:
+            rec_num = int(rec)
+        except ValueError:
+            rec_num = -1
+        label = "normal" if rec_num in MIT_BIH_NSR_RECORDS else "arrhythmia"
         yield Sample(
             record_id=rec,
             label=label,
             label_id=CLASS_TO_ID[label],
             source_dataset="mit_bih",
-            source_label="arrhythmia_record",
+            source_label="nsr_record" if label == "normal" else "arrhythmia_record",
             file_path=target_dir / f"{rec}.dat",
             sampling_rate_hz=360,
             n_leads=2,

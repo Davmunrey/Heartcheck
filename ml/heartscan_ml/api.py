@@ -1,4 +1,4 @@
-"""API HTTP para análisis de fotos ECG (y metadatos de servicio)."""
+"""API HTTP para analisis de fotos ECG (y metadatos de servicio)."""
 
 from __future__ import annotations
 
@@ -11,11 +11,12 @@ import torch
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
-from heartscan_ml import MODEL_FAMILY, PIPELINE_VERSION
+from heartscan_ml import PIPELINE_VERSION
 from heartscan_ml.ckpt import load_torch
 from heartscan_ml.config import TrainConfig
 from heartscan_ml.inference import analyze_photo_bytes
-from heartscan_ml.model_cnn1d import CNN1D12Lead
+
+from heartscan_ml.cnn1d import ECGResNet1D, default_model_version
 
 
 def _resolve_checkpoint_path() -> str | None:
@@ -44,16 +45,18 @@ async def lifespan(app: FastAPI):
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     cfg = TrainConfig(ptbxl_dir=os.environ.get("PTBXL_DIR", "."))
-    model = CNN1D12Lead(seq_len=cfg.crop_len, num_classes=3).to(device)
+    # ECGResNet1D: 1-channel input, matches pretrain.py and finetune_image.py
+    model = ECGResNet1D(num_classes=3, length=cfg.crop_len).to(device)
 
     ckpt_path = _resolve_checkpoint_path()
-    model_version = f"{MODEL_FAMILY}-0.1.0-untrained"
+    model_version = default_model_version()
     if ckpt_path:
         ckpt = load_torch(ckpt_path, device)
-        model.load_state_dict(ckpt["model_state"])
-        meta = ckpt.get("meta") or {}
-        model_version = f"{meta.get('model_family', MODEL_FAMILY)}-trained"
-    model.eval()
+        payload = ckpt.get("state_dict") or ckpt.get("model_state") or ckpt
+        if isinstance(payload, dict):
+            model.load_state_dict(payload, strict=False)
+        model_version = str(ckpt.get("version", model_version)).replace("-untrained", "-trained")
+    model.set_eval_mode() if hasattr(model, "set_eval_mode") else model.eval()
 
     _state["model"] = model
     _state["device"] = device
