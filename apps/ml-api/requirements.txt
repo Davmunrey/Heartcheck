@@ -21,7 +21,7 @@ passlib[bcrypt]>=1.7.4,<2
 # Pinear hasta que passlib publique 2.x o se migre a argon2/bcrypt directo.
 bcrypt>=3.2.0,<4
 PyJWT>=2.8.0,<3
-cryptography>=42.0.0,<45
+cryptography>=46.0.6,<47
 email-validator>=2.0.0,<3
 slowapi>=0.1.9,<1
 sentry-sdk[fastapi]>=1.39.0,<3

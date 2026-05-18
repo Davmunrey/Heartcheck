@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 def _test_env_and_db() -> None:
     os.environ.setdefault("HEARTSCAN_API_KEY", "test-key")
     os.environ.setdefault("HEARTSCAN_ALLOW_LEGACY_API_KEY", "true")
+    os.environ.setdefault("HEARTSCAN_AUTH_LEGACY_ENABLED", "true")
     os.environ.setdefault("HEARTSCAN_JWT_SECRET_KEY", "pytest-jwt-secret-key-minimum-32-characters-long")
     fd, path = tempfile.mkstemp(suffix=".db")
     os.close(fd)
@@ -24,7 +25,8 @@ def _test_env_and_db() -> None:
     get_engine.cache_clear()
 
     import app.db.models  # noqa: F401
-    from app.db.session import Base, get_engine as ge
+    from app.db.session import Base
+    from app.db.session import get_engine as ge
 
     Base.metadata.create_all(bind=ge())
 

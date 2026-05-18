@@ -78,7 +78,7 @@ def _safe_load(weights_path: Path) -> dict:
             raise
         logger.warning("torch_load_unsafe_fallback", path=str(weights_path))
         return torch.load(weights_path, map_location=dev)
-    except Exception:  # noqa: BLE001
+    except Exception:
         if allow_unsafe:
             logger.warning("torch_load_unsafe_fallback", path=str(weights_path))
             return torch.load(weights_path, map_location=dev)
@@ -190,9 +190,9 @@ def _tta_signals(signal: np.ndarray, n: int = 5) -> list[np.ndarray]:
     """Cheap deterministic TTA: small temporal shifts and an inversion."""
     if n <= 1:
         return [signal]
-    L = len(signal)
+    length = len(signal)
     out = [signal]
-    shifts = [-L // 32, L // 32, -L // 16, L // 16]
+    shifts = [-length // 32, length // 32, -length // 16, length // 16]
     for s in shifts[: n - 1]:
         out.append(np.roll(signal, s))
     return out

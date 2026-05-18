@@ -97,7 +97,7 @@ def _ecg_template(label: str, width: int, height: int, rng: np.random.Generator)
 def _draw_trace(img: np.ndarray, y_signal: np.ndarray) -> None:
     h, w = img.shape
     for xi in range(w):
-        yv = int(round(y_signal[xi]))
+        yv = round(y_signal[xi])
         if 0 <= yv < h:
             img[max(0, yv - 1) : min(h, yv + 2), xi] = 30
 
@@ -124,7 +124,7 @@ def _apply_blur_noise(img: np.ndarray, blur: float, noise: float) -> np.ndarray:
         try:
             import cv2
 
-            k = max(1, int(round(blur * 2)) * 2 + 1)
+            k = max(1, round(blur * 2) * 2 + 1)
             out = cv2.GaussianBlur(out, (k, k), blur)
         except ImportError:
             pass

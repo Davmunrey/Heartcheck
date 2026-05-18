@@ -13,8 +13,8 @@ from slowapi.errors import RateLimitExceeded
 
 from app.api.routes import analyze, auth, education, feedback, health, meta, reports
 from app.core.config import get_settings
-from app.core.logging import configure_logging, get_logger
 from app.core.limiter import limiter
+from app.core.logging import configure_logging, get_logger
 from app.middleware.request_id import RequestIdMiddleware
 from app.middleware.security_headers import SecurityHeadersMiddleware
 from app.services import inference as inf

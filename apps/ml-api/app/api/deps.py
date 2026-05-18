@@ -69,7 +69,7 @@ async def get_current_user(
 
 
 class AnalyzeAuth:
-    __slots__ = ("company_id", "clerk_user_id", "legacy_api_key", "legacy_user_id")
+    __slots__ = ("clerk_user_id", "company_id", "legacy_api_key", "legacy_user_id")
 
     def __init__(
         self,

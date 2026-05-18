@@ -9,7 +9,7 @@ when the model can't load.
 Design constraints
 ------------------
 
-- ~50k–200k params (CPU-friendly).
+- ~50k-200k params (CPU-friendly).
 - Input: ``(B, 1, H, W)`` grayscale, normalised to ``[0, 1]``.
 - Output: ``(B, 1, H, W)`` per-pixel logits ("trace" vs "background").
 """
@@ -83,7 +83,7 @@ def load_unet(weights_path: str | Path | None) -> TinyUNet | None:
         return None
     model = TinyUNet()
     try:
-        model.load_state_dict(state if isinstance(state, dict) and "weight" not in state.keys() else state, strict=False)
+        model.load_state_dict(state, strict=False)
     except Exception:  # noqa: BLE001
         _logger.warning("unet_state_dict_load_failed", path=str(p))
         _LOADED = None

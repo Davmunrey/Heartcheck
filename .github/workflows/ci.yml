@@ -25,6 +25,7 @@ jobs:
         run: |
           uv pip install --system -r requirements.lock
           uv pip install --system -e .
+          uv pip install --system -e ../../ml --no-deps
       - name: pip-audit
         run: |
           uv pip install --system pip-audit
