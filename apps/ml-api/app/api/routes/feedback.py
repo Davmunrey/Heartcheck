@@ -10,9 +10,9 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db
-from app.core.limiter import limiter
 from app.core.clerk import verify_clerk_bearer
 from app.core.config import get_settings
+from app.core.limiter import limiter
 from app.core.security import decode_token
 from app.db.models import Feedback
 from app.schemas.analysis import AnalysisResponse

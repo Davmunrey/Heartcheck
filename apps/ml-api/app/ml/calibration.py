@@ -37,7 +37,7 @@ class TemperatureScaler:
             self.temperature = 1.0
             return 1.0
         best = (1.0, _nll(self.apply(logits), labels))
-        # Wider range (0.1–10.0) prevents clipping extreme miscalibration cases
+        # Wider range (0.1-10.0) prevents clipping extreme miscalibration cases
         # such as a highly overconfident or under-confident freshly trained model.
         for t in np.geomspace(0.1, 10.0, num=40):
             self.temperature = float(t)

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import jwt
 from jwt.exceptions import PyJWTError
@@ -21,7 +21,7 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 def create_access_token(subject: str, user_id: int, email: str, settings: Settings | None = None) -> str:
     s = settings or get_settings()
-    expire = datetime.now(timezone.utc) + timedelta(minutes=s.jwt_expire_minutes)
+    expire = datetime.now(UTC) + timedelta(minutes=s.jwt_expire_minutes)
     payload = {"sub": subject, "uid": user_id, "email": email, "exp": expire}
     return jwt.encode(payload, s.jwt_secret_key, algorithm=s.jwt_algorithm)
 

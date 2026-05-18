@@ -25,8 +25,13 @@ from pathlib import Path
 
 from app.core.config import Settings
 from app.schemas.analysis import AnalysisResponse
-
-from app.services import grid_suppression, photo_geometry, preprocess, quality_gate, trace_extract
+from app.services import (
+    grid_suppression,
+    photo_geometry,
+    preprocess,
+    quality_gate,
+    trace_extract,
+)
 from app.services import inference as inf
 from app.services.heuristic_classify import heuristic_label
 from app.services.rr_intervals import analyze_rr
@@ -65,12 +70,30 @@ def _localize_reasons(lang: str, reasons: dict[str, str]) -> dict[str, str]:
     """Translate stable reason codes to user-facing copy."""
     es = lang.startswith("es")
     table = {
-        quality_gate.REASON_BLUR: ("Foto borrosa: repítela con la cámara enfocada.", reasons.get(quality_gate.REASON_BLUR, "")),
-        quality_gate.REASON_GLARE: ("Reflejos fuertes: evita brillos sobre el papel.", reasons.get(quality_gate.REASON_GLARE, "")),
-        quality_gate.REASON_TILT: ("Foto inclinada: alinea la tira en horizontal.", reasons.get(quality_gate.REASON_TILT, "")),
-        quality_gate.REASON_LOW_CONTRAST: ("Contraste bajo: mejora la iluminación.", reasons.get(quality_gate.REASON_LOW_CONTRAST, "")),
-        quality_gate.REASON_NO_GRID: ("No se detecta cuadrícula: el BPM es orientativo.", reasons.get(quality_gate.REASON_NO_GRID, "")),
-        quality_gate.REASON_NO_SIGNAL: ("No se pudo extraer el trazo de la imagen.", reasons.get(quality_gate.REASON_NO_SIGNAL, "")),
+        quality_gate.REASON_BLUR: (
+            "Foto borrosa: repítela con la cámara enfocada.",
+            reasons.get(quality_gate.REASON_BLUR, ""),
+        ),
+        quality_gate.REASON_GLARE: (
+            "Reflejos fuertes: evita brillos sobre el papel.",
+            reasons.get(quality_gate.REASON_GLARE, ""),
+        ),
+        quality_gate.REASON_TILT: (
+            "Foto inclinada: alinea la tira en horizontal.",
+            reasons.get(quality_gate.REASON_TILT, ""),
+        ),
+        quality_gate.REASON_LOW_CONTRAST: (
+            "Contraste bajo: mejora la iluminación.",
+            reasons.get(quality_gate.REASON_LOW_CONTRAST, ""),
+        ),
+        quality_gate.REASON_NO_GRID: (
+            "No se detecta cuadrícula: el BPM es orientativo.",
+            reasons.get(quality_gate.REASON_NO_GRID, ""),
+        ),
+        quality_gate.REASON_NO_SIGNAL: (
+            "No se pudo extraer el trazo de la imagen.",
+            reasons.get(quality_gate.REASON_NO_SIGNAL, ""),
+        ),
     }
     return {code: (table[code][0] if es else table[code][1]) for code in reasons if code in table}
 

@@ -23,6 +23,7 @@ from app.schemas.analysis import AnalysisResponse
 from app.services.analysis_pipeline import run_analysis
 from app.services.usage_service import get_today_count, increment_today
 
+
 def _resolve_actor(auth: AnalyzeAuth) -> str:
     """Derive a stable, non-PHI actor identifier for the audit trail."""
     if auth.clerk_user_id:
@@ -146,7 +147,7 @@ async def analyze(
                 )
             )
             db.commit()
-        except Exception:
+        except Exception:  # noqa: BLE001
             # Audit write must never break the response; surface via metrics.
             db.rollback()
             ANALYZE_TOTAL.labels(status="audit_error").inc()

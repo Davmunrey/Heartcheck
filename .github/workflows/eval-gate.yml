@@ -27,6 +27,7 @@ jobs:
         run: |
           python -m venv apps/ml-api/.venv
           apps/ml-api/.venv/bin/pip install -r apps/ml-api/requirements.txt
+          apps/ml-api/.venv/bin/pip install -e ml --no-deps
       - name: Generate synthetic dataset
         run: make eval-synth
       - name: Run eval (no gate when no baseline)

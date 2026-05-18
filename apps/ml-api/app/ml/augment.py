@@ -30,7 +30,13 @@ def apply_jitter(signal: np.ndarray, std: float, rng: np.random.Generator) -> np
     return signal + rng.normal(0.0, std, size=signal.shape)
 
 
-def apply_drift(signal: np.ndarray, amp: float, period_min: int, period_max: int, rng: np.random.Generator) -> np.ndarray:
+def apply_drift(
+    signal: np.ndarray,
+    amp: float,
+    period_min: int,
+    period_max: int,
+    rng: np.random.Generator,
+) -> np.ndarray:
     period = float(rng.integers(period_min, period_max + 1))
     phase = float(rng.uniform(0, 2 * np.pi))
     x = np.arange(len(signal), dtype=np.float64)
@@ -39,18 +45,18 @@ def apply_drift(signal: np.ndarray, amp: float, period_min: int, period_max: int
 
 def apply_time_warp(signal: np.ndarray, max_frac: float, rng: np.random.Generator) -> np.ndarray:
     """Locally stretch/squeeze the signal by interpolation."""
-    L = len(signal)
+    length = len(signal)
     factor = 1.0 + float(rng.uniform(-max_frac, max_frac))
-    new_L = max(2, int(round(L * factor)))
-    src = np.linspace(0, L - 1, new_L)
-    stretched = np.interp(src, np.arange(L), signal)
-    # crop or pad back to L
-    if new_L >= L:
-        start = (new_L - L) // 2
-        return stretched[start : start + L]
-    out = np.zeros(L, dtype=signal.dtype)
-    start = (L - new_L) // 2
-    out[start : start + new_L] = stretched
+    new_length = max(2, round(length * factor))
+    src = np.linspace(0, length - 1, new_length)
+    stretched = np.interp(src, np.arange(length), signal)
+    # crop or pad back to original length
+    if new_length >= length:
+        start = (new_length - length) // 2
+        return stretched[start : start + length]
+    out = np.zeros(length, dtype=signal.dtype)
+    start = (length - new_length) // 2
+    out[start : start + new_length] = stretched
     return out
 
 

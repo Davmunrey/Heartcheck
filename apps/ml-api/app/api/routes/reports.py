@@ -16,7 +16,10 @@ router = APIRouter(prefix="/api/v1", tags=["reports"])
     "/reports/pdf",
     response_class=StreamingResponse,
     summary="Generate PDF report",
-    description="Builds a structured PDF from a prior analysis payload. Requires Bearer JWT or legacy API key when enabled.",
+    description=(
+        "Builds a structured PDF from a prior analysis payload. "
+        "Requires Bearer JWT or legacy API key when enabled."
+    ),
 )
 def build_pdf(
     body: ReportPdfRequest,

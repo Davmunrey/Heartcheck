@@ -14,14 +14,14 @@ from __future__ import annotations
 import json
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 
 from app.core.config import get_settings
-from app.eval import metrics as M
+from app.eval import metrics
 from app.eval.synth import CLASS_NAMES, CLASS_TO_ID
 from app.services.analysis_pipeline import run_analysis
 
@@ -133,17 +133,17 @@ def run_eval(cfg: EvalConfig) -> EvalReport:
     yp = np.array(y_pred)
     probs = np.stack(probs_list) if probs_list else np.zeros((0, len(CLASS_NAMES)))
 
-    cls = M.classification_report(yt, yp, list(CLASS_NAMES))
-    ece = M.expected_calibration_error(yt, probs) if len(yt) else 0.0
-    brier = M.brier_score_multiclass(yt, probs, len(CLASS_NAMES)) if len(yt) else 0.0
-    auroc = M.confidence_correctness_auroc(yt, probs) if len(yt) else 0.5
+    cls = metrics.classification_report(yt, yp, list(CLASS_NAMES))
+    ece = metrics.expected_calibration_error(yt, probs) if len(yt) else 0.0
+    brier = metrics.brier_score_multiclass(yt, probs, len(CLASS_NAMES)) if len(yt) else 0.0
+    auroc = metrics.confidence_correctness_auroc(yt, probs) if len(yt) else 0.5
 
     # Gating: arrhythmia sensitivity is the key safety metric for promotion.
     arrhythmia_sens = cls.sensitivity_per_class.get("arrhythmia", 0.0)
 
     report = EvalReport(
         label=cfg.label,
-        timestamp=datetime.now(timezone.utc).isoformat(),
+        timestamp=datetime.now(UTC).isoformat(),
         n_samples=len(items),
         classification={
             "accuracy": cls.accuracy,
@@ -161,10 +161,10 @@ def run_eval(cfg: EvalConfig) -> EvalReport:
             "brier": brier,
             "confidence_correctness_auroc": auroc,
         },
-        abstention_rate=M.abstention_rate(abstain_flags),
+        abstention_rate=metrics.abstention_rate(abstain_flags),
         latency_ms={
-            "p50": M.percentile(latencies_ms, 50),
-            "p95": M.percentile(latencies_ms, 95),
+            "p50": metrics.percentile(latencies_ms, 50),
+            "p95": metrics.percentile(latencies_ms, 95),
             "mean": float(np.mean(latencies_ms)) if latencies_ms else 0.0,
         },
         arrhythmia_sensitivity=arrhythmia_sens,
@@ -175,7 +175,7 @@ def run_eval(cfg: EvalConfig) -> EvalReport:
 
 def write_report(report: EvalReport, out_dir: Path) -> tuple[Path, Path]:
     out_dir.mkdir(parents=True, exist_ok=True)
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     json_path = out_dir / f"{stamp}_{report.label}.json"
     html_path = out_dir / f"{stamp}_{report.label}.html"
     payload = {
@@ -205,6 +205,16 @@ def _render_html(payload: dict[str, Any]) -> str:
         for i, row in enumerate(cls["confusion"])
     )
     confusion_header = "".join(f"<th>{n}</th>" for n in cls["class_names"])
+    per_class_rows = "".join(
+        (
+            f"<tr><th>{n}</th><td>{cls['f1_per_class'][n]:.4f}</td>"
+            f"<td>{cls['sensitivity_per_class'][n]:.4f}</td>"
+            f"<td>{cls['specificity_per_class'][n]:.4f}</td>"
+            f"<td>{cls['ppv_per_class'][n]:.4f}</td>"
+            f"<td>{cls['support'][i]}</td></tr>"
+        )
+        for i, n in enumerate(cls["class_names"])
+    )
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>HeartScan eval — {payload['label']}</title>
 <style>
@@ -229,7 +239,7 @@ th:first-child{{text-align:left;background:#f7f7f7}}
 </dl>
 <h2>Per-class metrics</h2>
 <table><tr><th>Class</th><th>F1</th><th>Sensitivity</th><th>Specificity</th><th>PPV</th><th>Support</th></tr>
-{''.join(f"<tr><th>{n}</th><td>{cls['f1_per_class'][n]:.4f}</td><td>{cls['sensitivity_per_class'][n]:.4f}</td><td>{cls['specificity_per_class'][n]:.4f}</td><td>{cls['ppv_per_class'][n]:.4f}</td><td>{cls['support'][i]}</td></tr>" for i, n in enumerate(cls['class_names']))}
+    {per_class_rows}
 </table>
 <h2>Confusion matrix (rows=true, cols=pred)</h2>
 <table><tr><th></th>{confusion_header}</tr>{confusion_rows}</table>
