@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint app __tests__ middleware.ts next.config.ts",
+    "test": "node --test --experimental-strip-types __tests__/actions.test.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.2.3",

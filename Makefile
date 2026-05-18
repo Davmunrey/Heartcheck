@@ -1,4 +1,4 @@
-.PHONY: install test eval eval-synth eval-gate lint help
+.PHONY: install check-venv test eval eval-synth eval-gate lint help
 
 ML := apps/ml-api
 ROOT := $(abspath .)
@@ -15,13 +15,16 @@ help:  ## Show available targets
 install:  ## Install backend deps in venv
 	./scripts/install_backend.sh
 
-test:  ## Run pytest
+check-venv:  ## Verify backend venv exists
+	@test -x "$(PY)" || (echo "Missing $(PY). Run ./scripts/install_backend.sh first." && exit 2)
+
+test: check-venv ## Run pytest
 	cd $(ML) && $(PY) -m pytest -q
 
-eval-synth:  ## Generate the deterministic synthetic dataset
-	cd $(ML) && $(PY) -m app.eval.synth --out ../$(SYNTH_DIR) --n 20
+eval-synth: check-venv ## Generate the deterministic synthetic dataset
+	cd $(ML) && $(PY) -m app.eval.synth --out ../$(SYNTH_DIR) --n 200
 
-eval:  ## Run evaluation harness against $(SYNTH_DIR) and emit a report
+eval: check-venv ## Run evaluation harness against $(SYNTH_DIR) and emit a report
 	mkdir -p $(EVAL_OUT)
 	cd $(ML) && $(PY) -m app.eval.cli \
 		--manifest ../$(SYNTH_DIR)/manifest.jsonl \
@@ -29,7 +32,7 @@ eval:  ## Run evaluation harness against $(SYNTH_DIR) and emit a report
 		--label $(EVAL_LABEL) \
 		$(if $(BASELINE),--baseline ../$(BASELINE))
 
-eval-gate:  ## Run eval with regression gate (requires BASELINE=path/to/report.json)
+eval-gate: check-venv ## Run eval with regression gate (requires BASELINE=path/to/report.json)
 	@test -n "$(BASELINE)" || (echo "set BASELINE=path/to/report.json" && exit 2)
 	mkdir -p $(EVAL_OUT)
 	cd $(ML) && $(PY) -m app.eval.cli \
@@ -39,5 +42,5 @@ eval-gate:  ## Run eval with regression gate (requires BASELINE=path/to/report.j
 		--baseline ../$(BASELINE) \
 		--gate
 
-lint:  ## Run ruff
+lint: check-venv ## Run ruff
 	cd $(ML) && $(PY) -m ruff check app tests
