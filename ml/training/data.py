@@ -84,7 +84,10 @@ class ParquetECGDataset(Dataset):
         # WFDB / .mat / .dat / .h5 dispatch — defensive: try wfdb, fall back
         # to numpy.load, fall back to a zero stub so missing files don't kill
         # a 1M-row epoch.
-        if path.suffix in {".dat", ".hea"}:
+        is_wfdb_record = path.suffix in {".dat", ".hea"} or (
+            not path.suffix and (path.with_suffix(".hea").is_file() or path.with_suffix(".dat").is_file())
+        )
+        if is_wfdb_record:
             try:
                 import wfdb
 
