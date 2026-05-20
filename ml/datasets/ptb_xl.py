@@ -18,6 +18,19 @@ from ml.datasets.registry import CLASS_TO_ID, Dataset, Sample
 _PHYSIONET_SLUG = "ptb-xl/1.0.3"
 
 
+def _load_scp_statements(target_dir: Path) -> dict[str, dict[str, str]]:
+    path = target_dir / "scp_statements.csv"
+    if not path.is_file():
+        return {}
+    out: dict[str, dict[str, str]] = {}
+    with path.open("r", encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            code = str(row.get("") or "").strip()
+            if code:
+                out[code] = row
+    return out
+
+
 def _download(target_dir: Path) -> None:
     physionet_wget(_PHYSIONET_SLUG, target_dir)
 
@@ -29,11 +42,29 @@ def _parse(target_dir: Path) -> Iterator[Sample]:
             f"PTB-XL CSV not found at {csv_path}; run "
             f"`python -m ml.datasets.cli download ptb_xl` first."
         )
+    scp_statements = _load_scp_statements(target_dir)
     with csv_path.open("r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
             scp = ast.literal_eval(row["scp_codes"]) if row.get("scp_codes") else {}
             label = map_ptbxl_codes(scp.keys())
+            scp_codes = sorted(str(code) for code in scp)
+            diagnostic_classes = sorted(
+                {
+                    str(scp_statements.get(code, {}).get("diagnostic_class") or "").strip()
+                    for code in scp_codes
+                    if str(scp_statements.get(code, {}).get("diagnostic") or "").strip() == "1.0"
+                }
+                - {""}
+            )
+            diagnostic_subclasses = sorted(
+                {
+                    str(scp_statements.get(code, {}).get("diagnostic_subclass") or "").strip()
+                    for code in scp_codes
+                    if str(scp_statements.get(code, {}).get("diagnostic") or "").strip() == "1.0"
+                }
+                - {""}
+            )
             rec_path = target_dir / row["filename_lr"]  # 100 Hz
             yield Sample(
                 record_id=str(row["ecg_id"]),
@@ -51,6 +82,10 @@ def _parse(target_dir: Path) -> Iterator[Sample]:
                     "sex": row.get("sex"),
                     "strat_fold": row.get("strat_fold"),
                     "report": row.get("report", "")[:200],
+                    "scp_codes": scp,
+                    "scp_code_list": scp_codes,
+                    "diagnostic_classes": diagnostic_classes,
+                    "diagnostic_subclasses": diagnostic_subclasses,
                 },
             )
 

@@ -27,6 +27,7 @@ import time
 from collections import Counter
 from dataclasses import asdict, dataclass
 from pathlib import Path
+from typing import Literal
 
 import numpy as np
 import torch
@@ -34,6 +35,7 @@ from torch.utils.data import DataLoader, WeightedRandomSampler
 
 from heartscan_ml.cnn1d import ECGResNet1D, default_model_version
 from ml.training.data import CLASS_NAMES, ParquetECGDataset
+from ml.training.utils import macro_f1
 
 
 @dataclass
@@ -49,6 +51,9 @@ class TrainConfig:
     seed: int = 1234
     num_workers: int = 2
     sample_balanced: bool = True
+    lead: Literal["ii", "first", "mean"] = "ii"
+    class_weight_mode: Literal["none", "inverse", "inverse_sqrt"] = "inverse_sqrt"
+    label_smoothing: float = 0.03
 
 
 def _balanced_sampler(ds: ParquetECGDataset) -> WeightedRandomSampler:
@@ -57,16 +62,51 @@ def _balanced_sampler(ds: ParquetECGDataset) -> WeightedRandomSampler:
     return WeightedRandomSampler(weights, num_samples=len(weights), replacement=True)
 
 
-def _macro_f1(true: np.ndarray, pred: np.ndarray, n_classes: int) -> float:
-    f1s = []
-    for c in range(n_classes):
-        tp = int(((pred == c) & (true == c)).sum())
-        fp = int(((pred == c) & (true != c)).sum())
-        fn = int(((pred != c) & (true == c)).sum())
-        prec = tp / (tp + fp) if (tp + fp) else 0.0
-        rec = tp / (tp + fn) if (tp + fn) else 0.0
-        f1s.append(2 * prec * rec / (prec + rec) if (prec + rec) else 0.0)
-    return float(np.mean(f1s))
+def _class_weights(ds: ParquetECGDataset, mode: str, device: torch.device) -> torch.Tensor | None:
+    if mode == "none":
+        return None
+    counts = Counter(int(r.label_id) for r in ds.rows)
+    total = sum(counts.values())
+    weights = []
+    for c in range(len(CLASS_NAMES)):
+        count = max(1, counts.get(c, 0))
+        weight = total / count
+        if mode == "inverse_sqrt":
+            weight = weight ** 0.5
+        weights.append(weight)
+    arr = np.asarray(weights, dtype=np.float32)
+    arr = arr / arr.mean()
+    return torch.tensor(arr, dtype=torch.float32, device=device)
+
+
+def _classification_report(true: np.ndarray, pred: np.ndarray) -> dict:
+    n_classes = len(CLASS_NAMES)
+    confusion = np.zeros((n_classes, n_classes), dtype=np.int64)
+    for y, p in zip(true.astype(int), pred.astype(int), strict=False):
+        if 0 <= y < n_classes and 0 <= p < n_classes:
+            confusion[y, p] += 1
+    per_class = {}
+    for idx, name in enumerate(CLASS_NAMES):
+        tp = int(confusion[idx, idx])
+        fp = int(confusion[:, idx].sum() - tp)
+        fn = int(confusion[idx, :].sum() - tp)
+        support = int(confusion[idx, :].sum())
+        precision = tp / (tp + fp) if (tp + fp) else 0.0
+        recall = tp / (tp + fn) if (tp + fn) else 0.0
+        f1 = 2 * precision * recall / (precision + recall) if (precision + recall) else 0.0
+        per_class[name] = {
+            "precision": precision,
+            "recall": recall,
+            "f1": f1,
+            "support": support,
+        }
+    return {
+        "accuracy": float((pred == true).mean()) if len(true) else 0.0,
+        "macro_f1": macro_f1(true, pred, n_classes) if len(true) else 0.0,
+        "confusion_matrix": confusion.tolist(),
+        "classes": list(CLASS_NAMES),
+        "per_class": per_class,
+    }
 
 
 def run(cfg: TrainConfig) -> dict:
@@ -76,8 +116,20 @@ def run(cfg: TrainConfig) -> dict:
     out_dir = Path(cfg.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    train_ds = ParquetECGDataset(cfg.manifest, split="train", target_len=cfg.target_len, target_fs=cfg.target_fs)
-    val_ds = ParquetECGDataset(cfg.manifest, split="val", target_len=cfg.target_len, target_fs=cfg.target_fs)
+    train_ds = ParquetECGDataset(
+        cfg.manifest,
+        split="train",
+        target_len=cfg.target_len,
+        target_fs=cfg.target_fs,
+        lead=cfg.lead,
+    )
+    val_ds = ParquetECGDataset(
+        cfg.manifest,
+        split="val",
+        target_len=cfg.target_len,
+        target_fs=cfg.target_fs,
+        lead=cfg.lead,
+    )
     if not train_ds.rows:
         raise RuntimeError("Train split is empty; check the manifest.")
 
@@ -95,7 +147,10 @@ def run(cfg: TrainConfig) -> dict:
     model = ECGResNet1D(num_classes=len(CLASS_NAMES), length=cfg.target_len).to(device)
     optim = torch.optim.AdamW(model.parameters(), lr=cfg.lr, weight_decay=cfg.weight_decay)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optim, T_max=cfg.epochs)
-    loss_fn = torch.nn.CrossEntropyLoss()
+    loss_fn = torch.nn.CrossEntropyLoss(
+        weight=_class_weights(train_ds, cfg.class_weight_mode, device),
+        label_smoothing=cfg.label_smoothing,
+    )
 
     log_path = out_dir / "training_log.jsonl"
     log_f = log_path.open("w", encoding="utf-8")
@@ -128,7 +183,7 @@ def run(cfg: TrainConfig) -> dict:
         val_y = np.concatenate(all_y) if all_y else np.zeros(0, dtype=np.int64)
         if len(val_y):
             preds = val_logits.argmax(axis=1)
-            f1 = _macro_f1(val_y, preds, len(CLASS_NAMES))
+            f1 = macro_f1(val_y, preds, len(CLASS_NAMES))
             acc = float((preds == val_y).mean())
         else:
             f1, acc = 0.0, 0.0
@@ -168,6 +223,8 @@ def run(cfg: TrainConfig) -> dict:
         "device": str(device),
     }
     if val_logits_buf is not None:
+        best_preds = val_logits_buf.argmax(axis=1)
+        summary["validation"] = _classification_report(val_labels_buf, best_preds)
         # 3-way split: avoid calibration leakage by splitting the validation
         # logits into two halves.
         #   cal_logits.npz  — used by calibrate.py to fit temperature T*
@@ -204,6 +261,9 @@ def _parse() -> TrainConfig:
     p.add_argument("--batch-size", type=int, default=64)
     p.add_argument("--lr", type=float, default=1e-3)
     p.add_argument("--workers", type=int, default=2)
+    p.add_argument("--lead", choices=["ii", "first", "mean"], default="ii")
+    p.add_argument("--class-weight-mode", choices=["none", "inverse", "inverse_sqrt"], default="inverse_sqrt")
+    p.add_argument("--label-smoothing", type=float, default=0.03)
     args = p.parse_args()
     return TrainConfig(
         manifest=args.manifest,
@@ -212,6 +272,9 @@ def _parse() -> TrainConfig:
         batch_size=args.batch_size,
         lr=args.lr,
         num_workers=args.workers,
+        lead=args.lead,
+        class_weight_mode=args.class_weight_mode,
+        label_smoothing=args.label_smoothing,
     )
 
 

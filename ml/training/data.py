@@ -36,6 +36,7 @@ CLASS_NAMES = ("normal", "arrhythmia", "noise")
 class ManifestRow:
     file_path: str
     label_id: int
+    label: str
     sampling_rate_hz: int
     n_leads: int
     duration_s: float
@@ -65,6 +66,7 @@ class ParquetECGDataset(Dataset):
             ManifestRow(
                 file_path=r["file_path"],
                 label_id=int(r["label_id"]),
+                label=str(r.get("label") or CLASS_NAMES[int(r["label_id"])]),
                 sampling_rate_hz=int(r.get("sampling_rate_hz") or 500),
                 n_leads=int(r.get("n_leads") or 1),
                 duration_s=float(r.get("duration_s") or 10.0),
