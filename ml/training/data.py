@@ -30,6 +30,7 @@ from torch.utils.data import Dataset
 _logger = logging.getLogger(__name__)
 
 CLASS_NAMES = ("normal", "arrhythmia", "noise")
+PTBXL_DIAGNOSTIC_CLASSES = ("NORM", "MI", "STTC", "CD", "HYP")
 
 
 @dataclass
@@ -132,6 +133,15 @@ class ParquetECGDataset(Dataset):
             return raw[:, 0]
         return raw.mean(axis=1)
 
+    def _to_channel_first(self, raw: np.ndarray) -> np.ndarray:
+        if raw.ndim == 1:
+            raw = raw[:, np.newaxis]
+        if raw.shape[1] >= 12:
+            raw = raw[:, :12]
+        elif raw.shape[1] < 12:
+            raw = np.pad(raw, ((0, 0), (0, 12 - raw.shape[1])), mode="constant")
+        return raw.T
+
     def _resample(self, signal: np.ndarray, fs_in: int) -> np.ndarray:
         if fs_in == self.target_fs:
             return signal
@@ -164,3 +174,65 @@ class ParquetECGDataset(Dataset):
             torch.from_numpy(sig.astype(np.float32)).unsqueeze(0),  # (1, L)
             torch.tensor(row.label_id, dtype=torch.long),
         )
+
+
+class PTBXLDiagnosticDataset(ParquetECGDataset):
+    """Multi-label PTB-XL diagnostic superclass dataset.
+
+    Targets follow PTB-XL diagnostic superclasses: NORM, MI, STTC, CD, HYP.
+    Output tensors are 12-lead channel-first arrays: ``(12, target_len)``.
+    """
+
+    classes = PTBXL_DIAGNOSTIC_CLASSES
+
+    def __init__(
+        self,
+        manifest_path: str | Path,
+        split: str | None = None,
+        target_len: int = 1024,
+        target_fs: int = 100,
+    ) -> None:
+        try:
+            import pyarrow.parquet as pq
+        except ImportError as exc:
+            raise RuntimeError("pyarrow required: pip install pyarrow") from exc
+        table = pq.read_table(manifest_path)
+        rows = table.to_pylist()
+        if split:
+            rows = [r for r in rows if r.get("split") == split]
+        self.rows = []
+        self.targets: list[np.ndarray] = []
+        for r in rows:
+            metadata = r.get("metadata") or {}
+            diagnostic_classes = metadata.get("diagnostic_classes") or []
+            target = np.asarray([1.0 if c in diagnostic_classes else 0.0 for c in self.classes], dtype=np.float32)
+            if not target.any():
+                continue
+            self.rows.append(
+                ManifestRow(
+                    file_path=r["file_path"],
+                    label_id=int(r["label_id"]),
+                    label=str(r.get("label") or CLASS_NAMES[int(r["label_id"])]),
+                    sampling_rate_hz=int(r.get("sampling_rate_hz") or 500),
+                    n_leads=int(r.get("n_leads") or 12),
+                    duration_s=float(r.get("duration_s") or 10.0),
+                    source_dataset=str(r.get("source_dataset") or "unknown"),
+                )
+            )
+            self.targets.append(target)
+        self.target_len = target_len
+        self.target_fs = target_fs
+        self.lead = "ii"
+
+    def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
+        row = self.rows[idx]
+        raw = self._load_raw(row)
+        signal = self._to_channel_first(raw)
+        resampled = []
+        for lead in signal:
+            x = self._resample(lead, fs_in=row.sampling_rate_hz)
+            x = self._crop_or_pad(x)
+            x = x - x.mean()
+            x = x / (x.std() + 1e-6)
+            resampled.append(x.astype(np.float32))
+        return torch.from_numpy(np.stack(resampled)), torch.from_numpy(self.targets[idx])

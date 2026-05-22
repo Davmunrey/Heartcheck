@@ -7,7 +7,7 @@ Two architectures are exported:
   baseline once weights are available; still tiny (~150k params) so CPU
   inference stays under SLO.
 
-Both expose the same forward signature ``(B, 1, L) -> (B, num_classes)``.
+Both expose the same forward signature ``(B, C, L) -> (B, num_classes)``.
 """
 
 from __future__ import annotations
@@ -19,11 +19,12 @@ import torch.nn as nn
 class ECGCNN1D(nn.Module):
     """Small convolutional classifier — legacy baseline."""
 
-    def __init__(self, num_classes: int = 3, length: int = 1024) -> None:
+    def __init__(self, num_classes: int = 3, length: int = 1024, in_channels: int = 1) -> None:
         super().__init__()
         self.length = length
+        self.in_channels = in_channels
         self.features = nn.Sequential(
-            nn.Conv1d(1, 32, kernel_size=7, padding=3),
+            nn.Conv1d(in_channels, 32, kernel_size=7, padding=3),
             nn.BatchNorm1d(32),
             nn.ReLU(inplace=True),
             nn.MaxPool1d(2),
@@ -70,11 +71,12 @@ class ECGResNet1D(nn.Module):
     - returns logits — calibration (temperature scaling) is applied outside.
     """
 
-    def __init__(self, num_classes: int = 3, length: int = 1024) -> None:
+    def __init__(self, num_classes: int = 3, length: int = 1024, in_channels: int = 1) -> None:
         super().__init__()
         self.length = length
+        self.in_channels = in_channels
         self.stem = nn.Sequential(
-            nn.Conv1d(1, 32, kernel_size=7, padding=3),
+            nn.Conv1d(in_channels, 32, kernel_size=7, padding=3),
             nn.BatchNorm1d(32),
             nn.ReLU(inplace=True),
             nn.MaxPool1d(2),
@@ -108,9 +110,9 @@ class ECGResNet1D(nn.Module):
         return self.head(x)
 
 
-def build_default_model(num_classes: int = 3, length: int = 1024) -> nn.Module:
+def build_default_model(num_classes: int = 3, length: int = 1024, in_channels: int = 1) -> nn.Module:
     """Construct the default classifier; switch architectures here in the future."""
-    return ECGResNet1D(num_classes=num_classes, length=length)
+    return ECGResNet1D(num_classes=num_classes, length=length, in_channels=in_channels)
 
 
 def default_model_version() -> str:

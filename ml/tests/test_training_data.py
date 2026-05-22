@@ -9,8 +9,9 @@ import pytest
 pa = pytest.importorskip("pyarrow")
 pq = pytest.importorskip("pyarrow.parquet")
 
-from ml.training.data import ParquetECGDataset
+from ml.training.data import PTBXLDiagnosticDataset, ParquetECGDataset
 from ml.training.pretrain import _classification_report, _class_weights
+from ml.training.train_multilabel import _multilabel_report
 
 
 def test_suffixless_wfdb_record_loads(tmp_path, monkeypatch):
@@ -77,3 +78,50 @@ def test_training_report_and_weights_include_all_classes(tmp_path):
     assert weights[1] > weights[0]
     assert report["confusion_matrix"] == [[1, 0, 0], [1, 1, 0], [0, 0, 0]]
     assert report["per_class"]["arrhythmia"]["support"] == 2
+
+
+def test_ptbxl_diagnostic_dataset_returns_12_leads(tmp_path, monkeypatch):
+    record = tmp_path / "records100" / "00000" / "00001_lr"
+    record.parent.mkdir(parents=True)
+    record.with_suffix(".hea").write_text("stub\n", encoding="utf-8")
+    record.with_suffix(".dat").write_bytes(b"stub")
+    manifest = tmp_path / "manifest.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "file_path": str(record),
+                    "label": "arrhythmia",
+                    "label_id": 1,
+                    "sampling_rate_hz": 100,
+                    "n_leads": 12,
+                    "duration_s": 10.0,
+                    "source_dataset": "ptb_xl",
+                    "split": "train",
+                    "metadata": {
+                        "diagnostic_classes": ["MI", "CD"],
+                        "diagnostic_subclasses": ["AMI", "RBBB"],
+                    },
+                }
+            ]
+        ),
+        manifest,
+    )
+    raw = np.tile(np.linspace(-1.0, 1.0, num=1000, dtype=np.float32)[:, None], (1, 12))
+    fake_wfdb = SimpleNamespace(rdrecord=lambda _: SimpleNamespace(p_signal=raw))
+    monkeypatch.setitem(sys.modules, "wfdb", fake_wfdb)
+
+    sample, target = PTBXLDiagnosticDataset(manifest, split="train")[0]
+
+    assert sample.shape == (12, 1024)
+    assert target.tolist() == [0.0, 1.0, 0.0, 1.0, 0.0]
+
+
+def test_multilabel_report_metrics():
+    y = np.array([[1, 0, 0, 0, 0], [0, 1, 1, 0, 0]], dtype=np.float32)
+    p = np.array([[0.9, 0.1, 0.1, 0.1, 0.1], [0.2, 0.8, 0.7, 0.1, 0.1]], dtype=np.float32)
+
+    report = _multilabel_report(y, p, threshold=0.5)
+
+    assert report["exact_match"] == 1.0
+    assert report["per_class"]["NORM"]["recall"] == 1.0
