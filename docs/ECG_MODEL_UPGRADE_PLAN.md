@@ -30,6 +30,16 @@ limitations.
   - Exact match: `0.4817`
   - Hamming accuracy: `0.8317`
 
+With per-class validation-tuned thresholds:
+
+- Thresholds: `NORM=0.45`, `MI=0.75`, `STTC=0.60`, `CD=0.65`, `HYP=0.60`
+- Test Macro-F1: `0.6934`
+- Test exact match: `0.5728`
+- Test hamming accuracy: `0.8646`
+
+Focal loss is implemented as an option for long runs, but the short 2-epoch
+local CPU probe did not beat the 3-epoch BCE checkpoint.
+
 ## Next Quality Gates
 
 1. Complete full PTB-XL ZIP extraction, regenerate full manifest/splits.

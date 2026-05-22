@@ -24,6 +24,8 @@ def evaluate(
     batch_size: int = 64,
     workers: int = 2,
     threshold: float = 0.5,
+    thresholds: list[float] | None = None,
+    use_checkpoint_thresholds: bool = True,
 ) -> dict:
     ds = PTBXLDiagnosticDataset(manifest, split=split)
     if not ds.rows:
@@ -50,7 +52,12 @@ def evaluate(
     logits = np.concatenate(logits_buf)
     labels = np.concatenate(labels_buf)
     probs = 1.0 / (1.0 + np.exp(-logits))
-    report = _multilabel_report(labels, probs, threshold)
+    effective_threshold = threshold
+    if thresholds is not None:
+        effective_threshold = thresholds
+    elif use_checkpoint_thresholds and isinstance(state, dict) and state.get("thresholds"):
+        effective_threshold = list(state["thresholds"])
+    report = _multilabel_report(labels, probs, effective_threshold)
     report.update(
         {
             "manifest": manifest,
@@ -71,8 +78,14 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--batch-size", type=int, default=64)
     p.add_argument("--workers", type=int, default=2)
     p.add_argument("--threshold", type=float, default=0.5)
+    p.add_argument("--thresholds-json", default=None, help="JSON file with a thresholds list")
+    p.add_argument("--ignore-checkpoint-thresholds", action="store_true")
     p.add_argument("--out", default=None)
     args = p.parse_args(argv)
+    thresholds = None
+    if args.thresholds_json:
+        payload = json.loads(Path(args.thresholds_json).read_text(encoding="utf-8"))
+        thresholds = payload.get("thresholds") or payload.get("tuned_thresholds") or payload
     report = evaluate(
         manifest=args.manifest,
         checkpoint=args.checkpoint,
@@ -80,6 +93,8 @@ def main(argv: list[str] | None = None) -> int:
         batch_size=args.batch_size,
         workers=args.workers,
         threshold=args.threshold,
+        thresholds=thresholds,
+        use_checkpoint_thresholds=not args.ignore_checkpoint_thresholds,
     )
     text = json.dumps(report, indent=2)
     print(text)

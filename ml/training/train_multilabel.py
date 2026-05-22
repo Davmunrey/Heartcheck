@@ -31,6 +31,8 @@ class MultiLabelTrainConfig:
     seed: int = 1234
     num_workers: int = 2
     threshold: float = 0.5
+    loss: str = "bce"
+    focal_gamma: float = 2.0
 
 
 def _pos_weight(ds: PTBXLDiagnosticDataset, device: torch.device) -> torch.Tensor:
@@ -42,8 +44,18 @@ def _pos_weight(ds: PTBXLDiagnosticDataset, device: torch.device) -> torch.Tenso
     return torch.tensor(weight, dtype=torch.float32, device=device)
 
 
-def _multilabel_report(y_true: np.ndarray, probs: np.ndarray, threshold: float) -> dict:
-    pred = probs >= threshold
+def _threshold_array(threshold: float | list[float] | np.ndarray) -> np.ndarray:
+    if isinstance(threshold, (list, tuple, np.ndarray)):
+        arr = np.asarray(threshold, dtype=np.float32)
+        if arr.shape != (len(PTBXL_DIAGNOSTIC_CLASSES),):
+            raise ValueError(f"thresholds must have {len(PTBXL_DIAGNOSTIC_CLASSES)} values")
+        return arr
+    return np.full(len(PTBXL_DIAGNOSTIC_CLASSES), float(threshold), dtype=np.float32)
+
+
+def _multilabel_report(y_true: np.ndarray, probs: np.ndarray, threshold: float | list[float] | np.ndarray) -> dict:
+    thresholds = _threshold_array(threshold)
+    pred = probs >= thresholds[np.newaxis, :]
     per_class = {}
     f1s = []
     recalls = []
@@ -73,7 +85,7 @@ def _multilabel_report(y_true: np.ndarray, probs: np.ndarray, threshold: float) 
     exact_match = float((pred == y_true.astype(bool)).all(axis=1).mean()) if len(y_true) else 0.0
     hamming_accuracy = float((pred == y_true.astype(bool)).mean()) if len(y_true) else 0.0
     return {
-        "threshold": threshold,
+        "threshold": thresholds.tolist(),
         "macro_f1": float(np.mean(f1s)) if f1s else 0.0,
         "macro_precision": float(np.mean(precisions)) if precisions else 0.0,
         "macro_recall": float(np.mean(recalls)) if recalls else 0.0,
@@ -82,6 +94,56 @@ def _multilabel_report(y_true: np.ndarray, probs: np.ndarray, threshold: float) 
         "classes": list(PTBXL_DIAGNOSTIC_CLASSES),
         "per_class": per_class,
     }
+
+
+def tune_thresholds(
+    y_true: np.ndarray,
+    probs: np.ndarray,
+    *,
+    metric: str = "f1",
+    min_threshold: float = 0.05,
+    max_threshold: float = 0.95,
+    steps: int = 19,
+) -> list[float]:
+    """Tune one threshold per label on validation data."""
+    grid = np.linspace(min_threshold, max_threshold, steps)
+    thresholds = []
+    for idx in range(y_true.shape[1]):
+        yt = y_true[:, idx].astype(bool)
+        best = (0.5, -1.0)
+        for thr in grid:
+            yp = probs[:, idx] >= thr
+            tp = int((yt & yp).sum())
+            fp = int((~yt & yp).sum())
+            fn = int((yt & ~yp).sum())
+            precision = tp / (tp + fp) if (tp + fp) else 0.0
+            recall = tp / (tp + fn) if (tp + fn) else 0.0
+            if metric == "recall":
+                score = recall - 0.01 * fp
+            else:
+                score = 2 * precision * recall / (precision + recall) if (precision + recall) else 0.0
+            if score > best[1]:
+                best = (float(thr), float(score))
+        thresholds.append(best[0])
+    return thresholds
+
+
+class FocalBCEWithLogitsLoss(torch.nn.Module):
+    def __init__(self, pos_weight: torch.Tensor | None = None, gamma: float = 2.0) -> None:
+        super().__init__()
+        self.pos_weight = pos_weight
+        self.gamma = gamma
+
+    def forward(self, logits: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
+        bce = torch.nn.functional.binary_cross_entropy_with_logits(
+            logits,
+            targets,
+            pos_weight=self.pos_weight,
+            reduction="none",
+        )
+        probs = torch.sigmoid(logits)
+        pt = torch.where(targets > 0, probs, 1 - probs)
+        return (bce * (1 - pt).pow(self.gamma)).mean()
 
 
 def _run_eval(model: torch.nn.Module, loader: DataLoader, device: torch.device, threshold: float) -> tuple[dict, np.ndarray, np.ndarray]:
@@ -119,11 +181,17 @@ def run(cfg: MultiLabelTrainConfig) -> dict:
     ).to(device)
     optim = torch.optim.AdamW(model.parameters(), lr=cfg.lr, weight_decay=cfg.weight_decay)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optim, T_max=cfg.epochs)
-    loss_fn = torch.nn.BCEWithLogitsLoss(pos_weight=_pos_weight(train_ds, device))
+    pos_weight = _pos_weight(train_ds, device)
+    if cfg.loss == "focal":
+        loss_fn = FocalBCEWithLogitsLoss(pos_weight=pos_weight, gamma=cfg.focal_gamma)
+    else:
+        loss_fn = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight)
 
     log_f = (out_dir / "training_log.jsonl").open("w", encoding="utf-8")
     best_f1 = -1.0
     best_report: dict | None = None
+    best_tuned_report: dict | None = None
+    best_thresholds: list[float] | None = None
     best_logits: np.ndarray | None = None
     best_labels: np.ndarray | None = None
 
@@ -161,6 +229,9 @@ def run(cfg: MultiLabelTrainConfig) -> dict:
             best_report = report
             best_logits = logits
             best_labels = labels
+            probs = 1.0 / (1.0 + np.exp(-logits))
+            best_thresholds = tune_thresholds(labels, probs)
+            best_tuned_report = _multilabel_report(labels, probs, best_thresholds)
             torch.save(
                 {
                     "state_dict": model.state_dict(),
@@ -168,7 +239,9 @@ def run(cfg: MultiLabelTrainConfig) -> dict:
                     "classes": list(PTBXL_DIAGNOSTIC_CLASSES),
                     "task": "ptbxl_diagnostic_multilabel",
                     "threshold": cfg.threshold,
+                    "thresholds": best_thresholds,
                     "in_channels": 12,
+                    "loss": cfg.loss,
                 },
                 out_dir / "checkpoint.pt",
             )
@@ -183,6 +256,8 @@ def run(cfg: MultiLabelTrainConfig) -> dict:
         "device": str(device),
         "best_val_macro_f1": best_f1,
         "validation": best_report,
+        "tuned_thresholds": best_thresholds,
+        "validation_tuned": best_tuned_report,
     }
     if best_logits is not None and best_labels is not None:
         np.savez(out_dir / "val_logits.npz", logits=best_logits, labels=best_labels)
@@ -200,6 +275,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--lr", type=float, default=1e-3)
     p.add_argument("--workers", type=int, default=2)
     p.add_argument("--threshold", type=float, default=0.5)
+    p.add_argument("--loss", choices=["bce", "focal"], default="bce")
+    p.add_argument("--focal-gamma", type=float, default=2.0)
     args = p.parse_args(argv)
     run(
         MultiLabelTrainConfig(
@@ -210,6 +287,8 @@ def main(argv: list[str] | None = None) -> int:
             lr=args.lr,
             num_workers=args.workers,
             threshold=args.threshold,
+            loss=args.loss,
+            focal_gamma=args.focal_gamma,
         )
     )
     return 0

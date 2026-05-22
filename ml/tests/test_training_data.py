@@ -11,7 +11,7 @@ pq = pytest.importorskip("pyarrow.parquet")
 
 from ml.training.data import PTBXLDiagnosticDataset, ParquetECGDataset
 from ml.training.pretrain import _classification_report, _class_weights
-from ml.training.train_multilabel import _multilabel_report
+from ml.training.train_multilabel import FocalBCEWithLogitsLoss, _multilabel_report, tune_thresholds
 
 
 def test_suffixless_wfdb_record_loads(tmp_path, monkeypatch):
@@ -125,3 +125,17 @@ def test_multilabel_report_metrics():
 
     assert report["exact_match"] == 1.0
     assert report["per_class"]["NORM"]["recall"] == 1.0
+
+
+def test_multilabel_threshold_tuning_and_focal_loss():
+    y = np.array([[1, 0, 0, 0, 0], [1, 1, 0, 0, 0], [0, 1, 0, 0, 0]], dtype=np.float32)
+    p = np.array([[0.7, 0.2, 0.1, 0.1, 0.1], [0.6, 0.4, 0.1, 0.1, 0.1], [0.2, 0.8, 0.1, 0.1, 0.1]], dtype=np.float32)
+    thresholds = tune_thresholds(y, p, steps=5)
+    report = _multilabel_report(y, p, thresholds)
+
+    torch = __import__("torch")
+    loss = FocalBCEWithLogitsLoss(gamma=2.0)(torch.zeros((2, 5)), torch.zeros((2, 5)))
+
+    assert len(thresholds) == 5
+    assert report["macro_f1"] >= 0.4
+    assert float(loss) >= 0.0
