@@ -24,8 +24,18 @@ def _download(target_dir: Path) -> None:
     physionet_wget(_PHYSIONET_SLUG, target_dir)
 
 
+def _data_root(target_dir: Path) -> Path:
+    if (target_dir / "RECORDS").is_file():
+        return target_dir
+    nested = target_dir / "1.0.0"
+    if (nested / "RECORDS").is_file():
+        return nested
+    return target_dir
+
+
 def _parse(target_dir: Path) -> Iterator[Sample]:
-    records = target_dir / "RECORDS"
+    data_root = _data_root(target_dir)
+    records = data_root / "RECORDS"
     if not records.is_file():
         raise FileNotFoundError(f"MIT-BIH RECORDS file not found at {records}")
     for rec in records.read_text(encoding="utf-8").splitlines():
@@ -45,7 +55,7 @@ def _parse(target_dir: Path) -> Iterator[Sample]:
             label_id=CLASS_TO_ID[label],
             source_dataset="mit_bih",
             source_label="nsr_record" if label == "normal" else "arrhythmia_record",
-            file_path=target_dir / f"{rec}.dat",
+            file_path=data_root / f"{rec}.dat",
             sampling_rate_hz=360,
             n_leads=2,
             duration_s=1800.0,

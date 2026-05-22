@@ -31,6 +31,17 @@ def sha256_file(path: Path) -> str:
     return h.hexdigest()
 
 
+def md5_file(path: Path) -> str:
+    h = hashlib.md5(usedforsecurity=False)
+    with path.open("rb") as f:
+        while True:
+            chunk = f.read(CHUNK)
+            if not chunk:
+                break
+            h.update(chunk)
+    return h.hexdigest()
+
+
 def verify_sha(path: Path, expected_sha256: str) -> None:
     digest = sha256_file(path)
     if digest.lower() != expected_sha256.lower():
@@ -39,12 +50,25 @@ def verify_sha(path: Path, expected_sha256: str) -> None:
         )
 
 
-def http_download(url: str, target: Path, expected_sha256: str | None = None) -> None:
+def verify_md5(path: Path, expected_md5: str) -> None:
+    digest = md5_file(path)
+    if digest.lower() != expected_md5.lower():
+        raise RuntimeError(
+            f"MD5 mismatch for {path.name}: expected={expected_md5[:12]}.. got={digest[:12]}.."
+        )
+
+
+def http_download(
+    url: str,
+    target: Path,
+    expected_sha256: str | None = None,
+    expected_md5: str | None = None,
+) -> None:
     """Resilient wget; prints to stderr so the CLI can capture progress.
 
-    If *expected_sha256* is provided the downloaded file's digest is verified
-    and a RuntimeError is raised on mismatch. Pass ``None`` (default) to skip
-    the check, preserving backward compatibility.
+    If a digest is provided the downloaded file is verified and RuntimeError is
+    raised on mismatch. Pass ``None`` (default) to skip the check, preserving
+    backward compatibility.
     """
     ensure_dir(target.parent)
     print(f"[download] {url} -> {target}", file=sys.stderr)
@@ -61,6 +85,8 @@ def http_download(url: str, target: Path, expected_sha256: str | None = None) ->
 
     if expected_sha256 is not None:
         verify_sha(target, expected_sha256)
+    if expected_md5 is not None:
+        verify_md5(target, expected_md5)
 
 
 def physionet_wget(slug: str, target_dir: Path) -> None:
