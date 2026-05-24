@@ -10,6 +10,7 @@ Hugging Face and is larger.
 from __future__ import annotations
 
 import csv
+import os
 import re
 import zipfile
 from pathlib import Path
@@ -58,8 +59,69 @@ def _find_record_list(target_dir: Path) -> Path:
     return candidates[0]
 
 
+def _mat_text_fields(path: Path) -> dict[str, str]:
+    """Extract text fields from MATLAB v5 files without requiring scipy."""
+    raw = path.read_bytes()
+    chunks = re.findall(rb"[\x20-\x7e]{4,}", raw)
+    strings = [c.decode("utf-8", errors="ignore").strip() for c in chunks]
+    fields: dict[str, str] = {}
+    for key in ("report", "LLM_Interpretation"):
+        try:
+            idx = strings.index(key)
+        except ValueError:
+            continue
+        value_parts: list[str] = []
+        for item in strings[idx + 1 :]:
+            if item in {"report", "LLM_Interpretation"}:
+                break
+            if item and not item.startswith("MATLAB 5.0 MAT-file"):
+                value_parts.append(item)
+        fields[key] = " ".join(value_parts).strip()
+    return fields
+
+
+def _iter_mat_samples(target_dir: Path) -> Iterator[Sample]:
+    base_dir = target_dir / "MEETI" if (target_dir / "MEETI").is_dir() else target_dir
+    max_samples = int(os.environ.get("MEETI_MAX_SAMPLES", "0") or "0")
+    emitted = 0
+    for mat in base_dir.rglob("*.mat"):
+        fields = _mat_text_fields(mat)
+        report = fields.get("report") or fields.get("LLM_Interpretation") or ""
+        label = _text_to_screening_label(report)
+        png = mat.with_suffix(".png")
+        subject = mat.parents[1].name if len(mat.parents) > 1 else None
+        study = mat.parent.name
+        yield Sample(
+            record_id=mat.stem,
+            label=label,
+            label_id=CLASS_TO_ID[label],
+            source_dataset="meeti",
+            source_label=report[:200],
+            file_path=png if png.is_file() else mat,
+            sampling_rate_hz=500,
+            n_leads=12,
+            duration_s=10.0,
+            patient_id=subject,
+            metadata={
+                "study_id": study,
+                "mat_path": str(mat),
+                "png_path": str(png),
+                "report": report[:500],
+                "llm_interpretation": fields.get("LLM_Interpretation", "")[:500],
+                "label_source": "rule_based_text_screening",
+            },
+        )
+        emitted += 1
+        if max_samples and emitted >= max_samples:
+            return
+
+
 def _parse(target_dir: Path) -> Iterator[Sample]:
-    record_list = _find_record_list(target_dir)
+    try:
+        record_list = _find_record_list(target_dir)
+    except FileNotFoundError:
+        yield from _iter_mat_samples(target_dir)
+        return
     with record_list.open("r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:

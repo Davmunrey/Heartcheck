@@ -59,6 +59,7 @@ def _parse(target_dir: Path) -> Iterator[Sample]:
             sampling_rate_hz=360,
             n_leads=2,
             duration_s=1800.0,
+            metadata={"label_rule": "dominant_nsr_record_set"},
         )
 
 
