@@ -48,6 +48,29 @@ Reported automatically by `make eval` on the deterministic synthetic set ([`apps
 
 A release whose F1 macro regresses by more than 2 points or whose ECE worsens by more than 0.05 fails the CI gate (see [`Makefile`](../Makefile) `eval-gate`).
 
+### Local 12-lead diagnostic benchmark
+
+The strongest local research checkpoint is not yet the production API model.
+It uses full PTB-XL 1.0.3 12-lead signals and predicts the PTB-XL diagnostic
+superclasses: `NORM`, `MI`, `STTC`, `CD`, `HYP`.
+
+| Field | Value |
+|-------|-------|
+| Checkpoint | `runs/auto/ptbxl_full/multilabel_12lead_5e/checkpoint.pt` |
+| Manifest | `runs/auto/ptbxl_full/signal_manifest_split.parquet` |
+| Test report | `runs/auto/ptbxl_full/multilabel_12lead_5e/test_report_tuned.json` |
+| Test rows | `2,118` diagnostic-labelled PTB-XL rows |
+| Thresholds | `NORM=0.55`, `MI=0.50`, `STTC=0.70`, `CD=0.55`, `HYP=0.65` |
+| Macro-F1 | `0.7314` |
+| Macro precision | `0.6810` |
+| Macro recall | `0.7962` |
+| Exact match | `0.5836` |
+| Hamming accuracy | `0.8720` |
+
+Per-class F1: `NORM=0.8706`, `MI=0.7513`, `STTC=0.7697`, `CD=0.7751`,
+`HYP=0.4905`. `HYP` remains the weakest class and blocks any claim of broad
+clinical-grade coverage.
+
 ## Evaluation data
 
 - **Synthetic**: described in [`docs/DATASHEET_SYNTH.md`](DATASHEET_SYNTH.md). Generated deterministically per seed; covers perspective, blur, glare and shading augmentations.
