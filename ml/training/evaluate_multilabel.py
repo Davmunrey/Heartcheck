@@ -27,17 +27,25 @@ def evaluate(
     thresholds: list[float] | None = None,
     use_checkpoint_thresholds: bool = True,
 ) -> dict:
-    ds = PTBXLDiagnosticDataset(manifest, split=split)
-    if not ds.rows:
-        raise RuntimeError(f"Split {split!r} is empty.")
-
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device(
+        "cuda"
+        if torch.cuda.is_available()
+        else "mps"
+        if getattr(torch.backends, "mps", None) and torch.backends.mps.is_available()
+        else "cpu"
+    )
     state = torch.load(checkpoint, map_location=device, weights_only=True)
     classes = list(state.get("classes", PTBXL_DIAGNOSTIC_CLASSES)) if isinstance(state, dict) else list(PTBXL_DIAGNOSTIC_CLASSES)
     if tuple(classes) != PTBXL_DIAGNOSTIC_CLASSES:
         raise RuntimeError(f"Unsupported class order: {classes}")
+    target_len = int(state.get("target_len", 1024)) if isinstance(state, dict) else 1024
+    target_fs = int(state.get("target_fs", 100)) if isinstance(state, dict) else 100
 
-    model = ECGResNet1D(num_classes=len(PTBXL_DIAGNOSTIC_CLASSES), length=ds.target_len, in_channels=12).to(device)
+    ds = PTBXLDiagnosticDataset(manifest, split=split, target_len=target_len, target_fs=target_fs)
+    if not ds.rows:
+        raise RuntimeError(f"Split {split!r} is empty.")
+
+    model = ECGResNet1D(num_classes=len(PTBXL_DIAGNOSTIC_CLASSES), length=target_len, in_channels=12).to(device)
     payload = state.get("state_dict") if isinstance(state, dict) else state
     model.load_state_dict(payload, strict=True)
     model.eval()

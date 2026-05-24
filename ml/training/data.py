@@ -191,6 +191,8 @@ class PTBXLDiagnosticDataset(ParquetECGDataset):
         split: str | None = None,
         target_len: int = 1024,
         target_fs: int = 100,
+        augment: bool = False,
+        seed: int = 1234,
     ) -> None:
         try:
             import pyarrow.parquet as pq
@@ -223,6 +225,24 @@ class PTBXLDiagnosticDataset(ParquetECGDataset):
         self.target_len = target_len
         self.target_fs = target_fs
         self.lead = "ii"
+        self.augment = augment
+        self.rng = np.random.default_rng(seed)
+
+    def _augment_signal(self, signal: np.ndarray) -> np.ndarray:
+        """Apply conservative ECG augmentations to improve demo robustness."""
+        signal = signal.copy()
+        if self.rng.random() < 0.5:
+            signal *= self.rng.uniform(0.85, 1.15, size=(signal.shape[0], 1)).astype(np.float32)
+        if self.rng.random() < 0.35:
+            signal += self.rng.normal(0.0, 0.03, size=signal.shape).astype(np.float32)
+        if self.rng.random() < 0.25:
+            shift = int(self.rng.integers(-24, 25))
+            signal = np.roll(signal, shift, axis=1)
+        if self.rng.random() < 0.15:
+            n_drop = int(self.rng.integers(1, 3))
+            leads = self.rng.choice(signal.shape[0], size=n_drop, replace=False)
+            signal[leads] = 0.0
+        return signal
 
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
         row = self.rows[idx]
@@ -235,4 +255,7 @@ class PTBXLDiagnosticDataset(ParquetECGDataset):
             x = x - x.mean()
             x = x / (x.std() + 1e-6)
             resampled.append(x.astype(np.float32))
-        return torch.from_numpy(np.stack(resampled)), torch.from_numpy(self.targets[idx])
+        stacked = np.stack(resampled)
+        if self.augment:
+            stacked = self._augment_signal(stacked)
+        return torch.from_numpy(stacked.astype(np.float32)), torch.from_numpy(self.targets[idx])

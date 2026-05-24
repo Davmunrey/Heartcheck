@@ -33,6 +33,9 @@ class MultiLabelTrainConfig:
     threshold: float = 0.5
     loss: str = "bce"
     focal_gamma: float = 2.0
+    threshold_metric: str = "f1"
+    monitor: str = "tuned_macro_f1"
+    augment: bool = True
 
 
 def _pos_weight(ds: PTBXLDiagnosticDataset, device: torch.device) -> torch.Tensor:
@@ -146,6 +149,14 @@ class FocalBCEWithLogitsLoss(torch.nn.Module):
         return (bce * (1 - pt).pow(self.gamma)).mean()
 
 
+def _select_device() -> torch.device:
+    if torch.cuda.is_available():
+        return torch.device("cuda")
+    if getattr(torch.backends, "mps", None) and torch.backends.mps.is_available():
+        return torch.device("mps")
+    return torch.device("cpu")
+
+
 def _run_eval(model: torch.nn.Module, loader: DataLoader, device: torch.device, threshold: float) -> tuple[dict, np.ndarray, np.ndarray]:
     logits_buf = []
     labels_buf = []
@@ -166,14 +177,21 @@ def run(cfg: MultiLabelTrainConfig) -> dict:
     out_dir = Path(cfg.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    train_ds = PTBXLDiagnosticDataset(cfg.manifest, split="train", target_len=cfg.target_len, target_fs=cfg.target_fs)
+    train_ds = PTBXLDiagnosticDataset(
+        cfg.manifest,
+        split="train",
+        target_len=cfg.target_len,
+        target_fs=cfg.target_fs,
+        augment=cfg.augment,
+        seed=cfg.seed,
+    )
     val_ds = PTBXLDiagnosticDataset(cfg.manifest, split="val", target_len=cfg.target_len, target_fs=cfg.target_fs)
     if not train_ds.rows or not val_ds.rows:
         raise RuntimeError("Train/val split empty; need PTB-XL diagnostic metadata.")
 
     train_loader = DataLoader(train_ds, batch_size=cfg.batch_size, shuffle=True, num_workers=cfg.num_workers)
     val_loader = DataLoader(val_ds, batch_size=cfg.batch_size, num_workers=cfg.num_workers)
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = _select_device()
     model = ECGResNet1D(
         num_classes=len(PTBXL_DIAGNOSTIC_CLASSES),
         length=cfg.target_len,
@@ -188,7 +206,7 @@ def run(cfg: MultiLabelTrainConfig) -> dict:
         loss_fn = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight)
 
     log_f = (out_dir / "training_log.jsonl").open("w", encoding="utf-8")
-    best_f1 = -1.0
+    best_score = -1.0
     best_report: dict | None = None
     best_tuned_report: dict | None = None
     best_thresholds: list[float] | None = None
@@ -208,12 +226,20 @@ def run(cfg: MultiLabelTrainConfig) -> dict:
             losses.append(float(loss.item()))
         report, logits, labels = _run_eval(model, val_loader, device, cfg.threshold)
         scheduler.step()
+        probs = 1.0 / (1.0 + np.exp(-logits))
+        tuned_thresholds = tune_thresholds(labels, probs, metric=cfg.threshold_metric)
+        tuned_report = _multilabel_report(labels, probs, tuned_thresholds)
+        score = tuned_report["macro_f1"] if cfg.monitor == "tuned_macro_f1" else report["macro_f1"]
         rec = {
             "epoch": epoch,
             "train_loss": float(np.mean(losses)) if losses else 0.0,
             "val_macro_f1": report["macro_f1"],
+            "val_tuned_macro_f1": tuned_report["macro_f1"],
             "val_exact_match": report["exact_match"],
+            "val_tuned_exact_match": tuned_report["exact_match"],
             "val_hamming_accuracy": report["hamming_accuracy"],
+            "val_tuned_hamming_accuracy": tuned_report["hamming_accuracy"],
+            "monitor_score": score,
             "seconds": round(time.perf_counter() - t0, 2),
             "lr": float(scheduler.get_last_lr()[0]),
         }
@@ -221,17 +247,17 @@ def run(cfg: MultiLabelTrainConfig) -> dict:
         log_f.flush()
         print(
             f"[epoch {epoch:>3}] loss={rec['train_loss']:.4f} "
-            f"val_f1={rec['val_macro_f1']:.4f} exact={rec['val_exact_match']:.4f} "
+            f"val_f1={rec['val_macro_f1']:.4f} tuned_f1={rec['val_tuned_macro_f1']:.4f} "
+            f"exact={rec['val_tuned_exact_match']:.4f} "
             f"hamming={rec['val_hamming_accuracy']:.4f} ({rec['seconds']:.0f}s)"
         )
-        if report["macro_f1"] > best_f1:
-            best_f1 = report["macro_f1"]
+        if score > best_score:
+            best_score = score
             best_report = report
             best_logits = logits
             best_labels = labels
-            probs = 1.0 / (1.0 + np.exp(-logits))
-            best_thresholds = tune_thresholds(labels, probs)
-            best_tuned_report = _multilabel_report(labels, probs, best_thresholds)
+            best_thresholds = tuned_thresholds
+            best_tuned_report = tuned_report
             torch.save(
                 {
                     "state_dict": model.state_dict(),
@@ -240,8 +266,13 @@ def run(cfg: MultiLabelTrainConfig) -> dict:
                     "task": "ptbxl_diagnostic_multilabel",
                     "threshold": cfg.threshold,
                     "thresholds": best_thresholds,
+                    "target_len": cfg.target_len,
+                    "target_fs": cfg.target_fs,
                     "in_channels": 12,
                     "loss": cfg.loss,
+                    "threshold_metric": cfg.threshold_metric,
+                    "monitor": cfg.monitor,
+                    "augment": cfg.augment,
                 },
                 out_dir / "checkpoint.pt",
             )
@@ -254,7 +285,8 @@ def run(cfg: MultiLabelTrainConfig) -> dict:
         "n_train": len(train_ds),
         "n_val": len(val_ds),
         "device": str(device),
-        "best_val_macro_f1": best_f1,
+        "best_val_score": best_score,
+        "monitor": cfg.monitor,
         "validation": best_report,
         "tuned_thresholds": best_thresholds,
         "validation_tuned": best_tuned_report,
@@ -262,7 +294,7 @@ def run(cfg: MultiLabelTrainConfig) -> dict:
     if best_logits is not None and best_labels is not None:
         np.savez(out_dir / "val_logits.npz", logits=best_logits, labels=best_labels)
     (out_dir / "training_summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
-    print(f"[done] best val macro-F1 = {best_f1:.4f}; checkpoint at {out_dir / 'checkpoint.pt'}")
+    print(f"[done] best val {cfg.monitor} = {best_score:.4f}; checkpoint at {out_dir / 'checkpoint.pt'}")
     return summary
 
 
@@ -277,6 +309,9 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--threshold", type=float, default=0.5)
     p.add_argument("--loss", choices=["bce", "focal"], default="bce")
     p.add_argument("--focal-gamma", type=float, default=2.0)
+    p.add_argument("--threshold-metric", choices=["f1", "recall"], default="f1")
+    p.add_argument("--monitor", choices=["macro_f1", "tuned_macro_f1"], default="tuned_macro_f1")
+    p.add_argument("--no-augment", action="store_true")
     args = p.parse_args(argv)
     run(
         MultiLabelTrainConfig(
@@ -289,6 +324,9 @@ def main(argv: list[str] | None = None) -> int:
             threshold=args.threshold,
             loss=args.loss,
             focal_gamma=args.focal_gamma,
+            threshold_metric=args.threshold_metric,
+            monitor=args.monitor,
+            augment=not args.no_augment,
         )
     )
     return 0

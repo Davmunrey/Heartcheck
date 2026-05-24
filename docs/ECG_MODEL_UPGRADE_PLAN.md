@@ -22,22 +22,22 @@ limitations.
 - Task: PTB-XL diagnostic superclasses: `NORM`, `MI`, `STTC`, `CD`, `HYP`.
 - Input: 12 leads, 100 Hz, 1024 samples.
 - Best local checkpoint:
-  `runs/auto/ptbxl_full/multilabel_12lead_5e/checkpoint.pt`.
+  `runs/auto/ptbxl_full/multilabel_12lead_demo_12e/checkpoint.pt`.
 - Training set: full PTB-XL 1.0.3 extract, deterministic manifest with `21,799`
   rows (`17,445` train, `2,202` validation, `2,152` test).
 - Test metrics on full PTB-XL diagnostic rows (`n=2,118`) with
   validation-tuned thresholds:
-  - Macro-F1: `0.7314`
-  - Macro precision: `0.6810`
-  - Macro recall: `0.7962`
-  - Exact match: `0.5836`
-  - Hamming accuracy: `0.8720`
+  - Macro-F1: `0.7348`
+  - Macro precision: `0.7279`
+  - Macro recall: `0.7530`
+  - Exact match: `0.6157`
+  - Hamming accuracy: `0.8812`
 
 With per-class validation-tuned thresholds:
 
-- Thresholds: `NORM=0.55`, `MI=0.50`, `STTC=0.70`, `CD=0.55`, `HYP=0.65`
-- Per-class F1: `NORM=0.8706`, `MI=0.7513`, `STTC=0.7697`,
-  `CD=0.7751`, `HYP=0.4905`
+- Thresholds: `NORM=0.45`, `MI=0.80`, `STTC=0.75`, `CD=0.60`, `HYP=0.65`
+- Per-class F1: `NORM=0.8753`, `MI=0.7479`, `STTC=0.7573`,
+  `CD=0.7838`, `HYP=0.5096`
 
 Focal loss is implemented as an option for long runs, but the short 2-epoch
 local CPU probe did not beat the 3-epoch BCE checkpoint.
@@ -45,9 +45,10 @@ local CPU probe did not beat the 3-epoch BCE checkpoint.
 Previous partial-subset tuned checkpoint:
 `runs/auto/ptbxl_multilabel_12lead/pretrain_3e/checkpoint.pt`
 (`Macro-F1=0.6934`, `Exact=0.5728`, `Hamming=0.8646`). The full PTB-XL
-checkpoint is the current local benchmark, but it is not promoted to the API
-until calibration, manifest emission, and API architecture compatibility are
-completed.
+5-epoch checkpoint reached `Macro-F1=0.7314`, `Exact=0.5836`,
+`Hamming=0.8720`. The 12-epoch augmented checkpoint is the current local
+benchmark, but it is not promoted to the API until calibration, manifest
+emission, and API architecture compatibility are completed.
 
 ## Next Quality Gates
 
