@@ -35,14 +35,31 @@ def _download(target_dir: Path) -> None:
     physionet_wget(_PHYSIONET_SLUG, target_dir)
 
 
+def _data_root(target_dir: Path) -> Path:
+    candidates = [
+        target_dir,
+        target_dir / "1.0.3",
+        target_dir / "ptb-xl-a-large-publicly-available-electrocardiography-dataset-1.0.3",
+    ]
+    valid = [
+        candidate
+        for candidate in candidates
+        if (candidate / "ptbxl_database.csv").is_file() and (candidate / "records100").is_dir()
+    ]
+    if not valid:
+        return target_dir
+    return max(valid, key=lambda p: sum(1 for _ in (p / "records100").rglob("*.dat")))
+
+
 def _parse(target_dir: Path) -> Iterator[Sample]:
-    csv_path = target_dir / "ptbxl_database.csv"
+    data_root = _data_root(target_dir)
+    csv_path = data_root / "ptbxl_database.csv"
     if not csv_path.is_file():
         raise FileNotFoundError(
             f"PTB-XL CSV not found at {csv_path}; run "
             f"`python -m ml.datasets.cli download ptb_xl` first."
         )
-    scp_statements = _load_scp_statements(target_dir)
+    scp_statements = _load_scp_statements(data_root)
     with csv_path.open("r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
@@ -65,7 +82,7 @@ def _parse(target_dir: Path) -> Iterator[Sample]:
                 }
                 - {""}
             )
-            rec_path = target_dir / row["filename_lr"]  # 100 Hz
+            rec_path = data_root / row["filename_lr"]  # 100 Hz
             yield Sample(
                 record_id=str(row["ecg_id"]),
                 label=label,
