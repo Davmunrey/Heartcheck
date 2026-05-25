@@ -17,6 +17,8 @@ NORMAL = "normal"
 ARRHYTHMIA = "arrhythmia"
 NOISE = "noise"
 
+DIAGNOSTIC_SUPERCLASSES = ("NORM", "MI", "STTC", "CD", "HYP")
+
 
 # ---- PTB-XL (SCP-ECG) ------------------------------------------------------
 
@@ -75,6 +77,36 @@ CHAPMAN_ARRHYTHMIA_SNOMED = {
     "164912004",  # p wave abnormal
 }
 
+SNOMED_TO_DIAGNOSTIC_SUPERCLASS = {
+    # Normal / sinus rhythm
+    "426783006": "NORM",  # sinus rhythm
+    "426177001": "NORM",  # sinus bradycardia
+    "427084000": "NORM",  # sinus tachycardia
+    # Myocardial infarction / ischemic injury
+    "164865005": "MI",    # myocardial infarction
+    "164867002": "MI",    # old myocardial infarction
+    "57054005": "MI",     # acute myocardial infarction
+    "429622005": "MI",    # ST elevation myocardial infarction
+    # ST/T changes
+    "164930006": "STTC",  # ST segment depression
+    "164931005": "STTC",  # ST segment elevation
+    "164934002": "STTC",  # T wave abnormal
+    "59931005": "STTC",   # T wave inversion
+    "428750005": "STTC",  # nonspecific ST-T abnormality
+    # Conduction disturbances
+    "164909002": "CD",    # left bundle branch block
+    "59118001": "CD",     # right bundle branch block
+    "713427006": "CD",    # complete right bundle branch block
+    "713426002": "CD",    # incomplete right bundle branch block
+    "445118002": "CD",    # left anterior fascicular block
+    "164947007": "CD",    # left posterior fascicular block
+    "698252002": "CD",    # nonspecific intraventricular conduction disorder
+    "270492004": "CD",    # first degree AV block
+    # Hypertrophy
+    "164873001": "HYP",   # left ventricular hypertrophy
+    "89792004": "HYP",    # right ventricular hypertrophy
+}
+
 
 def map_chapman_codes(snomed_codes: Iterable[str]) -> str:
     codes = {str(c) for c in snomed_codes}
@@ -83,6 +115,18 @@ def map_chapman_codes(snomed_codes: Iterable[str]) -> str:
     if codes & CHAPMAN_SR_SNOMED:
         return NORMAL
     return NOISE
+
+
+def diagnostic_superclasses_from_snomed(snomed_codes: Iterable[str]) -> list[str]:
+    """Map SNOMED-CT ECG labels to PTB-XL-style diagnostic superclasses."""
+    classes = {
+        SNOMED_TO_DIAGNOSTIC_SUPERCLASS[str(code).strip()]
+        for code in snomed_codes
+        if str(code).strip() in SNOMED_TO_DIAGNOSTIC_SUPERCLASS
+    }
+    if "NORM" in classes and len(classes) > 1:
+        classes.remove("NORM")
+    return [c for c in DIAGNOSTIC_SUPERCLASSES if c in classes]
 
 
 # ---- CinC 2017 (single-letter labels) -------------------------------------

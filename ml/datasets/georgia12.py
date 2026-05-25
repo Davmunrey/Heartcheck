@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Iterator
 
 from ml.datasets._common import physionet_wget
-from ml.datasets.labels import map_chapman_codes  # SNOMED-CT shared with Chapman
+from ml.datasets.labels import diagnostic_superclasses_from_snomed, map_chapman_codes
 from ml.datasets.registry import CLASS_TO_ID, Dataset, Sample
 
 _PHYSIONET_SLUG = "challenge-2020/1.0.2/training/georgia"
@@ -21,19 +21,18 @@ def _download(target_dir: Path) -> None:
 
 
 def _parse(target_dir: Path) -> Iterator[Sample]:
-    summary = target_dir / "RECORDS"
-    if not summary.is_file():
+    root = target_dir
+    nested = target_dir / "1.0.2" / "training" / "georgia"
+    if nested.is_dir():
+        root = nested
+    records = sorted(root.glob("g*/*.hea")) or sorted(root.glob("*.hea"))
+    if not records:
         raise FileNotFoundError(
-            f"Georgia12 RECORDS file not found at {summary}; "
+            f"Georgia12 WFDB headers not found under {root}; "
             f"run `python -m ml.datasets.cli download georgia12` first."
         )
-    for line in summary.read_text(encoding="utf-8").splitlines():
-        rec = line.strip()
-        if not rec:
-            continue
-        hea = target_dir / f"{rec}.hea"
-        if not hea.is_file():
-            continue
+    for hea in records:
+        rec = hea.with_suffix("").name
         # Header lines starting with `# Dx:` carry SNOMED-CT codes.
         codes: list[str] = []
         for hl in hea.read_text(encoding="utf-8").splitlines():
@@ -46,10 +45,11 @@ def _parse(target_dir: Path) -> Iterator[Sample]:
             label_id=CLASS_TO_ID[label],
             source_dataset="georgia12",
             source_label=";".join(codes),
-            file_path=target_dir / f"{rec}.mat",
+            file_path=hea.with_suffix(".mat"),
             sampling_rate_hz=500,
             n_leads=12,
             duration_s=10.0,
+            metadata={"diagnostic_classes": diagnostic_superclasses_from_snomed(codes)},
         )
 
 

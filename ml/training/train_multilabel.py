@@ -36,6 +36,7 @@ class MultiLabelTrainConfig:
     threshold_metric: str = "f1"
     monitor: str = "tuned_macro_f1"
     augment: bool = True
+    init_checkpoint: str | None = None
 
 
 def _pos_weight(ds: PTBXLDiagnosticDataset, device: torch.device) -> torch.Tensor:
@@ -197,6 +198,13 @@ def run(cfg: MultiLabelTrainConfig) -> dict:
         length=cfg.target_len,
         in_channels=12,
     ).to(device)
+    if cfg.init_checkpoint:
+        state = torch.load(cfg.init_checkpoint, map_location=device, weights_only=True)
+        classes = list(state.get("classes", PTBXL_DIAGNOSTIC_CLASSES)) if isinstance(state, dict) else list(PTBXL_DIAGNOSTIC_CLASSES)
+        if tuple(classes) != PTBXL_DIAGNOSTIC_CLASSES:
+            raise RuntimeError(f"Unsupported init checkpoint class order: {classes}")
+        payload = state.get("state_dict") if isinstance(state, dict) else state
+        model.load_state_dict(payload, strict=True)
     optim = torch.optim.AdamW(model.parameters(), lr=cfg.lr, weight_decay=cfg.weight_decay)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optim, T_max=cfg.epochs)
     pos_weight = _pos_weight(train_ds, device)
@@ -273,6 +281,7 @@ def run(cfg: MultiLabelTrainConfig) -> dict:
                     "threshold_metric": cfg.threshold_metric,
                     "monitor": cfg.monitor,
                     "augment": cfg.augment,
+                    "init_checkpoint": cfg.init_checkpoint,
                 },
                 out_dir / "checkpoint.pt",
             )
@@ -312,6 +321,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--threshold-metric", choices=["f1", "recall"], default="f1")
     p.add_argument("--monitor", choices=["macro_f1", "tuned_macro_f1"], default="tuned_macro_f1")
     p.add_argument("--no-augment", action="store_true")
+    p.add_argument("--init-checkpoint", default=None)
     args = p.parse_args(argv)
     run(
         MultiLabelTrainConfig(
@@ -327,6 +337,7 @@ def main(argv: list[str] | None = None) -> int:
             threshold_metric=args.threshold_metric,
             monitor=args.monitor,
             augment=not args.no_augment,
+            init_checkpoint=args.init_checkpoint,
         )
     )
     return 0

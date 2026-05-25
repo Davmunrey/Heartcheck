@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Iterator
 
 from ml.datasets._common import physionet_wget
-from ml.datasets.labels import map_chapman_codes
+from ml.datasets.labels import diagnostic_superclasses_from_snomed, map_chapman_codes
 from ml.datasets.registry import CLASS_TO_ID, Dataset, Sample
 
 _PHYSIONET_SLUG = "ecg-arrhythmia/1.0.0"
@@ -47,7 +47,11 @@ def _parse(target_dir: Path) -> Iterator[Sample]:
                 n_leads=12,
                 duration_s=10.0,
                 patient_id=row.get("PatientID") or row.get("patient_id") or file_id,
-                metadata={"age": row.get("PatientAge"), "sex": row.get("Gender")},
+                metadata={
+                    "age": row.get("PatientAge"),
+                    "sex": row.get("Gender"),
+                    "diagnostic_classes": diagnostic_superclasses_from_snomed(codes),
+                },
             )
     # cond_csv kept for reference; not used at parse time
     _ = cond_csv

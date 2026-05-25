@@ -35,6 +35,23 @@ jobs:
       - name: Pytest
         run: pytest tests/ -q
 
+  ml:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+      - name: Install ML package
+        run: uv pip install --system -e "ml[dev]"
+      - name: Ruff (ML)
+        run: ruff check ml
+      - name: Pytest (ML)
+        run: pytest ml/tests -q
+
   mobile:
     runs-on: ubuntu-latest
     defaults:

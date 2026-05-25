@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from ml.datasets._common import md5_file, verify_md5
+from ml.datasets.georgia12 import dataset as georgia12_dataset
+from ml.datasets.labels import diagnostic_superclasses_from_snomed
 from ml.datasets.mit_bih import dataset as mit_bih_dataset
 from ml.datasets.registry import REGISTRY
 
@@ -33,3 +35,25 @@ def test_meeti_registered():
 
     assert ds.license_class == "permissive"
     assert ds.homepage == "https://zenodo.org/records/15893351"
+
+
+def test_snomed_diagnostic_superclass_mapping():
+    assert diagnostic_superclasses_from_snomed(["426783006"]) == ["NORM"]
+    assert diagnostic_superclasses_from_snomed(["164909002", "164873001"]) == ["CD", "HYP"]
+    assert diagnostic_superclasses_from_snomed(["426783006", "164934002"]) == ["STTC"]
+
+
+def test_georgia_parser_accepts_physionet_nested_root(tmp_path):
+    root = tmp_path / "georgia12"
+    nested = root / "1.0.2" / "training" / "georgia" / "g1"
+    nested.mkdir(parents=True)
+    header = nested / "E00001.hea"
+    header.write_text("E00001 12 500 5000\n# Dx: 426783006,164909002\n", encoding="utf-8")
+    header.with_suffix(".mat").write_bytes(b"stub")
+
+    rows = list(georgia12_dataset().parse(root))
+
+    assert len(rows) == 1
+    assert rows[0].record_id == "E00001"
+    assert rows[0].file_path == header.with_suffix(".mat")
+    assert rows[0].metadata["diagnostic_classes"] == ["CD"]
