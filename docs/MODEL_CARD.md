@@ -51,31 +51,32 @@ A release whose F1 macro regresses by more than 2 points or whose ECE worsens by
 ### Local 12-lead diagnostic benchmark
 
 The strongest local research checkpoint is not yet the production API model.
-It fine-tunes the full PTB-XL 1.0.3 12-lead model with an in-progress Georgia
-12-lead snapshot and predicts the PTB-XL diagnostic superclasses: `NORM`,
-`MI`, `STTC`, `CD`, `HYP`.
+It fine-tunes the full PTB-XL 1.0.3 12-lead model with a Georgia 12-lead
+snapshot (`8,857` records) and predicts the PTB-XL diagnostic superclasses:
+`NORM`, `MI`, `STTC`, `CD`, `HYP`. The full Georgia download is now available
+locally and should be used for the next training pass.
 
 | Field | Value |
 |-------|-------|
-| Checkpoint | `runs/auto/ptbxl_georgia_fullish/finetune_4e/checkpoint.pt` |
-| Manifest | `runs/auto/ptbxl_georgia_fullish/signal_manifest_split.parquet` |
-| Test report | `runs/auto/ptbxl_georgia_fullish/finetune_4e/ptbxl_test_report.json` |
+| Checkpoint | `runs/auto/ptbxl_georgia_8857/finetune_12e/checkpoint.pt` |
+| Manifest | `runs/auto/ptbxl_georgia_8857/signal_manifest_split.parquet` |
+| Test report | `runs/auto/ptbxl_georgia_8857/finetune_12e/ptbxl_test_report.json` |
 | Test rows | `2,118` diagnostic-labelled PTB-XL rows |
-| Thresholds | `NORM=0.45`, `MI=0.75`, `STTC=0.60`, `CD=0.65`, `HYP=0.70` |
-| Macro-F1 | `0.7392` |
-| Macro precision | `0.7297` |
-| Macro recall | `0.7562` |
-| Exact match | `0.6176` |
-| Hamming accuracy | `0.8845` |
+| Thresholds | `NORM=0.45`, `MI=0.65`, `STTC=0.55`, `CD=0.65`, `HYP=0.70` |
+| Macro-F1 | `0.7541` |
+| Macro precision | `0.7245` |
+| Macro recall | `0.7888` |
+| Exact match | `0.6204` |
+| Hamming accuracy | `0.8873` |
 
-Per-class F1: `NORM=0.8706`, `MI=0.7490`, `STTC=0.7648`, `CD=0.7946`,
-`HYP=0.5172`. `HYP` remains the weakest class and blocks any claim of broad
+Per-class F1: `NORM=0.8712`, `MI=0.7739`, `STTC=0.7710`, `CD=0.8042`,
+`HYP=0.5505`. `HYP` remains the weakest class and blocks any claim of broad
 clinical-grade coverage.
 
-On the mixed PTB-XL + Georgia snapshot test split, the same checkpoint reaches
-`Macro-F1=0.7192`, `Exact=0.5754`, `Hamming=0.8708`, beating the previous
-PTB-only checkpoint on that mixed test (`Macro-F1=0.7000`, `Exact=0.5535`,
-`Hamming=0.8587`).
+On the mixed PTB-XL + Georgia test split, the same checkpoint reaches
+`Macro-F1=0.7249`, `Exact=0.5626`, `Hamming=0.8688`, beating the previous
+PTB-only checkpoint on the earlier mixed snapshot test (`Macro-F1=0.7000`,
+`Exact=0.5535`, `Hamming=0.8587`).
 
 ## Evaluation data
 
