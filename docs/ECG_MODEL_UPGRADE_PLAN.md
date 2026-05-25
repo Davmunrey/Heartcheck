@@ -22,22 +22,27 @@ limitations.
 - Task: PTB-XL diagnostic superclasses: `NORM`, `MI`, `STTC`, `CD`, `HYP`.
 - Input: 12 leads, 100 Hz, 1024 samples.
 - Best local checkpoint:
-  `runs/auto/ptbxl_full/multilabel_12lead_demo_12e/checkpoint.pt`.
-- Training set: full PTB-XL 1.0.3 extract, deterministic manifest with `21,799`
-  rows (`17,445` train, `2,202` validation, `2,152` test).
+  `runs/auto/ptbxl_georgia_fullish/finetune_4e/checkpoint.pt`.
+- Training set: full PTB-XL 1.0.3 plus an in-progress Georgia12 snapshot,
+  deterministic manifest with `30,562` rows (`24,393` train, `3,085`
+  validation, `3,084` test).
 - Test metrics on full PTB-XL diagnostic rows (`n=2,118`) with
   validation-tuned thresholds:
-  - Macro-F1: `0.7348`
-  - Macro precision: `0.7279`
-  - Macro recall: `0.7530`
-  - Exact match: `0.6157`
-  - Hamming accuracy: `0.8812`
+  - Macro-F1: `0.7392`
+  - Macro precision: `0.7297`
+  - Macro recall: `0.7562`
+  - Exact match: `0.6176`
+  - Hamming accuracy: `0.8845`
+- Test metrics on mixed PTB-XL + Georgia snapshot rows (`n=2,963`):
+  - Macro-F1: `0.7192`
+  - Exact match: `0.5754`
+  - Hamming accuracy: `0.8708`
 
 With per-class validation-tuned thresholds:
 
-- Thresholds: `NORM=0.45`, `MI=0.80`, `STTC=0.75`, `CD=0.60`, `HYP=0.65`
-- Per-class F1: `NORM=0.8753`, `MI=0.7479`, `STTC=0.7573`,
-  `CD=0.7838`, `HYP=0.5096`
+- Thresholds: `NORM=0.45`, `MI=0.75`, `STTC=0.60`, `CD=0.65`, `HYP=0.70`
+- Per-class F1: `NORM=0.8706`, `MI=0.7490`, `STTC=0.7648`,
+  `CD=0.7946`, `HYP=0.5172`
 
 Focal loss is implemented as an option for long runs, but the short 2-epoch
 local CPU probe did not beat the 3-epoch BCE checkpoint.
@@ -46,9 +51,11 @@ Previous partial-subset tuned checkpoint:
 `runs/auto/ptbxl_multilabel_12lead/pretrain_3e/checkpoint.pt`
 (`Macro-F1=0.6934`, `Exact=0.5728`, `Hamming=0.8646`). The full PTB-XL
 5-epoch checkpoint reached `Macro-F1=0.7314`, `Exact=0.5836`,
-`Hamming=0.8720`. The 12-epoch augmented checkpoint is the current local
-benchmark, but it is not promoted to the API until calibration, manifest
-emission, and API architecture compatibility are completed.
+`Hamming=0.8720`. The PTB-only 12-epoch augmented checkpoint reached
+`Macro-F1=0.7348`, `Exact=0.6157`, `Hamming=0.8812`. The PTB-XL + Georgia
+fine-tuned checkpoint is the current local benchmark, but it is not promoted
+to the API until calibration, manifest emission, and API architecture
+compatibility are completed.
 
 ## Next Quality Gates
 
