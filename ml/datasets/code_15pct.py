@@ -24,6 +24,19 @@ _ZENODO_FILES = [
 ]
 
 
+def _truthy(value: object) -> bool:
+    return str(value).strip().lower() in {"1", "true", "t", "yes", "y"}
+
+
+def _diagnostic_classes(row: dict[str, str]) -> list[str]:
+    classes: list[str] = []
+    if _truthy(row.get("normal_ecg")):
+        classes.append("NORM")
+    if any(_truthy(row.get(k)) for k in ("1dAVb", "RBBB", "LBBB")):
+        classes.append("CD")
+    return classes
+
+
 def _download(target_dir: Path) -> None:
     target_dir.mkdir(parents=True, exist_ok=True)
     print(
@@ -42,22 +55,27 @@ def _parse(target_dir: Path) -> Iterator[Sample]:
     with meta.open("r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
+            trace_file = target_dir / row["trace_file"]
+            if not trace_file.is_file():
+                continue
             label = map_code15(row)
+            source_codes = [k for k in ("1dAVb", "RBBB", "LBBB", "SB", "ST", "AF") if _truthy(row.get(k))]
             yield Sample(
                 record_id=row["exam_id"],
                 label=label,
                 label_id=CLASS_TO_ID[label],
                 source_dataset="code_15pct",
-                source_label=";".join(k for k in ("1dAVb", "RBBB", "LBBB", "SB", "ST", "AF") if int(row.get(k, 0)) == 1) or "normal",
-                file_path=target_dir / row["trace_file"],
+                source_label=";".join(source_codes) or "normal",
+                file_path=Path(f"{trace_file}::{row['exam_id']}"),
                 sampling_rate_hz=400,
                 n_leads=12,
-                duration_s=float(row.get("seconds", 10.0)),
+                duration_s=10.24,
                 patient_id=row.get("patient_id"),
                 metadata={
                     "age": row.get("age"),
                     "is_male": row.get("is_male"),
                     "death": row.get("death"),
+                    "diagnostic_classes": _diagnostic_classes(row),
                 },
             )
 

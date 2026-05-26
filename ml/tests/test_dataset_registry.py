@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from ml.datasets._common import md5_file, verify_md5
 from ml.datasets.chapman_shaoxing import dataset as chapman_dataset
+from ml.datasets.code_15pct import dataset as code15_dataset
 from ml.datasets.georgia12 import dataset as georgia12_dataset
 from ml.datasets.labels import diagnostic_superclasses_from_snomed
 from ml.datasets.mit_bih import dataset as mit_bih_dataset
@@ -79,4 +80,23 @@ def test_chapman_parser_accepts_physionet_nested_headers(tmp_path):
     assert len(rows) == 1
     assert rows[0].record_id == "JS00001"
     assert rows[0].file_path == header.with_suffix(".mat")
+    assert rows[0].metadata["diagnostic_classes"] == ["CD"]
+
+
+def test_code15_parser_filters_existing_hdf5_and_emits_diagnostic_classes(tmp_path):
+    root = tmp_path / "code_15pct"
+    root.mkdir()
+    (root / "exams_part0.hdf5").write_bytes(b"stub")
+    (root / "exams.csv").write_text(
+        "exam_id,age,is_male,1dAVb,RBBB,LBBB,SB,ST,AF,patient_id,death,normal_ecg,trace_file\n"
+        "1,50,True,False,True,False,False,False,False,p1,False,False,exams_part0.hdf5\n"
+        "2,60,False,False,False,False,False,False,False,p2,False,True,missing.hdf5\n",
+        encoding="utf-8",
+    )
+
+    rows = list(code15_dataset().parse(root))
+
+    assert len(rows) == 1
+    assert str(rows[0].file_path).endswith("exams_part0.hdf5::1")
+    assert rows[0].source_label == "RBBB"
     assert rows[0].metadata["diagnostic_classes"] == ["CD"]

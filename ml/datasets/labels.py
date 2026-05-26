@@ -149,8 +149,8 @@ CODE15_FIELDS = ("1dAVb", "RBBB", "LBBB", "SB", "ST", "AF")
 
 
 def map_code15(row: dict) -> str:
-    """``row`` is a dict from the CSV; values are 0/1."""
-    arrhythmia = any(int(row.get(k, 0)) == 1 for k in CODE15_FIELDS)
+    """``row`` is a dict from the CSV; values may be bool strings or 0/1."""
+    arrhythmia = any(str(row.get(k, 0)).strip().lower() in {"1", "true", "t", "yes"} for k in CODE15_FIELDS)
     return ARRHYTHMIA if arrhythmia else NORMAL
 
 

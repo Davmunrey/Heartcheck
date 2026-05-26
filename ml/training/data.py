@@ -78,12 +78,30 @@ class ParquetECGDataset(Dataset):
         self.target_len = target_len
         self.target_fs = target_fs
         self.lead = lead
+        self._hdf5_files = {}
+        self._hdf5_indices = {}
 
     def __len__(self) -> int:
         return len(self.rows)
 
     def _load_raw(self, row: ManifestRow) -> np.ndarray:
         path = Path(row.file_path)
+        raw_path = str(row.file_path)
+        if "::" in raw_path:
+            hdf5_path, record_id = raw_path.split("::", 1)
+            try:
+                import h5py
+
+                if hdf5_path not in self._hdf5_files:
+                    handle = h5py.File(hdf5_path, "r")
+                    ids = handle["exam_id"][:]
+                    self._hdf5_files[hdf5_path] = handle
+                    self._hdf5_indices[hdf5_path] = {str(int(v)): i for i, v in enumerate(ids)}
+                idx = self._hdf5_indices[hdf5_path][str(record_id)]
+                return np.asarray(self._hdf5_files[hdf5_path]["tracings"][idx], dtype=np.float32)
+            except Exception:  # noqa: BLE001
+                _logger.warning("ecg_load_failed", extra={"path": raw_path, "suffix": ".hdf5"})
+                return np.zeros((self.target_len, max(1, row.n_leads)), dtype=np.float32)
         # WFDB / .mat / .dat / .h5 dispatch — defensive: try wfdb, fall back
         # to numpy.load, fall back to a zero stub so missing files don't kill
         # a 1M-row epoch.
@@ -227,6 +245,8 @@ class PTBXLDiagnosticDataset(ParquetECGDataset):
         self.lead = "ii"
         self.augment = augment
         self.rng = np.random.default_rng(seed)
+        self._hdf5_files = {}
+        self._hdf5_indices = {}
 
     def _augment_signal(self, signal: np.ndarray) -> np.ndarray:
         """Apply conservative ECG augmentations to improve demo robustness."""
