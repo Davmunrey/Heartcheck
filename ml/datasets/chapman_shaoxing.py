@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 
-import csv
 from pathlib import Path
 from typing import Iterator
 
@@ -21,40 +20,48 @@ def _download(target_dir: Path) -> None:
 
 
 def _parse(target_dir: Path) -> Iterator[Sample]:
-    # The PhysioNet release ships a master condition.csv plus per-record
-    # WFDB triplets under WFDBRecords/.
-    cond_csv = target_dir / "ConditionNames_SNOMED-CT.csv"
-    diag_csv = target_dir / "Diagnostics.csv"
-    if not diag_csv.is_file():
+    # PhysioNet wget commonly creates target/1.0.0/WFDBRecords. Older mirrors
+    # may also include Diagnostics.csv; current release carries labels in .hea.
+    root = target_dir
+    nested = target_dir / "1.0.0"
+    if nested.is_dir():
+        root = nested
+    wfdb_root = root / "WFDBRecords"
+    if not wfdb_root.is_dir():
         raise FileNotFoundError(
-            f"Chapman Diagnostics.csv not found at {diag_csv}; "
+            f"Chapman WFDBRecords not found at {wfdb_root}; "
             f"run `python -m ml.datasets.cli download chapman_shaoxing` first."
         )
-    with diag_csv.open("r", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            codes = [c.strip() for c in (row.get("Rhythm", "") + ";" + row.get("Beat", "")).split(";") if c.strip()]
-            label = map_chapman_codes(codes)
-            file_id = row["FileName"]
-            yield Sample(
-                record_id=file_id,
-                label=label,
-                label_id=CLASS_TO_ID[label],
-                source_dataset="chapman_shaoxing",
-                source_label=";".join(codes),
-                file_path=target_dir / "WFDBRecords" / f"{file_id}.mat",
-                sampling_rate_hz=500,
-                n_leads=12,
-                duration_s=10.0,
-                patient_id=row.get("PatientID") or row.get("patient_id") or file_id,
-                metadata={
-                    "age": row.get("PatientAge"),
-                    "sex": row.get("Gender"),
-                    "diagnostic_classes": diagnostic_superclasses_from_snomed(codes),
-                },
-            )
-    # cond_csv kept for reference; not used at parse time
-    _ = cond_csv
+    for hea in sorted(wfdb_root.rglob("*.hea")):
+        codes: list[str] = []
+        age: str | None = None
+        sex: str | None = None
+        for line in hea.read_text(encoding="utf-8").splitlines():
+            if line.startswith("#Dx:"):
+                codes.extend(c.strip() for c in line.split(":", 1)[1].split(",") if c.strip())
+            elif line.startswith("#Age:"):
+                age = line.split(":", 1)[1].strip()
+            elif line.startswith("#Sex:"):
+                sex = line.split(":", 1)[1].strip()
+        label = map_chapman_codes(codes) if codes else "noise"
+        file_id = hea.with_suffix("").name
+        yield Sample(
+            record_id=file_id,
+            label=label,
+            label_id=CLASS_TO_ID[label],
+            source_dataset="chapman_shaoxing",
+            source_label=";".join(codes),
+            file_path=hea.with_suffix(".mat"),
+            sampling_rate_hz=500,
+            n_leads=12,
+            duration_s=10.0,
+            patient_id=file_id,
+            metadata={
+                "age": age,
+                "sex": sex,
+                "diagnostic_classes": diagnostic_superclasses_from_snomed(codes),
+            },
+        )
 
 
 def dataset() -> Dataset:

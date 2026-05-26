@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from ml.datasets._common import md5_file, verify_md5
+from ml.datasets.chapman_shaoxing import dataset as chapman_dataset
 from ml.datasets.georgia12 import dataset as georgia12_dataset
 from ml.datasets.labels import diagnostic_superclasses_from_snomed
 from ml.datasets.mit_bih import dataset as mit_bih_dataset
@@ -55,5 +56,27 @@ def test_georgia_parser_accepts_physionet_nested_root(tmp_path):
 
     assert len(rows) == 1
     assert rows[0].record_id == "E00001"
+    assert rows[0].file_path == header.with_suffix(".mat")
+    assert rows[0].metadata["diagnostic_classes"] == ["CD"]
+
+
+def test_chapman_parser_accepts_physionet_nested_headers(tmp_path):
+    root = tmp_path / "chapman_shaoxing"
+    nested = root / "1.0.0" / "WFDBRecords" / "01" / "001"
+    nested.mkdir(parents=True)
+    header = nested / "JS00001.hea"
+    header.write_text(
+        "JS00001 12 500 5000\n"
+        "#Age: 70\n"
+        "#Sex: Female\n"
+        "#Dx: 426783006,164909002\n",
+        encoding="utf-8",
+    )
+    header.with_suffix(".mat").write_bytes(b"stub")
+
+    rows = list(chapman_dataset().parse(root))
+
+    assert len(rows) == 1
+    assert rows[0].record_id == "JS00001"
     assert rows[0].file_path == header.with_suffix(".mat")
     assert rows[0].metadata["diagnostic_classes"] == ["CD"]
