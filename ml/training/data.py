@@ -19,6 +19,7 @@ PTB-XL's ``filename_lr`` and the 100 Hz heartscan_ml pipeline.
 from __future__ import annotations
 
 import logging
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
@@ -81,6 +82,47 @@ class ParquetECGDataset(Dataset):
         self._hdf5_files = {}
         self._hdf5_indices = {}
 
+    def _load_wfdb_format16(self, path: Path) -> np.ndarray | None:
+        """Fast local reader for common WFDB 16-bit interleaved records."""
+        base = path.with_suffix("") if path.suffix in {".hea", ".dat"} else path
+        header_path = base.with_suffix(".hea")
+        if not header_path.is_file():
+            return None
+        lines = [line.strip() for line in header_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+        if not lines:
+            return None
+        parts = lines[0].split()
+        if len(parts) < 4:
+            return None
+        try:
+            n_leads = int(parts[1])
+            n_samples = int(parts[3])
+        except ValueError:
+            return None
+        sig_lines = [line.split() for line in lines[1:] if not line.startswith("#")]
+        if len(sig_lines) < n_leads:
+            return None
+        dat_name = sig_lines[0][0]
+        if any(len(fields) < 3 or fields[0] != dat_name or fields[1] != "16" for fields in sig_lines[:n_leads]):
+            return None
+        dat_path = header_path.with_name(dat_name)
+        if not dat_path.is_file():
+            return None
+        raw = np.fromfile(dat_path, dtype="<i2", count=n_samples * n_leads)
+        if raw.size != n_samples * n_leads:
+            return None
+        digital = raw.reshape(n_samples, n_leads).astype(np.float32)
+        gains = []
+        baselines = []
+        for fields in sig_lines[:n_leads]:
+            gain_field = fields[2]
+            match = re.match(r"([-+0-9.]+)(?:\(([-+0-9.]+)\))?", gain_field)
+            gain = float(match.group(1)) if match else 1.0
+            baseline = float(match.group(2)) if match and match.group(2) is not None else 0.0
+            gains.append(gain if gain else 1.0)
+            baselines.append(baseline)
+        return (digital - np.asarray(baselines, dtype=np.float32)) / np.asarray(gains, dtype=np.float32)
+
     def __len__(self) -> int:
         return len(self.rows)
 
@@ -110,6 +152,9 @@ class ParquetECGDataset(Dataset):
         )
         if is_wfdb_record:
             try:
+                direct = self._load_wfdb_format16(path)
+                if direct is not None:
+                    return direct.astype(np.float32, copy=False)
                 import wfdb
 
                 rec = wfdb.rdrecord(str(path.with_suffix("")))
