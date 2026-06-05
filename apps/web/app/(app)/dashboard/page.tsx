@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
 import { createSupabaseForUser } from "@/lib/supabase/server";
+import { getBillingStatus } from "@/lib/billing/status";
 
 interface Analysis {
   id: string;
@@ -13,6 +14,7 @@ interface Analysis {
 
 export default async function DashboardPage() {
   const { orgId, userId } = await auth();
+  const billing = await getBillingStatus();
 
   let analyses: Analysis[] | null = null;
   let fetchError: string | null = null;
@@ -34,8 +36,25 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10">
-      <h1 className="text-2xl font-bold">Panel</h1>
+    <div className="mx-auto max-w-5xl px-4 py-10">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">Panel HeartScan</h1>
+          <p className="mt-2 text-zinc-600">
+            Copilot ECG, auditoría, cuotas, trial.
+          </p>
+        </div>
+        <div className="rounded-2xl border border-zinc-200 bg-white p-4 text-sm shadow-sm">
+          <p className="font-semibold">Plan: {billing.plan}</p>
+          <p className="mt-1 text-zinc-600">Estado: {billing.subscriptionStatus}</p>
+          <p className="mt-1 text-zinc-600">
+            Trial: {billing.trialDaysLeft ?? "—"} días restantes
+          </p>
+          <Link href="/settings/billing" className="mt-3 inline-flex text-rose-700 underline">
+            Gestionar billing
+          </Link>
+        </div>
+      </div>
       <p className="mt-2 text-zinc-600">
         Usuario: <code className="rounded bg-zinc-100 px-1">{userId}</code>
       </p>
@@ -58,10 +77,24 @@ export default async function DashboardPage() {
       <div className="mt-8">
         <Link
           href="/analyze"
-          className="inline-flex rounded-lg bg-rose-600 px-4 py-2 text-white hover:bg-rose-700"
+          className={`inline-flex rounded-lg px-4 py-2 text-white ${
+            billing.canAnalyze ? "bg-rose-600 hover:bg-rose-700" : "bg-zinc-400"
+          }`}
         >
           Nuevo análisis
         </Link>
+      </div>
+      <div className="mt-8 grid gap-4 md:grid-cols-3">
+        {[
+          ["Security", "RLS tenant, private storage, audit chain"],
+          ["Workflow", "quality gate → AI assist → doctor review"],
+          ["Data", "retention, delete helpers, no PHI logs"],
+        ].map(([title, body]) => (
+          <div key={title} className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
+            <h2 className="font-semibold">{title}</h2>
+            <p className="mt-2 text-sm text-zinc-600">{body}</p>
+          </div>
+        ))}
       </div>
       {orgId && (
         <div className="mt-8">

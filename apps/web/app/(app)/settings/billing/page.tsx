@@ -1,16 +1,33 @@
-/** Placeholder — connect Clerk Billing or Stripe (see docs/adr/002-stripe-billing-plan.md). */
-export default function BillingSettingsPage() {
+import { BillingControls } from "./ui/billing-controls";
+import { plans } from "@/lib/billing/plans";
+import { getBillingStatus } from "@/lib/billing/status";
+
+export default async function BillingSettingsPage() {
+  const status = await getBillingStatus();
   return (
-    <div className="mx-auto max-w-2xl px-4 py-10">
+    <div className="mx-auto max-w-5xl px-4 py-10">
       <h1 className="text-2xl font-bold">Facturación</h1>
       <p className="mt-2 text-zinc-600">
-        Los planes y límites por organización se derivan del plan activo (roadmap).
+        Trial 7 días, checkout Stripe, portal cliente.
       </p>
-      <p className="mt-4 text-sm text-zinc-500">
-        Roadmap: integración Stripe / Clerk Billing documentada en el repo (
-        <code className="rounded bg-zinc-100 px-1">docs/adr/002-stripe-billing-plan.md</code>
-        ).
-      </p>
+      <div className="mt-6 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+        <p className="font-semibold">Plan actual: {status.plan}</p>
+        <p className="mt-1 text-sm text-zinc-600">Estado: {status.subscriptionStatus}</p>
+        <p className="mt-1 text-sm text-zinc-600">
+          Trial restante: {status.trialDaysLeft ?? "—"} días
+        </p>
+        <BillingControls />
+      </div>
+      <div className="mt-8 grid gap-4 md:grid-cols-3">
+        {plans.filter((p) => p.id !== "trial").map((plan) => (
+          <div key={plan.id} className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+            <h2 className="font-bold">{plan.name}</h2>
+            <p className="mt-2 text-2xl font-bold">{plan.price}</p>
+            <p className="mt-2 text-sm text-zinc-600">{plan.quota}</p>
+            <BillingControls planId={plan.id} />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

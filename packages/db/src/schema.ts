@@ -16,8 +16,11 @@ export const companies = pgTable(
   {
     id: text("id").primaryKey(),
     name: text("name").notNull(),
-    plan: text("plan").notNull().default("free"),
+    plan: text("plan").notNull().default("trial"),
     stripeCustomerId: text("stripe_customer_id"),
+    stripeSubscriptionId: text("stripe_subscription_id"),
+    subscriptionStatus: text("subscription_status").notNull().default("trialing"),
+    trialEndsAt: timestamp("trial_ends_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -145,4 +148,45 @@ export const auditLog = pgTable(
       .defaultNow(),
   },
   (t) => [index("audit_log_company_created_idx").on(t.companyId, t.createdAt)],
+);
+
+export const billingEvents = pgTable(
+  "billing_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    stripeEventId: text("stripe_event_id").notNull(),
+    companyId: text("company_id")
+      .notNull()
+      .references(() => companies.id, { onDelete: "cascade" }),
+    eventType: text("event_type").notNull(),
+    payload: jsonb("payload").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    unique("billing_events_stripe_event_uq").on(t.stripeEventId),
+    index("billing_events_company_created_idx").on(t.companyId, t.createdAt),
+  ],
+);
+
+export const workflowRuns = pgTable(
+  "workflow_runs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    companyId: text("company_id")
+      .notNull()
+      .references(() => companies.id, { onDelete: "cascade" }),
+    workflowType: text("workflow_type").notNull(),
+    status: text("status").notNull().default("running"),
+    externalId: text("external_id"),
+    state: jsonb("state").notNull().default({}),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [index("workflow_runs_company_status_idx").on(t.companyId, t.status)],
 );

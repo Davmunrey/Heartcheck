@@ -79,3 +79,14 @@ flowchart TB
 
 - `flutter run -d chrome` con landing + upload + resultados contra API local.
 - README con pasos de un solo comando o script documentado.
+
+## Actualización 2026-06-05
+
+Base SaaS web añadida en Next.js:
+
+- Landing enterprise, copilot, security, pricing, enterprise.
+- Trial 7 días por organización.
+- Billing settings con checkout/portal Stripe server-side.
+- Stripe webhook HMAC + evento idempotente.
+- Supabase migration para `trial_ends_at`, subscription, `billing_events`, `workflow_runs`.
+- Ver arquitectura operacional en [`docs/SAAS_ECOSYSTEM.md`](SAAS_ECOSYSTEM.md).

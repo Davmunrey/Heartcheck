@@ -1,6 +1,6 @@
 # ADR 002 — Plan de facturación Stripe (no implementado todavía)
 
-- Estado: **Aceptado como plan**, sin implementación.
+- Estado: **Base implementada**, pendiente configuración Stripe real + tests webhook.
 - Fecha: 2026-04-18.
 - Decisores: equipo HeartScan.
 
@@ -38,3 +38,11 @@ Cuando se priorice, abrir issue con:
 - Diseño detallado del webhook idempotente.
 - Tests de integración con `stripe-mock` o `stripe-cli listen`.
 - Plan de migración de usuarios beta a planes pagos.
+
+## Implementación 2026-06-05
+
+- `POST /api/billing/checkout` crea Stripe Checkout vía REST si `STRIPE_SECRET_KEY` y price id existen.
+- `POST /api/billing/portal` crea Customer Portal si existe `stripe_customer_id`.
+- `POST /api/webhooks/stripe` valida `Stripe-Signature` con HMAC SHA-256.
+- `billing_events.stripe_event_id` único para idempotencia.
+- `companies` incluye `trial_ends_at`, `subscription_status`, `stripe_subscription_id`.

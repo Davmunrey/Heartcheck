@@ -21,6 +21,9 @@ export default function AppShellLayout({
               <Link href="/analyze" className="hover:text-zinc-900">
                 Analizar
               </Link>
+              <Link href="/settings/billing" className="hover:text-zinc-900">
+                Billing
+              </Link>
               <Link href="/onboarding/create-organization" className="hover:text-zinc-900">
                 Organización
               </Link>
