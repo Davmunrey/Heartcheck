@@ -36,4 +36,5 @@ where = ["."]
 include = ["heartscan_ml*"]
 
 [tool.pytest.ini_options]
+pythonpath = [".."]
 testpaths = ["tests"]
