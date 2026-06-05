@@ -67,18 +67,21 @@ jobs:
             git add apps/ml-api/weights/
             git commit -m "auto-train: promote new checkpoint"
             git push -u origin "$BRANCH"
+            cat > /tmp/auto-train-pr-body.md <<'EOF'
+          Automatic promotion from the weekly trainer. Compare eval reports in the run artefacts.
+
+          ## IMPORTANT: Cardiology Sign-Off Required
+
+          This PR promotes a new ML model checkpoint for clinical ECG classification.
+          A qualified cardiologist MUST review and approve this PR before merging.
+
+          - [ ] Cardiologist has reviewed the eval report and confusion matrix
+          - [ ] Performance regressions on known arrhythmia classes have been investigated
+          - [ ] Model has been validated against held-out clinical test set
+          - [ ] Sign-off documented in PR comments by @cardiology-reviewers
+          EOF
             gh pr create --title "auto-train: promote new checkpoint" \
-              --body "Automatic promotion from the weekly trainer. Compare eval reports in the run artefacts.
-
-## IMPORTANT: Cardiology Sign-Off Required
-
-This PR promotes a new ML model checkpoint for clinical ECG classification.
-A qualified cardiologist MUST review and approve this PR before merging.
-
-- [ ] Cardiologist has reviewed the eval report and confusion matrix
-- [ ] Performance regressions on known arrhythmia classes have been investigated
-- [ ] Model has been validated against held-out clinical test set
-- [ ] Sign-off documented in PR comments by @cardiology-reviewers" \
+              --body-file /tmp/auto-train-pr-body.md \
               --label "auto-train" \
               --label "requires-cardiology-review"
           else

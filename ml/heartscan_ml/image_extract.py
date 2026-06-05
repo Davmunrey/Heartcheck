@@ -86,7 +86,6 @@ def bytes_to_gray(data: bytes) -> np.ndarray:
 
 def single_lead_to_12(single: np.ndarray) -> np.ndarray:
     """(T,) -> (12, T) misma señal en todos los canales."""
-    t = single.shape[0]
     return np.tile(single[np.newaxis, :], (12, 1)).astype(np.float32)
 
 

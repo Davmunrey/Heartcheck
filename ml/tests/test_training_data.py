@@ -9,9 +9,9 @@ import pytest
 pa = pytest.importorskip("pyarrow")
 pq = pytest.importorskip("pyarrow.parquet")
 
-from ml.training.data import PTBXLDiagnosticDataset, ParquetECGDataset
-from ml.training.pretrain import _classification_report, _class_weights
-from ml.training.train_multilabel import FocalBCEWithLogitsLoss, _multilabel_report, tune_thresholds
+from ml.training.data import PTBXLDiagnosticDataset, ParquetECGDataset  # noqa: E402
+from ml.training.pretrain import _classification_report, _class_weights  # noqa: E402
+from ml.training.train_multilabel import FocalBCEWithLogitsLoss, _multilabel_report, tune_thresholds  # noqa: E402
 
 
 def test_suffixless_wfdb_record_loads(tmp_path, monkeypatch):

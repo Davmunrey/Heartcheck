@@ -11,7 +11,6 @@ import sys
 from pathlib import Path
 from typing import Iterator
 
-from ml.datasets._common import http_download
 from ml.datasets.labels import map_code15
 from ml.datasets.registry import CLASS_TO_ID, Dataset, Sample
 

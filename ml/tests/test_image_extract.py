@@ -3,7 +3,7 @@ import pytest
 
 cv2 = pytest.importorskip("cv2")
 
-from heartscan_ml.image_extract import extract_lead_1d_from_gray, single_lead_to_12
+from heartscan_ml.image_extract import extract_lead_1d_from_gray, single_lead_to_12  # noqa: E402
 
 
 def test_synthetic_trace():
