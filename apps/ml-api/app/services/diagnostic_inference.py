@@ -145,7 +145,7 @@ def _to_channel_first(raw: np.ndarray) -> np.ndarray:
 def _resample(lead: np.ndarray, fs_in: int, fs_out: int) -> np.ndarray:
     if fs_in == fs_out or len(lead) < 2:
         return lead
-    n_out = int(round(len(lead) * fs_out / fs_in))
+    n_out = round(len(lead) * fs_out / fs_in)
     if n_out < 2:
         return lead
     x_in = np.linspace(0.0, 1.0, num=len(lead))
