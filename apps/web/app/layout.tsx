@@ -1,5 +1,5 @@
 import { ClerkProvider } from "@clerk/nextjs";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -13,9 +13,54 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://heartscan.app";
+const DESCRIPTION =
+  "Clinical ECG copilot for care teams: upload an ECG, gate quality, get " +
+  "calibrated interpretive support, export a report, keep an audit trail. " +
+  "Decision support with human review — not an autonomous diagnosis.";
+
 export const metadata: Metadata = {
-  title: "HeartScan",
-  description: "Análisis educativo de ECG desde una foto — no sustituye valoración clínica.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "HeartScan — Clinical ECG Copilot",
+    template: "%s · HeartScan",
+  },
+  description: DESCRIPTION,
+  applicationName: "HeartScan",
+  keywords: [
+    "ECG",
+    "electrocardiogram",
+    "clinical decision support",
+    "cardiology copilot",
+    "12-lead ECG analysis",
+    "ECG triage",
+    "medical AI",
+  ],
+  authors: [{ name: "HeartScan" }],
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    siteName: "HeartScan",
+    title: "HeartScan — Clinical ECG Copilot",
+    description: DESCRIPTION,
+    url: SITE_URL,
+    locale: "es_ES",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "HeartScan — Clinical ECG Copilot",
+    description: DESCRIPTION,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large" },
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#17211f",
+  colorScheme: "light",
 };
 
 export default function RootLayout({
