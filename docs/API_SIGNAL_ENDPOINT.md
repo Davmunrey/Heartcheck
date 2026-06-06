@@ -69,9 +69,16 @@ the PTB-XL diagnostic superclasses: `NORM, MI, STTC, CD, HYP`.
 ## Known limitation
 
 The current champion (PTB-XL + Georgia) under-detects subtle **MI** and **HYP**
-(see [`MODEL_CARD.md`](MODEL_CARD.md)). A focal-loss fine-tune on the
-Chapman-augmented blend is the planned improvement; until promoted, treat
-non-NORM negatives with appropriate clinical caution.
+(see [`MODEL_CARD.md`](MODEL_CARD.md)). A focal-loss fine-tune is the planned
+improvement; until promoted, treat non-NORM negatives with appropriate clinical
+caution.
+
+To retrain locally once datasets are downloaded to a non-iCloud path
+(`~/heartscan_data`), run [`scripts/retrain_local.sh`](../scripts/retrain_local.sh)
+(manifest → split → focal fine-tune from champion → calibrate → evaluate). It
+guards against zero-stub training on a partial download and does **not**
+auto-promote — review `eval_test.json`, then point the API at the new
+checkpoint via `HEARTSCAN_DIAGNOSTIC_MODEL_PATH`.
 
 ## Web integration (in-app)
 
