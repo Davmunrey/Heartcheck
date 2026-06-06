@@ -78,6 +78,31 @@ On the mixed PTB-XL + Georgia test split, the same checkpoint reaches
 PTB-only checkpoint on the earlier mixed snapshot test (`Macro-F1=0.7000`,
 `Exact=0.5535`, `Hamming=0.8587`).
 
+#### Focal fine-tune on full PTB-XL (2026-06-06) — current served model
+
+Re-run via [`scripts/retrain_local.sh`](../scripts/retrain_local.sh) against the
+full PTB-XL 1.0.3 (21,799 records, local non-iCloud root), focal loss,
+fine-tuned from the previous champion. Served by the API when
+`HEARTSCAN_DIAGNOSTIC_MODEL_PATH` points at it.
+
+| Field | Value |
+|-------|-------|
+| Checkpoint | `runs/local/focal_from_champion/checkpoint.pt` (git-ignored artifact) |
+| Test rows | `2,118` held-out PTB-XL |
+| Macro-F1 | `0.7551` · Exact `0.626` · Hamming `0.890` |
+| Per-class F1 | `NORM=0.879`, `MI=0.778`, `STTC=0.765`, `CD=0.801`, `HYP=0.552` |
+
+Versus the checkpoint previously wired as the API default
+(`finetune_12e_from_8857`, `HYP F1≈0.495`, `MI F1≈0.692` on its own val), this
+notably improves the two weak classes — **MI precision 0.58→0.80, HYP precision
+0.35→0.53** — so it is promoted as the served diagnostic model. `HYP` is still
+the weakest class; treat non-NORM negatives with clinical caution.
+
+> Known issue: the temperature/conformal `calibrate.py` step assumes a
+> single-label logits shape and currently errors on the 5-way multi-label head
+> (non-fatal; the checkpoint ships per-class tuned thresholds). Multi-label
+> calibration is tracked as follow-up.
+
 ## Evaluation data
 
 - **Synthetic**: described in [`docs/DATASHEET_SYNTH.md`](DATASHEET_SYNTH.md). Generated deterministically per seed; covers perspective, blur, glare and shading augmentations.
