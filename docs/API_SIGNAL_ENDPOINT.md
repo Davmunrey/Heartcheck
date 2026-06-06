@@ -73,6 +73,19 @@ The current champion (PTB-XL + Georgia) under-detects subtle **MI** and **HYP**
 Chapman-augmented blend is the planned improvement; until promoted, treat
 non-NORM negatives with appropriate clinical caution.
 
+## Web integration (in-app)
+
+The logged-in console wires this endpoint through a Clerk-authenticated server
+action — the browser never holds the ML token:
+
+- Server action `analyzeSignalAction` —
+  [`apps/web/app/(app)/analyze/actions.ts`](../apps/web/app/(app)/analyze/actions.ts)
+  (Bearer Clerk JWT + `X-Organization-Id`, 30s timeout).
+- UI with a photo/signal mode toggle and a findings table —
+  [`apps/web/app/(app)/analyze/ui/analyze-client.tsx`](../apps/web/app/(app)/analyze/ui/analyze-client.tsx).
+- Boundary-safe parser —
+  [`apps/web/lib/analyze/diagnostic.ts`](../apps/web/lib/analyze/diagnostic.ts).
+
 ## cURL example
 
 ```bash
