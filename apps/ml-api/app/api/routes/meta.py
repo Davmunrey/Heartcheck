@@ -17,6 +17,7 @@ from typing import Any
 from fastapi import APIRouter, Depends
 
 from app.core.config import Settings, get_settings
+from app.services import diagnostic_inference as diag
 from app.services import inference as inf
 
 router = APIRouter(prefix="/api/v1", tags=["meta"])
@@ -36,4 +37,10 @@ def meta(settings: Settings = Depends(get_settings)) -> dict[str, Any]:
     manifest = inf.get_manifest()
     if manifest is not None:
         payload["model"] = manifest.public_meta()
+    payload["diagnostic_model"] = {
+        "loaded": diag.is_loaded(),
+        "version": diag.model_version(),
+        "classes": list(diag.SUPERCLASS_ORDER),
+        "wedge": "signal-12-lead",
+    }
     return payload

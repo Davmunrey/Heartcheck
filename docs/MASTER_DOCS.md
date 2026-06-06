@@ -26,6 +26,7 @@ this index.
 - [`CANONICAL_PROJECT_PATH.md`](CANONICAL_PROJECT_PATH.md) — repo location convention.
 - [`E2E_CLIENTS.md`](E2E_CLIENTS.md) — running web SPA, web static and mobile against the same backend.
 - [`API_PARITY.md`](API_PARITY.md) — FastAPI vs `heartscan_ml` response contract.
+- [`API_SIGNAL_ENDPOINT.md`](API_SIGNAL_ENDPOINT.md) — 12-lead diagnostic endpoint (`/api/v1/analyze/signal`), signal wedge.
 - [`REPORTING.md`](REPORTING.md) — server-side PDF report endpoint.
 - [`i18n.md`](i18n.md) — Spanish/English handling across clients and API.
 

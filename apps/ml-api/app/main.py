@@ -11,7 +11,16 @@ from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
-from app.api.routes import analyze, auth, education, feedback, health, meta, reports
+from app.api.routes import (
+    analyze,
+    analyze_signal,
+    auth,
+    education,
+    feedback,
+    health,
+    meta,
+    reports,
+)
 from app.core.config import get_settings
 from app.core.limiter import limiter
 from app.core.logging import configure_logging, get_logger
@@ -182,6 +191,7 @@ def create_app() -> FastAPI:
     if settings.auth_legacy_enabled:
         app.include_router(auth.router)
     app.include_router(analyze.router)
+    app.include_router(analyze_signal.router)
     app.include_router(education.router)
     app.include_router(reports.router)
     app.include_router(feedback.router)
