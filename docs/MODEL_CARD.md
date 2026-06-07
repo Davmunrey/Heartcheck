@@ -117,13 +117,26 @@ trained on a MIT-BIH-style beat-image set (`ECG_Image_data`, 6 AAMI classes
 | Test macro-F1 | `0.994` · accuracy `0.999` |
 | Per-class F1 | `F=1.00, M=1.00, N=1.00, Q=1.00, S=0.97, V=0.99` |
 
-**⚠️ Do not read this as clinical performance.** No direct file/content leakage
-was found (0 shared names, 0 identical images train↔test), but the filenames
-carry no patient id, so the split is **beat-level / intra-patient**: beats from
-the same patients appear in train and test. Intra-patient MIT-BIH splits are
-known to massively overstate real-world accuracy; inter-patient evaluation
-typically lands far lower. This model needs a **patient-disjoint split** before
-any claim or production use. Tracked as follow-up.
+**⚠️ Do not read this as clinical performance — this model is NOT deployable.**
+
+Two independent checks show the headline number is misleading:
+
+1. *Split.* No direct file/content leakage (0 shared names, 0 identical images
+   train↔test), but the filenames carry no patient id and the dataset ships no
+   metadata, so a patient-disjoint split cannot be built or verified. The
+   provider's beat-level split is almost certainly intra-patient, which
+   overstates real accuracy.
+2. *Brittleness (decisive).* Under mild Gaussian noise the model collapses far
+   below chance: macro-F1 `0.994 → 0.010` (acc `0.999 → 0.031`) at `σ=0.1` on
+   the normalised input. A robust morphology classifier would degrade
+   gracefully. This collapse means the CNN memorised the exact pixel signature
+   of this specific rendering rather than ECG morphology — it would fail on a
+   photo of a screen, a different plot style, or any real-world variation.
+
+Treat the beat-image checkpoint as a **negative result / baseline only**. A
+deployable image wedge needs: heavy augmentation (noise/blur/rotation), a
+patient-disjoint dataset with metadata, and likely the digitise-to-1D-signal
+path (reusing the strong 12-lead model) rather than raw-pixel classification.
 
 ## Evaluation data
 
