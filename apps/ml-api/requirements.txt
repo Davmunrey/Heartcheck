@@ -13,7 +13,7 @@ httpx>=0.28.1,<1
 reportlab>=4.0.0,<5
 PyYAML>=6.0.0,<7
 pyarrow>=24.0.0,<25  # used by ml.datasets.cli manifest and ml.training.data
-sqlalchemy>=2.0.0,<3
+sqlalchemy>=2.0.50,<3
 psycopg2-binary>=2.9.9,<3
 passlib[bcrypt]>=1.7.4,<2
 # passlib 1.7.x (último release) sigue acoplado a la API antigua de bcrypt;
