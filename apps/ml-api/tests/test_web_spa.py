@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 def test_landing_page(client: TestClient) -> None:
     r = client.get("/")
     assert r.status_code == 200
-    assert "HeartScan" in r.text
+    assert "Axis" in r.text
 
 
 def test_web_app_page(client: TestClient) -> None:

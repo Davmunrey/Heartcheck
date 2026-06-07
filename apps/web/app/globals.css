@@ -1,26 +1,85 @@
 @import "tailwindcss";
 
+/* ============================================================
+   AXIS — ECG Copilot · Design System
+   blue = product · red = signal. Editorial: stark, flat, square,
+   thick borders, big type.  Tokens mirror the brand book.
+   ============================================================ */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Paper & ink */
+  --paper: #f4f6fa;
+  --paper-2: #e9edf4;
+  --surface: #ffffff;
+  --ink: #0b1a2b;
+  --ink-2: #46586e;
+  --ink-3: #8493a6;
+  --line: #e2e7ef;
+  --line-2: #c9d2df;
+
+  /* Brand: clinical blue (product / UI) */
+  --brand: #1b5fd9;
+  --brand-strong: #0e3e9b;
+  --brand-bright: #3d7bff;
+  --brand-tint: #e6eefc;
+
+  /* Signal: ECG red (the patient's trace) */
+  --signal: #e5202a;
+  --signal-bright: #ff3b43;
+  --signal-700: #c20d17;
+  --signal-tint: #fce4e5;
+
+  /* Clinical status (maps to API green|yellow|red) */
+  --ok: #138a5e;
+  --ok-tint: #e2f4ec;
+  --warn: #b97d00;
+  --warn-tint: #faefd2;
+  --crit: #d2363b;
+  --crit-tint: #fbe3e4;
+
+  /* Dark reading canvas (ECG viewer / hero) */
+  --scope: #060b14;
+  --scope-2: #0b121e;
+  --scope-ink: #c7d2e4;
+
+  /* compatibility aliases for existing components */
+  --background: var(--paper);
+  --foreground: var(--ink);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: var(--paper);
+  --color-foreground: var(--ink);
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-line: var(--line);
+  --color-line-2: var(--line-2);
+  --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
+  --color-brand-bright: var(--brand-bright);
+  --color-brand-tint: var(--brand-tint);
+  --color-signal: var(--signal);
+  --color-signal-bright: var(--signal-bright);
+  --color-signal-700: var(--signal-700);
+  --color-signal-tint: var(--signal-tint);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-crit: var(--crit);
+  --color-scope: var(--scope);
+  --color-scope-2: var(--scope-2);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-geist-sans), "Hanken Grotesk", system-ui, sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }

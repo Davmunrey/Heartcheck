@@ -1,0 +1,199 @@
+{
+  "config": {
+    "manifest": "/Users/mac/dev/Heartcheck/runs/local/manifest_split.parquet",
+    "out_dir": "/Users/mac/dev/Heartcheck/runs/local/focal_from_champion",
+    "epochs": 10,
+    "batch_size": 128,
+    "lr": 3e-05,
+    "weight_decay": 0.0001,
+    "target_len": 1024,
+    "target_fs": 100,
+    "seed": 1234,
+    "num_workers": 0,
+    "threshold": 0.5,
+    "loss": "focal",
+    "focal_gamma": 2.0,
+    "threshold_metric": "f1",
+    "monitor": "tuned_macro_f1",
+    "augment": true,
+    "init_checkpoint": "/Users/mac/dev/Heartcheck/runs/auto/ptbxl_georgia_full/finetune_12e_from_8857/checkpoint.pt"
+  },
+  "classes": [
+    "NORM",
+    "MI",
+    "STTC",
+    "CD",
+    "HYP"
+  ],
+  "class_combo_counts_train": {
+    "NORM": 7256,
+    "STTC": 1917,
+    "HYP": 438,
+    "MI,STTC": 482,
+    "CD,HYP": 236,
+    "CD": 1351,
+    "MI,CD": 1031,
+    "MI": 2036,
+    "STTC,CD": 357,
+    "MI,HYP": 153,
+    "MI,STTC,HYP": 300,
+    "MI,STTC,CD,HYP": 132,
+    "STTC,HYP": 631,
+    "NORM,CD": 323,
+    "MI,STTC,CD": 177,
+    "STTC,CD,HYP": 171,
+    "NORM,STTC": 19,
+    "MI,CD,HYP": 85,
+    "NORM,STTC,CD": 4,
+    "NORM,CD,HYP": 2,
+    "NORM,HYP": 2
+  },
+  "n_train": 17103,
+  "n_val": 2167,
+  "device": "mps",
+  "best_val_score": 0.7493844723779715,
+  "monitor": "tuned_macro_f1",
+  "validation": {
+    "threshold": [
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5
+    ],
+    "macro_f1": 0.7302642311649624,
+    "macro_precision": 0.6586086481803979,
+    "macro_recall": 0.8436580307050081,
+    "exact_match": 0.5389940009229349,
+    "hamming_accuracy": 0.8619289340101522,
+    "classes": [
+      "NORM",
+      "MI",
+      "STTC",
+      "CD",
+      "HYP"
+    ],
+    "per_class": {
+      "NORM": {
+        "precision": 0.8788501026694046,
+        "recall": 0.8842975206611571,
+        "f1": 0.8815653964984552,
+        "support": 968,
+        "tp": 856,
+        "fp": 118,
+        "fn": 112
+      },
+      "MI": {
+        "precision": 0.7033639143730887,
+        "recall": 0.8409506398537477,
+        "f1": 0.7660283097418817,
+        "support": 547,
+        "tp": 460,
+        "fp": 194,
+        "fn": 87
+      },
+      "STTC": {
+        "precision": 0.6415343915343915,
+        "recall": 0.8754512635379061,
+        "f1": 0.7404580152671756,
+        "support": 554,
+        "tp": 485,
+        "fp": 271,
+        "fn": 69
+      },
+      "CD": {
+        "precision": 0.7061769616026711,
+        "recall": 0.844311377245509,
+        "f1": 0.769090909090909,
+        "support": 501,
+        "tp": 423,
+        "fp": 176,
+        "fn": 78
+      },
+      "HYP": {
+        "precision": 0.36311787072243346,
+        "recall": 0.7732793522267206,
+        "f1": 0.49417852522639066,
+        "support": 247,
+        "tp": 191,
+        "fp": 335,
+        "fn": 56
+      }
+    }
+  },
+  "tuned_thresholds": [
+    0.39999999999999997,
+    0.65,
+    0.65,
+    0.5499999999999999,
+    0.65
+  ],
+  "validation_tuned": {
+    "threshold": [
+      0.4000000059604645,
+      0.6499999761581421,
+      0.6499999761581421,
+      0.550000011920929,
+      0.6499999761581421
+    ],
+    "macro_f1": 0.7493844723779715,
+    "macro_precision": 0.7281049187825743,
+    "macro_recall": 0.7747220133403964,
+    "exact_match": 0.615597600369174,
+    "hamming_accuracy": 0.8881402861098292,
+    "classes": [
+      "NORM",
+      "MI",
+      "STTC",
+      "CD",
+      "HYP"
+    ],
+    "per_class": {
+      "NORM": {
+        "precision": 0.840297121634169,
+        "recall": 0.9349173553719008,
+        "f1": 0.8850855745721272,
+        "support": 968,
+        "tp": 905,
+        "fp": 172,
+        "fn": 63
+      },
+      "MI": {
+        "precision": 0.8106508875739645,
+        "recall": 0.7513711151736746,
+        "f1": 0.7798861480075902,
+        "support": 547,
+        "tp": 411,
+        "fp": 96,
+        "fn": 136
+      },
+      "STTC": {
+        "precision": 0.7601410934744268,
+        "recall": 0.7779783393501805,
+        "f1": 0.7689562890276539,
+        "support": 554,
+        "tp": 431,
+        "fp": 136,
+        "fn": 123
+      },
+      "CD": {
+        "precision": 0.7379679144385026,
+        "recall": 0.8263473053892215,
+        "f1": 0.7796610169491525,
+        "support": 501,
+        "tp": 414,
+        "fp": 147,
+        "fn": 87
+      },
+      "HYP": {
+        "precision": 0.49146757679180886,
+        "recall": 0.582995951417004,
+        "f1": 0.5333333333333333,
+        "support": 247,
+        "tp": 144,
+        "fp": 149,
+        "fn": 103
+      }
+    }
+  }
+}

@@ -31,7 +31,7 @@ Body:    multipart/form-data
   "model_version": "ecg-resnet1d-ptbxl-multilabel-0.1.0",
   "pipeline_version": "0.1.0",
   "request_id": "…",
-  "disclaimer": "HeartScan is a clinical decision-support copilot …",
+  "disclaimer": "Axis is a clinical decision-support copilot …",
   "analysis_limit": ["12-lead diagnostic superclasses only …", …]
 }
 ```

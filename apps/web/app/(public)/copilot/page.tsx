@@ -16,7 +16,7 @@ export default function CopilotPage() {
           Ayuda clínica trazable, no caja negra autónoma.
         </h1>
         <p className="mt-5 max-w-2xl leading-7 text-white/70">
-          HeartScan prepara casos, reduce fricción, genera evidencia operativa.
+          Axis prepara casos, reduce fricción, genera evidencia operativa.
           Médico conserva decisión final. Cada paso queda auditable.
         </p>
         <div className="mt-10 grid gap-4 md:grid-cols-3">

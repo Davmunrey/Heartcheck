@@ -2,7 +2,7 @@
 
 - Estado: **Base implementada**, pendiente configuración Stripe real + tests webhook.
 - Fecha: 2026-04-18.
-- Decisores: equipo HeartScan.
+- Decisores: equipo Axis.
 
 ## Contexto
 

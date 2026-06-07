@@ -1,0 +1,7 @@
+{
+  "temperature": 0.7916440369068478,
+  "multilabel": true,
+  "bce_raw": 0.3184251293621117,
+  "bce_calibrated": 0.3121796811441728,
+  "n_val": 2167
+}

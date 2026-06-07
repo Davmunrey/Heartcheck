@@ -1,6 +1,6 @@
 # Clerk authentication
 
-HeartScan uses [Clerk](https://clerk.com) for **users** and **Organizations** (multi-tenant companies).
+Axis uses [Clerk](https://clerk.com) for **users** and **Organizations** (multi-tenant companies).
 
 ## JWT template `supabase`
 

@@ -1,4 +1,4 @@
-# HeartScan — Deployment (Vercel + Fly.io + Supabase + Clerk)
+# Axis — Deployment (Vercel + Fly.io + Supabase + Clerk)
 
 This document defines **three environments**, required **secrets**, and how services connect.  
 Clerk handles **users and Organizations** (companies). Supabase provides **Postgres + Storage** with **RLS** scoped by `org_id` in the JWT. The **ML API** (FastAPI + PyTorch) runs **outside** Vercel on Fly.io (or Render).

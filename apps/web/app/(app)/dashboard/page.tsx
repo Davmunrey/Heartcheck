@@ -39,7 +39,7 @@ export default async function DashboardPage() {
     <div className="mx-auto max-w-5xl px-4 py-10">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Panel HeartScan</h1>
+          <h1 className="text-2xl font-bold">Panel Axis</h1>
           <p className="mt-2 text-zinc-600">
             Copilot ECG, auditoría, cuotas, trial.
           </p>

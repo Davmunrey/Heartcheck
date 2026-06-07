@@ -1,6 +1,6 @@
-# When NOT to use HeartScan
+# When NOT to use Axis
 
-HeartScan is an **educational** tool. It does **not** diagnose, triage or replace clinical care. Do not use HeartScan in any of the following situations.
+Axis is an **educational** tool. It does **not** diagnose, triage or replace clinical care. Do not use Axis in any of the following situations.
 
 ## Emergency
 
@@ -18,7 +18,7 @@ HeartScan is an **educational** tool. It does **not** diagnose, triage or replac
 - Recent cardiac surgery, ablation, or stent.
 - Hereditary syndromes (long QT, Brugada, hypertrophic cardiomyopathy, etc.).
 
-→ Follow your cardiologist's monitoring plan. HeartScan's signal is too coarse to add value here.
+→ Follow your cardiologist's monitoring plan. Axis's signal is too coarse to add value here.
 
 ## Pregnancy or paediatric use
 
@@ -30,8 +30,8 @@ HeartScan is an **educational** tool. It does **not** diagnose, triage or replac
 
 ## Marketing or compliance contexts
 
-- HeartScan must never appear in marketing copy as a diagnostic device. See [`docs/legal/DRAFT_NOTICE.md`](legal/DRAFT_NOTICE.md).
-- For regulated jurisdictions (EU MDR, FDA SaMD), HeartScan as currently shipped does not meet the bar for a medical device.
+- Axis must never appear in marketing copy as a diagnostic device. See [`docs/legal/DRAFT_NOTICE.md`](legal/DRAFT_NOTICE.md).
+- For regulated jurisdictions (EU MDR, FDA SaMD), Axis as currently shipped does not meet the bar for a medical device.
 
 ## What the product *can* help with
 

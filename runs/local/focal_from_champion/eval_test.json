@@ -1,0 +1,73 @@
+{
+  "threshold": [
+    0.4000000059604645,
+    0.6499999761581421,
+    0.6499999761581421,
+    0.550000011920929,
+    0.6499999761581421
+  ],
+  "macro_f1": 0.7551142095584356,
+  "macro_precision": 0.7341378603053347,
+  "macro_recall": 0.778816297063529,
+  "exact_match": 0.6260623229461756,
+  "hamming_accuracy": 0.8902738432483475,
+  "classes": [
+    "NORM",
+    "MI",
+    "STTC",
+    "CD",
+    "HYP"
+  ],
+  "per_class": {
+    "NORM": {
+      "precision": 0.8284637134778511,
+      "recall": 0.9351063829787234,
+      "f1": 0.8785607196401799,
+      "support": 940,
+      "tp": 879,
+      "fp": 182,
+      "fn": 61
+    },
+    "MI": {
+      "precision": 0.798,
+      "recall": 0.7585551330798479,
+      "f1": 0.7777777777777778,
+      "support": 526,
+      "tp": 399,
+      "fp": 101,
+      "fn": 127
+    },
+    "STTC": {
+      "precision": 0.7475728155339806,
+      "recall": 0.7841140529531568,
+      "f1": 0.7654075546719682,
+      "support": 491,
+      "tp": 385,
+      "fp": 130,
+      "fn": 106
+    },
+    "CD": {
+      "precision": 0.7655172413793103,
+      "recall": 0.8409090909090909,
+      "f1": 0.8014440433212997,
+      "support": 528,
+      "tp": 444,
+      "fp": 136,
+      "fn": 84
+    },
+    "HYP": {
+      "precision": 0.5311355311355311,
+      "recall": 0.5753968253968254,
+      "f1": 0.5523809523809523,
+      "support": 252,
+      "tp": 145,
+      "fp": 128,
+      "fn": 107
+    }
+  },
+  "manifest": "/Users/mac/dev/Heartcheck/runs/local/manifest_split.parquet",
+  "checkpoint": "/Users/mac/dev/Heartcheck/runs/local/focal_from_champion/checkpoint.pt",
+  "split": "test",
+  "n": 2118,
+  "device": "mps"
+}

@@ -1,6 +1,6 @@
-# Evaluación del modelo (HeartScan)
+# Evaluación del modelo (Axis)
 
-HeartScan analiza **fotos** de tiras de ECG, no señales digitales limpias. La evaluación tiene que medir explícitamente la brecha **foto ↔ señal** además de la calidad del clasificador. La fuente de verdad ejecutable es [`apps/ml-api/app/eval/`](../apps/ml-api/app/eval/) y el comando único:
+Axis analiza **fotos** de tiras de ECG, no señales digitales limpias. La evaluación tiene que medir explícitamente la brecha **foto ↔ señal** además de la calidad del clasificador. La fuente de verdad ejecutable es [`apps/ml-api/app/eval/`](../apps/ml-api/app/eval/) y el comando único:
 
 ```bash
 make eval                              # genera synth y corre baseline vs candidato

@@ -1,4 +1,4 @@
-# HeartScan
+# Axis
 
 **Ruta canónica del monorepo (abre siempre esta carpeta en el IDE):**  
 `/Users/mac/Desktop/Heartcheck`  
@@ -91,7 +91,7 @@ docker compose -f infra/docker-compose.yml up --build
 
 ### Entrenar el clasificador con datasets públicos
 
-HeartScan ships untrained; cargar pesos reales requiere descargar uno o varios
+Axis ships untrained; cargar pesos reales requiere descargar uno o varios
 de los datasets catalogados en [`docs/DATASHEET_TRAINING.md`](docs/DATASHEET_TRAINING.md).
 
 **Modo autónomo** — un único comando que descarga, entrena, calibra, evalúa y
@@ -155,4 +155,4 @@ seguridad, ADRs) y la regla operativa para añadir nuevos documentos.
 
 ## Aviso
 
-HeartScan es un producto **informativo/educativo**. No sustituye valoración médica ni un electrocardiograma clínico completo.
+Axis es un producto **informativo/educativo**. No sustituye valoración médica ni un electrocardiograma clínico completo.

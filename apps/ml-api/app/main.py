@@ -151,7 +151,7 @@ def create_app() -> FastAPI:
     settings = get_settings()
     _production = os.getenv("HEARTSCAN_ENV", "development").lower() == "production"
     app = FastAPI(
-        title="HeartScan API",
+        title="Axis API",
         version="0.1.0",
         lifespan=lifespan,
         docs_url=None if _production else "/docs",

@@ -33,7 +33,7 @@ router = APIRouter(prefix="/api/v1", tags=["analyze"])
 _NPY_MAGIC = b"\x93NUMPY"
 
 DISCLAIMER = (
-    "HeartScan is a clinical decision-support copilot. Findings are probabilistic "
+    "Axis is a clinical decision-support copilot. Findings are probabilistic "
     "aids for a qualified clinician and must be confirmed by human review. It does "
     "not provide an autonomous diagnosis and does not replace a full clinical ECG."
 )

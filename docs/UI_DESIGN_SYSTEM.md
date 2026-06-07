@@ -1,6 +1,6 @@
-# Sistema visual de HeartScan
+# Sistema visual de Axis
 
-HeartScan tiene **dos superficies web con propósitos distintos**, y por tanto **dos pieles**. La decisión es explícita y se documenta para evitar drift.
+Axis tiene **dos superficies web con propósitos distintos**, y por tanto **dos pieles**. La decisión es explícita y se documenta para evitar drift.
 
 ## Superficies y pieles
 
@@ -9,7 +9,7 @@ HeartScan tiene **dos superficies web con propósitos distintos**, y por tanto *
 | Landing/SaaS pública (`web_public/`) | Visitantes, prospectos, usuarios autenticados en producción | Claro, alta densidad de contenido editorial | [`web_public/static/saas.css`](../web_public/static/saas.css) |
 | SPA Vite (`web/`) | Desarrolladores, beta-testers, integradores; eventual modo “laboratorio” | Oscuro, focalizado en el flujo de análisis | [`web/src/index.css`](../web/src/index.css) + [`web/src/App.css`](../web/src/App.css) |
 
-Marca compartida: nombre **HeartScan**, símbolo `♡`, mismo lenguaje (es-ES por defecto), mismo disclaimer médico, misma jerarquía Beta.
+Marca compartida: nombre **Axis**, símbolo `♡`, mismo lenguaje (es-ES por defecto), mismo disclaimer médico, misma jerarquía Beta.
 
 ## Tokens compartidos (referencia)
 

@@ -1,4 +1,4 @@
-# HeartScan SaaS Ecosystem
+# Axis SaaS Ecosystem
 
 Estado: arquitectura producto + base implementada. Uso clínico real requiere
 validación clínica, legal, privacidad, seguridad, regulación, contrato hospital.

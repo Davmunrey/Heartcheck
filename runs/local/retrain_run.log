@@ -1,0 +1,121 @@
+[check] PTB-XL records present: 21799 / 21799
+[1/5] manifest (ptb_xl) from /Users/mac/heartscan_data_full
+[manifest] wrote 21,799 rows to /Users/mac/dev/Heartcheck/runs/local/manifest.parquet
+[2/5] patient-stratified split
+[splits] wrote 21,799 rows to /Users/mac/dev/Heartcheck/runs/local/manifest_split.parquet
+  train   17,445  (arrhythmia=9469, noise=309, normal=7667)
+  val      2,202  (arrhythmia=1188, noise=40, normal=974)
+  test     2,152  (arrhythmia=1172, noise=35, normal=945)
+[3/5] focal fine-tune from champion (10 epochs)
+[epoch   1] loss=0.1479 val_f1=0.7303 tuned_f1=0.7494 exact=0.6156 hamming=0.8619 (34s)
+[epoch   2] loss=0.1282 val_f1=0.7309 tuned_f1=0.7470 exact=0.6114 hamming=0.8623 (30s)
+[epoch   3] loss=0.1198 val_f1=0.7304 tuned_f1=0.7455 exact=0.6105 hamming=0.8611 (30s)
+[epoch   4] loss=0.1152 val_f1=0.7313 tuned_f1=0.7462 exact=0.6119 hamming=0.8617 (33s)
+[epoch   5] loss=0.1130 val_f1=0.7316 tuned_f1=0.7466 exact=0.6105 hamming=0.8619 (28s)
+[epoch   6] loss=0.1105 val_f1=0.7293 tuned_f1=0.7454 exact=0.5981 hamming=0.8597 (28s)
+[epoch   7] loss=0.1101 val_f1=0.7257 tuned_f1=0.7457 exact=0.6105 hamming=0.8581 (33s)
+[epoch   8] loss=0.1092 val_f1=0.7316 tuned_f1=0.7451 exact=0.6179 hamming=0.8623 (33s)
+[epoch   9] loss=0.1072 val_f1=0.7276 tuned_f1=0.7469 exact=0.6078 hamming=0.8580 (34s)
+[epoch  10] loss=0.1093 val_f1=0.7288 tuned_f1=0.7473 exact=0.6068 hamming=0.8595 (31s)
+[done] best val tuned_macro_f1 = 0.7494; checkpoint at /Users/mac/dev/Heartcheck/runs/local/focal_from_champion/checkpoint.pt
+[4/5] calibrate
+/Users/mac/dev/Heartcheck/ml/training/calibrate.py:98: UserWarning: cal_logits.npz not found next to /Users/mac/dev/Heartcheck/runs/local/focal_from_champion/val_logits.npz; using full val set for calibration fitting.  Re-run pretrain.py to get a proper 3-way split.
+  warnings.warn(
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mac/dev/Heartcheck/ml/training/calibrate.py", line 125, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/Users/mac/dev/Heartcheck/ml/training/calibrate.py", line 106, in main
+    cal = calibrate(cal_logits, cal_labels, alpha=args.alpha)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mac/dev/Heartcheck/ml/training/calibrate.py", line 35, in calibrate
+    t_star = ts.calibrate(logits, labels)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mac/dev/Heartcheck/ml/heartscan_ml/calibration.py", line 39, in calibrate
+    best = (1.0, _nll(self.apply(logits), labels))
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mac/dev/Heartcheck/ml/heartscan_ml/calibration.py", line 62, in _nll
+    p = probs[np.arange(len(labels)), labels.astype(np.int64)]
+        ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+IndexError: shape mismatch: indexing arrays could not be broadcast together with shapes (2167,) (2167,5) 
+[warn] calibrate step skipped/failed (non-fatal)
+[5/5] evaluate on held-out test
+{
+  "threshold": [
+    0.4000000059604645,
+    0.6499999761581421,
+    0.6499999761581421,
+    0.550000011920929,
+    0.6499999761581421
+  ],
+  "macro_f1": 0.7551142095584356,
+  "macro_precision": 0.7341378603053347,
+  "macro_recall": 0.778816297063529,
+  "exact_match": 0.6260623229461756,
+  "hamming_accuracy": 0.8902738432483475,
+  "classes": [
+    "NORM",
+    "MI",
+    "STTC",
+    "CD",
+    "HYP"
+  ],
+  "per_class": {
+    "NORM": {
+      "precision": 0.8284637134778511,
+      "recall": 0.9351063829787234,
+      "f1": 0.8785607196401799,
+      "support": 940,
+      "tp": 879,
+      "fp": 182,
+      "fn": 61
+    },
+    "MI": {
+      "precision": 0.798,
+      "recall": 0.7585551330798479,
+      "f1": 0.7777777777777778,
+      "support": 526,
+      "tp": 399,
+      "fp": 101,
+      "fn": 127
+    },
+    "STTC": {
+      "precision": 0.7475728155339806,
+      "recall": 0.7841140529531568,
+      "f1": 0.7654075546719682,
+      "support": 491,
+      "tp": 385,
+      "fp": 130,
+      "fn": 106
+    },
+    "CD": {
+      "precision": 0.7655172413793103,
+      "recall": 0.8409090909090909,
+      "f1": 0.8014440433212997,
+      "support": 528,
+      "tp": 444,
+      "fp": 136,
+      "fn": 84
+    },
+    "HYP": {
+      "precision": 0.5311355311355311,
+      "recall": 0.5753968253968254,
+      "f1": 0.5523809523809523,
+      "support": 252,
+      "tp": 145,
+      "fp": 128,
+      "fn": 107
+    }
+  },
+  "manifest": "/Users/mac/dev/Heartcheck/runs/local/manifest_split.parquet",
+  "checkpoint": "/Users/mac/dev/Heartcheck/runs/local/focal_from_champion/checkpoint.pt",
+  "split": "test",
+  "n": 2118,
+  "device": "mps"
+}
+
+[done] new checkpoint: /Users/mac/dev/Heartcheck/runs/local/focal_from_champion/checkpoint.pt
+       review /Users/mac/dev/Heartcheck/runs/local/focal_from_champion/eval_test.json (esp. MI/HYP recall) before promoting.
+       to serve it:  export HEARTSCAN_DIAGNOSTIC_MODEL_PATH=/Users/mac/dev/Heartcheck/runs/local/focal_from_champion/checkpoint.pt

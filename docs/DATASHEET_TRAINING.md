@@ -1,7 +1,7 @@
-# Datasheet — Training data for HeartScan
+# Datasheet — Training data for Axis
 
 > Format inspired by Gebru et al., "Datasheets for Datasets" (2018).
-> Lists every public ECG dataset HeartScan **may** train against and the
+> Lists every public ECG dataset Axis **may** train against and the
 > licence terms that constrain how derived weights can be used. The runtime
 > registry of these datasets lives in [`ml/datasets/registry.py`](../ml/datasets/registry.py).
 
@@ -11,9 +11,9 @@
 |---------|---------|-------|---------|---------------------|-------|
 | [PTB-XL](../ml/datasets/ptb_xl.py) | 21,837 | 12 | CC BY 4.0 | Yes | Gold standard; 71 SCP-ECG codes; pre-built folds 1–10 |
 | [Chapman-Shaoxing-Ningbo](../ml/datasets/chapman_shaoxing.py) | 45,152 | 12 | CC BY 4.0 | Yes | 90 SNOMED-CT codes; great rhythm diversity |
-| [CinC 2017](../ml/datasets/cinc2017.py) | 8,528 | 1 | CC BY 4.0 | Yes | Single-lead AliveCor; matches HeartScan's 1D output |
+| [CinC 2017](../ml/datasets/cinc2017.py) | 8,528 | 1 | CC BY 4.0 | Yes | Single-lead AliveCor; matches Axis's 1D output |
 | [BUT QDB](../ml/datasets/but_qdb.py) | 18 | 1 | CC BY 4.0 | Yes | Quality labels; trains the gate, not the classifier |
-| [ECG-Image-Database](../ml/datasets/ecg_image_database.py) | 35,595 imgs | 12 | CC BY 4.0 | Yes | **Photo domain** — critical for HeartScan |
+| [ECG-Image-Database](../ml/datasets/ecg_image_database.py) | 35,595 imgs | 12 | CC BY 4.0 | Yes | **Photo domain** — critical for Axis |
 | [PTB-XL-Image-17K](../ml/datasets/ptb_xl_image_17k.py) | 17,271 imgs | 12 | CC BY 4.0 | Yes | Synthetic photos with pixel masks |
 | [Georgia 12-lead](../ml/datasets/georgia12.py) | 10,344 | 12 | CC BY 4.0 | Yes | Emory; CinC 2020 training subset |
 | [SPH (Shandong)](../ml/datasets/sph.py) | 25,770 | 12 | CC BY 4.0 | Yes | Mendeley host; AHA/ACC/HRS statements |
@@ -27,14 +27,14 @@ Restricted (manual access): UK Biobank ECG (~90K resting + ~90K exercise),
 CODE full (2.47M), Apple Heart Study (not public). Access procedure and
 status log live in [`docs/RESTRICTED_DATASETS.md`](RESTRICTED_DATASETS.md).
 
-## How HeartScan combines them
+## How Axis combines them
 
 The intended primary blend:
 
 1. **Pretrain on signals** with PTB-XL + Chapman-Shaoxing + Georgia + CinC 2017.
    ([`ml/training/pretrain.py`](../ml/training/pretrain.py))
 2. **Fine-tune on images** with ECG-Image-Database + PTB-XL-Image-17K, routed
-   through HeartScan's own extractor so the model sees what production sees.
+   through Axis's own extractor so the model sees what production sees.
    ([`ml/training/finetune_image.py`](../ml/training/finetune_image.py))
 3. **Calibrate** temperature + conformal threshold on a dedicated val split.
    ([`ml/training/calibrate.py`](../ml/training/calibrate.py))
@@ -63,7 +63,7 @@ must explain the gap before the checkpoint is signed off.
   not redistribute raw records. We may publish derived statistics in the
   model card.
 - Patient identifiers in the manifest are upstream IDs; we never tie them to
-  HeartScan user accounts.
+  Axis user accounts.
 - Storage of downloaded data follows [`docs/PRIVACY.md`](PRIVACY.md): cifrado
   en reposo, control de acceso por equipo, no commits.
 

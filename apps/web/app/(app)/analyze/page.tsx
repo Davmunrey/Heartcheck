@@ -13,7 +13,7 @@ export default async function AnalyzePage() {
       <h1 className="text-2xl font-bold">Analizar ECG</h1>
       <p className="mt-2 text-zinc-600">
         Sube una <strong>foto</strong> de tira de ECG o una <strong>señal 12
-        derivaciones</strong> (.npy/.csv). HeartScan es un copilot de apoyo a la
+        derivaciones</strong> (.npy/.csv). Axis es un copilot de apoyo a la
         decisión clínica: las salidas son probabilísticas y requieren revisión
         de un profesional. No es un diagnóstico autónomo ni sustituye un ECG
         clínico completo.

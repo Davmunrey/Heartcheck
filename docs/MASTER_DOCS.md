@@ -1,4 +1,4 @@
-# HeartScan — Master docs index
+# Axis — Master docs index
 
 > **Single source of truth** for every piece of project documentation.
 > If you write or change docs and they aren't linked from here, they
@@ -17,11 +17,12 @@ this index.
 | Get the project running locally | [`../README.md`](../README.md) |
 | Contribute / open a PR | [`../CONTRIBUTING.md`](../CONTRIBUTING.md) |
 | Understand the system at a glance | [`ARCHITECTURE.md`](ARCHITECTURE.md) |
-| Know when **not** to use HeartScan | [`WHEN_NOT_TO_USE.md`](WHEN_NOT_TO_USE.md) |
+| Know when **not** to use Axis | [`WHEN_NOT_TO_USE.md`](WHEN_NOT_TO_USE.md) |
 
 ## 1. Product, scope and onboarding
 
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) — components, data flow, public endpoints.
+- [`BRAND.md`](BRAND.md) — Axis brand, design tokens, naming rule.
 - [`SAAS_WEB_ROADMAP.md`](SAAS_WEB_ROADMAP.md) — long-term SaaS plan.
 - [`CANONICAL_PROJECT_PATH.md`](CANONICAL_PROJECT_PATH.md) — repo location convention.
 - [`E2E_CLIENTS.md`](E2E_CLIENTS.md) — running web SPA, web static and mobile against the same backend.
@@ -41,8 +42,8 @@ this index.
 ## 3. Datasets and labels
 
 - [`DATASHEET_SYNTH.md`](DATASHEET_SYNTH.md) — synthetic eval set (`synth_v1`).
-- [`DATASHEET_TRAINING.md`](DATASHEET_TRAINING.md) — every public dataset HeartScan can train against.
-- [`LABEL_HARMONIZATION.md`](LABEL_HARMONIZATION.md) — SCP-ECG / SNOMED-CT / CinC → 3-class HeartScan mapping.
+- [`DATASHEET_TRAINING.md`](DATASHEET_TRAINING.md) — every public dataset Axis can train against.
+- [`LABEL_HARMONIZATION.md`](LABEL_HARMONIZATION.md) — SCP-ECG / SNOMED-CT / CinC → 3-class Axis mapping.
 - [`RESTRICTED_DATASETS.md`](RESTRICTED_DATASETS.md) — UK Biobank / CODE full / MIMIC access procedure.
 
 ## 4. UX and design system

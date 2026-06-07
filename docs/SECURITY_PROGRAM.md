@@ -1,4 +1,4 @@
-# HeartScan — Programa de seguridad
+# Axis — Programa de seguridad
 
 > Documento operativo. Resume el modelo de amenazas, los controles aplicados, las dependencias auditables y las verificaciones que el equipo se compromete a ejecutar.
 
@@ -82,6 +82,6 @@
 
 ## 6. Limitaciones honestas
 
-- HeartScan **no** es un dispositivo médico ni pretende serlo.
+- Axis **no** es un dispositivo médico ni pretende serlo.
 - Los controles aquí descritos reducen riesgo, **no garantizan invulnerabilidad**.
 - Cualquier despliegue que se aleje de las defaults (CORS, claves, modelo) debe documentarse en una revisión de cambios y actualizar este documento.

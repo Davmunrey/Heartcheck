@@ -22,11 +22,11 @@ const DESCRIPTION =
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "HeartScan — Clinical ECG Copilot",
-    template: "%s · HeartScan",
+    default: "Axis — Clinical ECG Copilot",
+    template: "%s · Axis",
   },
   description: DESCRIPTION,
-  applicationName: "HeartScan",
+  applicationName: "Axis",
   keywords: [
     "ECG",
     "electrocardiogram",
@@ -36,19 +36,19 @@ export const metadata: Metadata = {
     "ECG triage",
     "medical AI",
   ],
-  authors: [{ name: "HeartScan" }],
+  authors: [{ name: "Axis" }],
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
-    siteName: "HeartScan",
-    title: "HeartScan — Clinical ECG Copilot",
+    siteName: "Axis",
+    title: "Axis — Clinical ECG Copilot",
     description: DESCRIPTION,
     url: SITE_URL,
     locale: "es_ES",
   },
   twitter: {
     card: "summary_large_image",
-    title: "HeartScan — Clinical ECG Copilot",
+    title: "Axis — Clinical ECG Copilot",
     description: DESCRIPTION,
   },
   robots: {

@@ -12,7 +12,7 @@ export default function AppShellLayout({
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 px-4 py-3">
           <div className="flex items-center gap-6">
             <Link href="/dashboard" className="font-semibold">
-              HeartScan
+              Axis
             </Link>
             <nav className="flex gap-4 text-sm text-zinc-600">
               <Link href="/dashboard" className="hover:text-zinc-900">

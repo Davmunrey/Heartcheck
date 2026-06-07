@@ -6,7 +6,7 @@ Aceptada
 
 ## Contexto
 
-El proyecto HeartScan requiere trazabilidad de decisiones técnicas.
+El proyecto Axis requiere trazabilidad de decisiones técnicas.
 
 ## Decisión
 

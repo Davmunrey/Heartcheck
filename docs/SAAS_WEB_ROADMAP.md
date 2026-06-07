@@ -1,8 +1,8 @@
-# HeartScan — Plan SaaS + aplicación web
+# Axis — Plan SaaS + aplicación web
 
 ## Objetivo
 
-Ofrecer **HeartScan como producto SaaS**: web responsive accesible desde navegador, con camino claro hacia **autenticación**, **planes de pago** y **límites de uso**, manteniendo el mismo backend FastAPI y reutilizando el cliente **Flutter** (iOS/Android/Web desde un solo código).
+Ofrecer **Axis como producto SaaS**: web responsive accesible desde navegador, con camino claro hacia **autenticación**, **planes de pago** y **límites de uso**, manteniendo el mismo backend FastAPI y reutilizando el cliente **Flutter** (iOS/Android/Web desde un solo código).
 
 ## Arquitectura objetivo
 

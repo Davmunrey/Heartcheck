@@ -43,5 +43,5 @@ The generator ships in the repo. Generated images and `manifest.jsonl` are exclu
 
 ## Maintenance
 
-- Owners: HeartScan engineering.
+- Owners: Axis engineering.
 - Bump `synth_v1` to `synth_v2` when augmentation defaults change in a way that affects metrics. The current numbers in `eval/baselines/` are tied to the version and should be regenerated atomically with the change.

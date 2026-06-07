@@ -1,25 +1,25 @@
-# HeartScan — Model Card
+# Axis — Model Card
 
 > Format inspired by Mitchell et al., "Model Cards for Model Reporting" (FAccT 2019).
-> This card is **mandatory reading** for anyone deploying or integrating HeartScan.
+> This card is **mandatory reading** for anyone deploying or integrating Axis.
 
 ## Model details
 
 | Field | Value |
 |-------|-------|
-| Name | HeartScan classifier |
+| Name | Axis classifier |
 | Architecture | `ECGResNet1D` (3 residual stages, ~150k params) — see [`apps/ml-api/app/ml/cnn1d.py`](../apps/ml-api/app/ml/cnn1d.py) |
 | Input | 1024-sample 1D signal extracted from a single-lead ECG strip photo |
 | Output | One of `normal | arrhythmia | noise` plus a calibrated probability and a conformal prediction set |
 | Calibration | Temperature scaling + split conformal prediction (target coverage 90 %) |
-| Owners | HeartScan engineering |
+| Owners | Axis engineering |
 | Distribution | Bundled with the FastAPI backend; checkpoint loaded via `HEARTSCAN_MODEL_PATH` |
 | Versioning | `model_version` exposed at `/api/v1/meta`; provenance manifest in [`apps/ml-api/weights/`](../apps/ml-api/weights/) |
 
 ## Intended use
 
 - **Primary**: educational tool that gives a high-level orientation about the rhythm in a photo of an ECG strip.
-- **Secondary**: training data and metric reference for HeartScan integrations and clients.
+- **Secondary**: training data and metric reference for Axis integrations and clients.
 
 ## Out-of-scope use
 
@@ -145,7 +145,7 @@ path (reusing the strong 12-lead model) rather than raw-pixel classification.
 
 ## Training data
 
-The full catalogue of public ECG datasets HeartScan can train against —
+The full catalogue of public ECG datasets Axis can train against —
 plus their licence terms and commercial-use posture — lives in
 [`docs/DATASHEET_TRAINING.md`](DATASHEET_TRAINING.md). Every dataset is
 declared in the [`ml/datasets`](../ml/datasets/) registry so the manifest

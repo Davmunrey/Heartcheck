@@ -42,4 +42,4 @@ Si se contratan servicios externos (Sentry, Stripe, proveedor de email, hosting)
 
 ## Disclaimer médico
 
-HeartScan **no** es un dispositivo médico ni sustituye una valoración clínica. Cualquier resultado debe ir acompañado del disclaimer servido por el backend (ver `analysis_pipeline.DISCLAIMER_*`).
+Axis **no** es un dispositivo médico ni sustituye una valoración clínica. Cualquier resultado debe ir acompañado del disclaimer servido por el backend (ver `analysis_pipeline.DISCLAIMER_*`).

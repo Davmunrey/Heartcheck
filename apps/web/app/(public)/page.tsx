@@ -25,7 +25,7 @@ export default function LandingPage() {
             <span className="grid size-9 place-items-center rounded-full bg-[#17211f] text-[#f4f0e8]">
               ECG
             </span>
-            <span>HeartScan</span>
+            <span>Axis</span>
             <span className="rounded-full bg-[#d7ff63] px-2 py-0.5 text-xs text-[#17211f]">
               clinical copilot beta
             </span>
@@ -133,7 +133,7 @@ export default function LandingPage() {
       </main>
       <footer className="border-t border-[#17211f]/10 px-5 py-8 text-sm text-[#46534f]">
         <div className="mx-auto flex max-w-7xl flex-wrap justify-between gap-3">
-          <span>HeartScan · medical AI copilot beta</span>
+          <span>Axis · medical AI copilot beta</span>
           <span>Uso clínico requiere validación, contrato, DPA, revisión regulatoria.</span>
         </div>
       </footer>

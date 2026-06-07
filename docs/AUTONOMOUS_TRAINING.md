@@ -1,6 +1,6 @@
 # Entrenamiento autónomo
 
-> Cómo dejar que HeartScan se reentrene solo cuando aparezcan datos nuevos
+> Cómo dejar que Axis se reentrene solo cuando aparezcan datos nuevos
 > o caduquen los pesos actuales, sin que un humano tenga que orquestar
 > cada paso.
 

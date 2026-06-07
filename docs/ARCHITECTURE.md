@@ -1,4 +1,4 @@
-# HeartScan — Arquitectura
+# Axis — Arquitectura
 
 ## Componentes
 

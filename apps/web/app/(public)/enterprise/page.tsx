@@ -18,7 +18,7 @@ export default function EnterprisePage() {
           </p>
           <a
             className="mt-5 inline-flex rounded-full bg-[#d7ff63] px-5 py-3 font-semibold text-[#17211f]"
-            href={`mailto:${process.env.NEXT_PUBLIC_SALES_EMAIL ?? "sales@heartscan.local"}?subject=HeartScan Enterprise`}
+            href={`mailto:${process.env.NEXT_PUBLIC_SALES_EMAIL ?? "sales@heartscan.local"}?subject=Axis Enterprise`}
           >
             Solicitar evaluación
           </a>

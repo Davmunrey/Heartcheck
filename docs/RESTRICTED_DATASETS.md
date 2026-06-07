@@ -1,7 +1,7 @@
 # Restricted-access ECG datasets
 
 Datasets that require formal approval, an MTA, or institutional credentials
-before HeartScan can use them. None of these are checked into the repo and
+before Axis can use them. None of these are checked into the repo and
 none are pulled by the default download scripts. Document any approval
 status changes here so future operators can pick up the trail.
 
@@ -15,7 +15,7 @@ status changes here so future operators can pick up the trail.
 | Lead time | 4–8 weeks for review |
 | Form | <https://docs.google.com/forms/d/e/1FAIpQLSfSHnaQIJo5OyXh01V6FTvlWi5qOEpsP6a28kZYMvfye4v_rw/viewform> |
 | Required from us | Affiliation letter, intended use statement, MTA signed by both legal teams |
-| Compatible with HeartScan? | Research yes; commercial requires explicit clearance in the MTA |
+| Compatible with Axis? | Research yes; commercial requires explicit clearance in the MTA |
 
 Operational steps:
 
@@ -37,7 +37,7 @@ Operational steps:
 | Form | <https://www.ukbiobank.ac.uk/enable-your-research/apply-for-access> |
 | Cost | Access fees apply per project |
 | Required from us | UK Biobank registered researcher account; bona fide research project; data management plan |
-| Compatible with HeartScan? | Research only. **Cannot ship derived weights** without UK Biobank publication review. |
+| Compatible with Axis? | Research only. **Cannot ship derived weights** without UK Biobank publication review. |
 
 Operational steps:
 

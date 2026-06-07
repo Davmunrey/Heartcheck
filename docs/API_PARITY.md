@@ -1,6 +1,6 @@
 # Paridad de respuestas: FastAPI vs `heartscan_ml`
 
-HeartScan expone dos backends que pueden servir al mismo cliente web a través de `/api/v1/*`:
+Axis expone dos backends que pueden servir al mismo cliente web a través de `/api/v1/*`:
 
 - **FastAPI principal** ([`apps/ml-api/app/api/routes/analyze.py`](../apps/ml-api/app/api/routes/analyze.py)) → respuesta validada contra el modelo Pydantic [`AnalysisResponse`](../apps/ml-api/app/schemas/analysis.py).
 - **Paquete standalone** ([`ml/heartscan_ml/api.py`](../ml/heartscan_ml/api.py)) → respuesta construida en [`heartscan_ml/inference.build_full_response`](../ml/heartscan_ml/inference.py).

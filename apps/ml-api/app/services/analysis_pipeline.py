@@ -37,11 +37,11 @@ from app.services.heuristic_classify import heuristic_label
 from app.services.rr_intervals import analyze_rr
 
 DISCLAIMER_EN = (
-    "HeartScan provides educational information only. It does not replace professional "
+    "Axis provides educational information only. It does not replace professional "
     "medical advice, diagnosis, or treatment. Always consult a qualified healthcare provider."
 )
 DISCLAIMER_ES = (
-    "HeartScan ofrece información educativa únicamente. No sustituye el consejo médico "
+    "Axis ofrece información educativa únicamente. No sustituye el consejo médico "
     "profesional, el diagnóstico ni el tratamiento. Consulte siempre a un profesional sanitario."
 )
 

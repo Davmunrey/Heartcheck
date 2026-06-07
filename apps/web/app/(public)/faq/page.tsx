@@ -8,7 +8,7 @@ export default function FaqPage() {
       </Link>
       <h1 className="mt-4 text-3xl font-bold">FAQ</h1>
       <p className="mt-4 text-zinc-600">
-        HeartScan ofrece una lectura orientativa y educativa. No sustituye una
+        Axis ofrece una lectura orientativa y educativa. No sustituye una
         valoración médica. Consulta{" "}
         <a
           href="https://github.com/heartscan/heartscan/blob/main/docs/WHEN_NOT_TO_USE.md"
