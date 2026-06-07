@@ -322,6 +322,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--monitor", choices=["macro_f1", "tuned_macro_f1"], default="tuned_macro_f1")
     p.add_argument("--no-augment", action="store_true")
     p.add_argument("--init-checkpoint", default=None)
+    p.add_argument("--target-fs", type=int, default=100, help="resample rate; use 500 with records500 for finer morphology")
+    p.add_argument("--target-len", type=int, default=1024, help="samples per lead fed to the model")
     args = p.parse_args(argv)
     run(
         MultiLabelTrainConfig(
@@ -338,6 +340,8 @@ def main(argv: list[str] | None = None) -> int:
             monitor=args.monitor,
             augment=not args.no_augment,
             init_checkpoint=args.init_checkpoint,
+            target_len=args.target_len,
+            target_fs=args.target_fs,
         )
     )
     return 0
