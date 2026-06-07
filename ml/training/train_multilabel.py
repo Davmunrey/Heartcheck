@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import sys
 import time
 from collections import Counter
@@ -39,15 +40,55 @@ class MultiLabelTrainConfig:
     init_checkpoint: str | None = None
     mask_partial_labels: bool = False
     arch: str = "resnet"
+    warmup_epochs: int = 0
+    grad_clip: float = 0.0
+    balanced_sampler: bool = False
 
 
 def _pos_weight(ds: PTBXLDiagnosticDataset, device: torch.device) -> torch.Tensor:
     targets = np.stack(ds.targets)
-    pos = targets.sum(axis=0)
-    neg = len(targets) - pos
+    if getattr(ds, "return_mask", False) and getattr(ds, "masks", None):
+        # Count positives/negatives only over OBSERVED entries so partial-label
+        # sources don't inflate a class's negative count with phantom zeros.
+        masks = np.stack(ds.masks)
+        pos = (targets * masks).sum(axis=0)
+        observed = masks.sum(axis=0)
+        neg = observed - pos
+    else:
+        pos = targets.sum(axis=0)
+        neg = len(targets) - pos
     weight = neg / np.maximum(pos, 1.0)
     weight = np.clip(weight, 1.0, 20.0).astype(np.float32)
     return torch.tensor(weight, dtype=torch.float32, device=device)
+
+
+def _sample_weights(ds: PTBXLDiagnosticDataset) -> np.ndarray:
+    """Per-record sampling weight for class-balanced training.
+
+    Each record's weight is the inverse frequency of its rarest positive class,
+    so records carrying a scarce class (e.g. HYP) are oversampled — a direct
+    lever on the weak classes that complements ``pos_weight`` in the loss.
+    """
+    targets = np.stack(ds.targets)
+    class_freq = targets.sum(axis=0)
+    inv = 1.0 / np.maximum(class_freq, 1.0)
+    # weight = max inverse-freq among a record's positive classes
+    weights = (targets * inv[np.newaxis, :]).max(axis=1)
+    weights[weights == 0] = inv.min()  # records with no positive (shouldn't occur)
+    return weights.astype(np.float64)
+
+
+def _build_scheduler(optim: torch.optim.Optimizer, epochs: int, warmup_epochs: int):
+    """Linear warmup for ``warmup_epochs`` then cosine decay to ~0."""
+    warmup_epochs = max(0, min(warmup_epochs, epochs - 1))
+
+    def lr_lambda(epoch: int) -> float:  # epoch is 0-indexed
+        if warmup_epochs and epoch < warmup_epochs:
+            return float(epoch + 1) / float(warmup_epochs)
+        progress = (epoch - warmup_epochs) / max(1, epochs - warmup_epochs)
+        return 0.5 * (1.0 + math.cos(math.pi * min(1.0, progress)))
+
+    return torch.optim.lr_scheduler.LambdaLR(optim, lr_lambda)
 
 
 def _threshold_array(threshold: float | list[float] | np.ndarray) -> np.ndarray:
@@ -202,7 +243,14 @@ def run(cfg: MultiLabelTrainConfig) -> dict:
     if not train_ds.rows or not val_ds.rows:
         raise RuntimeError("Train/val split empty; need PTB-XL diagnostic metadata.")
 
-    train_loader = DataLoader(train_ds, batch_size=cfg.batch_size, shuffle=True, num_workers=cfg.num_workers)
+    if cfg.balanced_sampler:
+        from torch.utils.data import WeightedRandomSampler
+
+        weights = _sample_weights(train_ds)
+        sampler = WeightedRandomSampler(weights.tolist(), num_samples=len(weights), replacement=True)
+        train_loader = DataLoader(train_ds, batch_size=cfg.batch_size, sampler=sampler, num_workers=cfg.num_workers)
+    else:
+        train_loader = DataLoader(train_ds, batch_size=cfg.batch_size, shuffle=True, num_workers=cfg.num_workers)
     val_loader = DataLoader(val_ds, batch_size=cfg.batch_size, num_workers=cfg.num_workers)
     device = _select_device()
     model = build_model(
@@ -219,7 +267,7 @@ def run(cfg: MultiLabelTrainConfig) -> dict:
         payload = state.get("state_dict") if isinstance(state, dict) else state
         model.load_state_dict(payload, strict=True)
     optim = torch.optim.AdamW(model.parameters(), lr=cfg.lr, weight_decay=cfg.weight_decay)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optim, T_max=cfg.epochs)
+    scheduler = _build_scheduler(optim, cfg.epochs, cfg.warmup_epochs)
     pos_weight = _pos_weight(train_ds, device)
     if cfg.loss == "focal":
         loss_fn = FocalBCEWithLogitsLoss(pos_weight=pos_weight, gamma=cfg.focal_gamma)
@@ -258,6 +306,8 @@ def run(cfg: MultiLabelTrainConfig) -> dict:
             else:
                 loss = loss_fn(logits, y)
             loss.backward()
+            if cfg.grad_clip > 0:
+                torch.nn.utils.clip_grad_norm_(model.parameters(), cfg.grad_clip)
             optim.step()
             losses.append(float(loss.item()))
         report, logits, labels = _run_eval(model, val_loader, device, cfg.threshold)
@@ -355,6 +405,9 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--target-len", type=int, default=1024, help="samples per lead fed to the model")
     p.add_argument("--mask-partial-labels", action="store_true", help="ignore loss on classes a source dataset never annotates (partial-label safe)")
     p.add_argument("--arch", choices=["resnet", "deep"], default="resnet", help="resnet=light serving net; deep=Ribeiro-style high-capacity net")
+    p.add_argument("--warmup-epochs", type=int, default=0, help="linear LR warmup before cosine decay (recommended for --arch deep from scratch)")
+    p.add_argument("--grad-clip", type=float, default=0.0, help="max grad norm (0=off); 1.0 stabilises the deep net")
+    p.add_argument("--balanced-sampler", action="store_true", help="oversample records carrying rare classes (directly lifts HYP)")
     args = p.parse_args(argv)
     run(
         MultiLabelTrainConfig(
@@ -375,6 +428,9 @@ def main(argv: list[str] | None = None) -> int:
             target_fs=args.target_fs,
             mask_partial_labels=args.mask_partial_labels,
             arch=args.arch,
+            warmup_epochs=args.warmup_epochs,
+            grad_clip=args.grad_clip,
+            balanced_sampler=args.balanced_sampler,
         )
     )
     return 0

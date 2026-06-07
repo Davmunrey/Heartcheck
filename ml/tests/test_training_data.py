@@ -201,3 +201,41 @@ def test_build_model_arch_selection():
     assert tuple(deep(torch.randn(1, 12, 5000)).shape) == (1, 5)
     # Deep net has substantially more capacity than the light serving net.
     assert sum(p.numel() for p in deep.parameters()) > 10 * sum(p.numel() for p in light.parameters())
+
+
+def test_sample_weights_oversample_rare_class(tmp_path):
+    from ml.training.train_multilabel import _sample_weights
+    manifest = tmp_path / "m.parquet"
+    # 4 common (NORM) + 1 rare (HYP) records
+    rows = [
+        {"file_path": str(i), "label_id": 0, "sampling_rate_hz": 100, "n_leads": 12,
+         "duration_s": 10.0, "source_dataset": "ptb_xl", "split": "train",
+         "metadata": {"diagnostic_classes": ["NORM"]}}
+        for i in range(4)
+    ] + [
+        {"file_path": "h", "label_id": 1, "sampling_rate_hz": 100, "n_leads": 12,
+         "duration_s": 10.0, "source_dataset": "ptb_xl", "split": "train",
+         "metadata": {"diagnostic_classes": ["HYP"]}}
+    ]
+    _write_manifest(manifest, rows)
+    ds = PTBXLDiagnosticDataset(manifest, split="train")
+    w = _sample_weights(ds)
+    # the lone HYP record must carry a much larger sampling weight
+    assert w[-1] > w[0]
+
+
+def test_warmup_cosine_scheduler_shape():
+    import torch
+    from ml.training.train_multilabel import _build_scheduler
+    p = torch.nn.Parameter(torch.zeros(1))
+    optim = torch.optim.SGD([p], lr=1.0)
+    sched = _build_scheduler(optim, epochs=10, warmup_epochs=3)
+    lrs = []
+    for _ in range(10):
+        lrs.append(optim.param_groups[0]["lr"])
+        optim.step()
+        sched.step()
+    # warmup ramps up then cosine decays toward ~0
+    assert lrs[0] < lrs[2] <= lrs[3]      # increasing during warmup
+    assert lrs[-1] < lrs[3]               # decaying after
+    assert lrs[-1] < 0.1
