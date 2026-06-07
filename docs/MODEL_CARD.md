@@ -103,6 +103,28 @@ the weakest class; treat non-NORM negatives with clinical caution.
 > (non-fatal; the checkpoint ships per-class tuned thresholds). Multi-label
 > calibration is tracked as follow-up.
 
+### Beat-image classifier (2026-06-07) — research only, NOT production
+
+A separate image/beat wedge: a compact 2D CNN
+([`scripts/train_beat_image.py`](../scripts/train_beat_image.py), torch-only)
+trained on a MIT-BIH-style beat-image set (`ECG_Image_data`, 6 AAMI classes
+`N/S/V/F/Q/M`, majority-capped + class-weighted).
+
+| Field | Value |
+|-------|-------|
+| Checkpoint | `runs/local/beat_image/checkpoint.pt` (git-ignored) |
+| Test rows | `24,799` beat images |
+| Test macro-F1 | `0.994` · accuracy `0.999` |
+| Per-class F1 | `F=1.00, M=1.00, N=1.00, Q=1.00, S=0.97, V=0.99` |
+
+**⚠️ Do not read this as clinical performance.** No direct file/content leakage
+was found (0 shared names, 0 identical images train↔test), but the filenames
+carry no patient id, so the split is **beat-level / intra-patient**: beats from
+the same patients appear in train and test. Intra-patient MIT-BIH splits are
+known to massively overstate real-world accuracy; inter-patient evaluation
+typically lands far lower. This model needs a **patient-disjoint split** before
+any claim or production use. Tracked as follow-up.
+
 ## Evaluation data
 
 - **Synthetic**: described in [`docs/DATASHEET_SYNTH.md`](DATASHEET_SYNTH.md). Generated deterministically per seed; covers perspective, blur, glare and shading augmentations.
