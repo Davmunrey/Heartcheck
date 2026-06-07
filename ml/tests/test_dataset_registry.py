@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from ml.datasets._common import md5_file, verify_md5
 from ml.datasets.chapman_shaoxing import dataset as chapman_dataset
+from ml.datasets.cinc2020 import dataset as cinc2020_dataset
 from ml.datasets.code_15pct import dataset as code15_dataset
 from ml.datasets.georgia12 import dataset as georgia12_dataset
 from ml.datasets.labels import diagnostic_superclasses_from_snomed
@@ -43,6 +44,45 @@ def test_snomed_diagnostic_superclass_mapping():
     assert diagnostic_superclasses_from_snomed(["426783006"]) == ["NORM"]
     assert diagnostic_superclasses_from_snomed(["164909002", "164873001"]) == ["CD", "HYP"]
     assert diagnostic_superclasses_from_snomed(["426783006", "164934002"]) == ["STTC"]
+
+
+def test_snomed_cinc2020_expansion_codes():
+    # Codes added with the CinC 2020 integration (2026-06-07): ischemia/ST→STTC,
+    # atrial enlargement→HYP. These convert previously-dropped records into
+    # supervision for the model's two weakest classes.
+    assert diagnostic_superclasses_from_snomed(["164861001"]) == ["STTC"]  # ischemia
+    assert diagnostic_superclasses_from_snomed(["55930002"]) == ["STTC"]   # ST changes
+    assert diagnostic_superclasses_from_snomed(["67741000119109"]) == ["HYP"]  # LAE
+    assert diagnostic_superclasses_from_snomed(["446358003"]) == ["HYP"]   # RAH
+    # Rhythm / axis codes stay unmapped (belong to PTB-XL's non-diagnostic groups).
+    assert diagnostic_superclasses_from_snomed(["164889003", "39732003"]) == []
+
+
+def test_cinc2020_parser_walks_sources_and_excludes_ptbxl(tmp_path, monkeypatch):
+    root = tmp_path / "cinc2020"
+    for src in ("georgia", "ptb-xl"):
+        d = root / "training" / src / "g1"
+        d.mkdir(parents=True)
+        hea = d / f"{src}_R1.hea"
+        hea.write_text(f"{src}_R1 12 500 5000\n# Dx: 426783006,67741000119109\n", encoding="utf-8")
+        hea.with_suffix(".mat").write_bytes(b"stub")
+
+    # ptb-xl source is excluded by default → only the georgia record is emitted.
+    monkeypatch.delenv("CINC2020_INCLUDE_PTBXL", raising=False)
+    rows = list(cinc2020_dataset().parse(root))
+    assert [r.record_id for r in rows] == ["georgia_R1"]
+    assert rows[0].source_dataset == "cinc2020/georgia"
+    assert rows[0].file_path.suffix == ".mat"
+    assert rows[0].metadata["diagnostic_classes"] == ["HYP"]  # NORM dropped when abnormal co-occurs
+
+    # Opt-in includes the ptb-xl copy.
+    monkeypatch.setenv("CINC2020_INCLUDE_PTBXL", "1")
+    rows2 = list(cinc2020_dataset().parse(root))
+    assert {r.record_id for r in rows2} == {"georgia_R1", "ptb-xl_R1"}
+
+
+def test_cinc2020_registered():
+    assert REGISTRY["cinc2020"].license_class == "permissive"
 
 
 def test_georgia_parser_accepts_physionet_nested_root(tmp_path):

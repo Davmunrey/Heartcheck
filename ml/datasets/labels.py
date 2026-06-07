@@ -87,12 +87,14 @@ SNOMED_TO_DIAGNOSTIC_SUPERCLASS = {
     "164867002": "MI",    # old myocardial infarction
     "57054005": "MI",     # acute myocardial infarction
     "429622005": "MI",    # ST elevation myocardial infarction
-    # ST/T changes
+    # ST/T changes (incl. ischemia — PTB-XL groups ISC* under STTC)
     "164930006": "STTC",  # ST segment depression
     "164931005": "STTC",  # ST segment elevation
     "164934002": "STTC",  # T wave abnormal
     "59931005": "STTC",   # T wave inversion
     "428750005": "STTC",  # nonspecific ST-T abnormality
+    "164861001": "STTC",  # myocardial ischemia (CinC2020, 2.5k records)
+    "55930002": "STTC",   # nonspecific ST changes (CinC2020)
     # Conduction disturbances
     "164909002": "CD",    # left bundle branch block
     "59118001": "CD",     # right bundle branch block
@@ -102,9 +104,13 @@ SNOMED_TO_DIAGNOSTIC_SUPERCLASS = {
     "164947007": "CD",    # left posterior fascicular block
     "698252002": "CD",    # nonspecific intraventricular conduction disorder
     "270492004": "CD",    # first degree AV block
-    # Hypertrophy
+    # Hypertrophy / chamber enlargement (PTB-XL HYP superclass spans LVH/RVH
+    # plus atrial enlargement subclasses LAO/LAE, RAO/RAE)
     "164873001": "HYP",   # left ventricular hypertrophy
     "89792004": "HYP",    # right ventricular hypertrophy
+    "67741000119109": "HYP",  # left atrial enlargement (CinC2020, 1.3k records)
+    "446813000": "HYP",   # left atrial hypertrophy
+    "446358003": "HYP",   # right atrial hypertrophy
 }
 
 

@@ -70,6 +70,49 @@ Reuses `map_chapman_codes` because the CinC 2020 label space is the same
 SNOMED-CT subset. The Georgia loader extracts `# Dx:` lines from the WFDB
 header and feeds them to the same mapping.
 
+### CinC 2020 — full multi-source blend (SNOMED-CT)
+
+`ml/datasets/cinc2020.py`. The PhysioNet/CinC 2020 release bundles six source
+databases (`cpsc_2018`, `cpsc_2018_extra`, `georgia`, `ptb`,
+`st_petersburg_incart`, and a copy of `ptb-xl`). The loader walks every source
+**except `ptb-xl`** (excluded by default to avoid duplicating the native
+`ptb_xl` dataset in a blended manifest; override with
+`CINC2020_INCLUDE_PTBXL=1`). Each record's `# Dx:` SNOMED-CT codes feed both
+`map_chapman_codes` (3-class space) and `diagnostic_superclasses_from_snomed`
+(5-class diagnostic head, below). Sampling rate is read per-record from the
+header (500 Hz for most, 1000 Hz for `ptb`, 257 Hz for INCART). 18,062 of
+21,264 records (84.9 %) carry at least one diagnostic superclass and are kept by
+the multi-label trainer.
+
+## Diagnostic superclass harmonisation (5-class 12-lead head)
+
+The production 12-lead model predicts the five **PTB-XL diagnostic
+superclasses** — `NORM`, `MI`, `STTC`, `CD`, `HYP` — not the 3-class space.
+SNOMED-CT datasets (Georgia, CinC 2020) are mapped to these via
+`diagnostic_superclasses_from_snomed` in `ml/datasets/labels.py`. A record can
+carry several superclasses (true multi-label); if `NORM` co-occurs with any
+abnormal class, `NORM` is dropped. Records that map to **no** superclass are
+dropped by the trainer (`data.py`), so map coverage directly determines
+training-set size.
+
+| Superclass | SNOMED-CT codes |
+|------------|-----------------|
+| `NORM` | `426783006` sinus rhythm · `426177001` sinus bradycardia · `427084000` sinus tachycardia |
+| `MI` | `164865005` MI · `164867002` old MI · `57054005` acute MI · `429622005` STEMI |
+| `STTC` | `164930006` ST depression · `164931005` ST elevation · `164934002` T-wave abnormal · `59931005` T-wave inversion · `428750005` non-specific ST-T · `164861001` myocardial ischemia · `55930002` non-specific ST changes |
+| `CD` | `164909002` LBBB · `59118001` RBBB · `713427006` complete RBBB · `713426002` incomplete RBBB · `445118002` LAFB · `164947007` LPFB · `698252002` non-specific IVCD · `270492004` 1° AV block |
+| `HYP` | `164873001` LVH · `89792004` RVH · `67741000119109` left atrial enlargement · `446813000` left atrial hypertrophy · `446358003` right atrial hypertrophy |
+
+> **2026-06-07 expansion (CinC 2020 integration).** Added `164861001`,
+> `55930002` to STTC and `67741000119109`, `446813000`, `446358003` to HYP.
+> Rationale: these are high-frequency CinC 2020 codes (ischemia ≈2.5k records,
+> left-atrial enlargement ≈1.3k) that PTB-XL groups under STTC (ISC\*) and HYP
+> (atrial enlargement subclasses) respectively. They roughly **double HYP
+> supervision** (the model's weakest class) and add ~3.3k STTC records. Codes
+> outside the five diagnostic axes (rhythm: AF/PAC/PVC; axis deviation; QT
+> prolongation; low voltage) are intentionally **not** mapped — they belong to
+> PTB-XL's separate `rhythm`/`form` label groups, not the diagnostic head.
+
 ### SPH — Shandong Provincial Hospital (AHA / ACC / HRS strings)
 
 `map_sph`.
