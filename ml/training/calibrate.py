@@ -24,13 +24,40 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from heartscan_ml.calibration import ConformalClassifier, TemperatureScaler
+from heartscan_ml.calibration import (
+    ConformalClassifier,
+    MultiLabelTemperatureScaler,
+    TemperatureScaler,
+)
+from heartscan_ml.calibration import _bce as _multilabel_bce
 from heartscan_ml.eval_metrics import expected_calibration_error
+
+
+def _calibrate_multilabel(logits: np.ndarray, labels: np.ndarray) -> dict:
+    """Scalar sigmoid-temperature calibration for a multi-label ``(N, C)`` head.
+
+    Softmax temperature + split-conformal assume a single label; the diagnostic
+    superclass head is multi-label, so we fit one temperature minimising mean
+    BCE and report BCE before/after. Per-class decision thresholds live in the
+    checkpoint and are unchanged here.
+    """
+    ts = MultiLabelTemperatureScaler()
+    t_star = ts.calibrate(logits, labels)
+    sig = lambda z: 1.0 / (1.0 + np.exp(-z))  # noqa: E731
+    return {
+        "temperature": t_star,
+        "multilabel": True,
+        "bce_raw": _multilabel_bce(sig(logits), labels),
+        "bce_calibrated": _multilabel_bce(ts.apply(logits), labels),
+        "n_val": int(len(labels)),
+    }
 
 
 def calibrate(logits: np.ndarray, labels: np.ndarray, alpha: float) -> dict:
     if len(labels) == 0:
         raise RuntimeError("Empty validation set; cannot calibrate.")
+    if np.asarray(labels).ndim == 2:
+        return _calibrate_multilabel(logits, labels)
     ts = TemperatureScaler()
     t_star = ts.calibrate(logits, labels)
     probs_calibrated = ts.apply(logits)
@@ -69,7 +96,8 @@ def _bake(checkpoint_path: Path, calibration: dict) -> None:
     if not isinstance(state, dict):
         state = {"state_dict": state}
     state["temperature"] = float(calibration["temperature"])
-    state["conformal_threshold"] = float(calibration["conformal_threshold"])
+    if "conformal_threshold" in calibration:
+        state["conformal_threshold"] = float(calibration["conformal_threshold"])
     state["calibration"] = {k: v for k, v in calibration.items() if k != "n_val"}
     torch.save(state, checkpoint_path)
 
@@ -106,8 +134,9 @@ def main(argv: list[str] | None = None) -> int:
     cal = calibrate(cal_logits, cal_labels, alpha=args.alpha)
     _bake(Path(args.checkpoint), cal)
 
-    # Report final ECE on the held set when available.
-    if held_path.is_file():
+    # Report final ECE on the held set when available (single-label only;
+    # softmax ECE does not apply to the multi-label head).
+    if held_path.is_file() and not cal.get("multilabel"):
         held_npz = np.load(held_path)
         held_logits, held_labels = held_npz["logits"], held_npz["labels"]
         ts = TemperatureScaler(temperature=cal["temperature"])

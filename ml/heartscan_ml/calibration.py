@@ -63,6 +63,67 @@ def _nll(probs: np.ndarray, labels: np.ndarray) -> float:
     return float(-np.mean(np.log(np.clip(p, 1e-12, 1.0))))
 
 
+def _bce(probs: np.ndarray, labels: np.ndarray) -> float:
+    """Mean binary cross-entropy for a multi-label ``(N, C)`` target.
+
+    Work in float64: a float32 ``1 - 1e-12`` rounds to exactly ``1.0`` and makes
+    ``log(1 - p)`` blow up, so clip after widening.
+    """
+    p = np.clip(probs.astype(np.float64), 1e-12, 1.0 - 1e-12)
+    y = labels.astype(np.float64)
+    return float(-np.mean(y * np.log(p) + (1.0 - y) * np.log(1.0 - p)))
+
+
+@dataclass
+class MultiLabelTemperatureScaler:
+    """Single scalar temperature for an independent per-class sigmoid head.
+
+    Use for multi-label models (e.g. the 12-lead diagnostic superclasses) where
+    softmax temperature scaling does not apply. Fits ``T`` minimising mean BCE
+    on a validation set; ``apply`` returns ``sigmoid(logits / T)`` element-wise.
+    """
+
+    temperature: float = 1.0
+
+    def apply(self, logits: np.ndarray) -> np.ndarray:
+        if self.temperature <= 0:
+            raise ValueError("temperature must be > 0")
+        # Numerically stable sigmoid (avoids exp overflow on large |logits|).
+        z = np.asarray(logits, dtype=np.float64) / self.temperature
+        out = np.empty_like(z)
+        pos = z >= 0
+        out[pos] = 1.0 / (1.0 + np.exp(-z[pos]))
+        ez = np.exp(z[~pos])
+        out[~pos] = ez / (1.0 + ez)
+        return out
+
+    def calibrate(self, logits: np.ndarray, labels: np.ndarray) -> float:
+        """Grid + ternary search for T minimising mean BCE on (logits, labels)."""
+        if len(labels) == 0:
+            self.temperature = 1.0
+            return 1.0
+        best = (1.0, _bce(self.apply(logits), labels))
+        for t in np.geomspace(0.1, 10.0, num=40):
+            self.temperature = float(t)
+            loss = _bce(self.apply(logits), labels)
+            if loss < best[1]:
+                best = (float(t), loss)
+        lo, hi = best[0] / 1.4, best[0] * 1.4
+        for _ in range(20):
+            m1 = lo + (hi - lo) / 3
+            m2 = hi - (hi - lo) / 3
+            self.temperature = m1
+            loss1 = _bce(self.apply(logits), labels)
+            self.temperature = m2
+            loss2 = _bce(self.apply(logits), labels)
+            if loss1 < loss2:
+                hi = m2
+            else:
+                lo = m1
+        self.temperature = float((lo + hi) / 2)
+        return self.temperature
+
+
 @dataclass
 class ConformalClassifier:
     """Split-conformal classification with the standard score ``s = 1 - p_y``.
