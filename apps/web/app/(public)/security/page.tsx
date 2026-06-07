@@ -12,25 +12,24 @@ const controls = [
 
 export default function SecurityPage() {
   return (
-    <main className="min-h-full bg-[#f4f0e8] px-5 py-16 text-[#17211f]">
+    <section className="px-5 py-20">
       <div className="mx-auto max-w-5xl">
-        <p className="text-sm uppercase tracking-[0.25em] text-[#b54708]">Security</p>
-        <h1 className="mt-3 text-5xl font-black tracking-[-0.04em]">
+        <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand">Security</p>
+        <h1 className="mt-3 text-5xl font-black tracking-[-0.04em] text-ink">
           Ciberseguridad B2B desde día cero.
         </h1>
-        <p className="mt-5 max-w-3xl leading-7 text-[#46534f]">
+        <p className="mt-5 max-w-3xl leading-7 text-ink-2">
           Base preparada para clínicas/hospitales, pero producción sanitaria
           exige pentest, DPA/BAA, DPIA, validación clínica, controles SOC2/ISO.
         </p>
         <div className="mt-10 grid gap-3 md:grid-cols-3">
           {controls.map((control) => (
-            <div key={control} className="rounded-2xl border border-[#17211f]/10 bg-white/70 p-4 text-sm font-semibold">
+            <div key={control} className="border-2 border-line bg-surface p-4 text-sm font-semibold text-ink">
               {control}
             </div>
           ))}
         </div>
       </div>
-    </main>
+    </section>
   );
 }
-

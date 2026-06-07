@@ -1,23 +1,26 @@
-/* Axis design tokens — market-ready light theme */
+/* Axis design tokens — mirrors apps/web/app/globals.css (blue=product, red=signal,
+   navy ink, paper bg, square editorial). Keep in sync with docs/BRAND.md. */
 :root {
-  --brand: #1565c0;
-  --brand-dark: #0d47a1;
-  --brand-light: #e3f2fd;
+  --brand: #1b5fd9;
+  --brand-dark: #0e3e9b;
+  --brand-light: #e6eefc;
+  --signal: #e5202a;
   --surface: #ffffff;
-  --surface-muted: #fafafa;
-  --text: #1a1a1a;
-  --text-muted: #424242;
-  --muted: #616161;
-  --border: #e0e0e0;
-  --outline: #bdbdbd;
-  --radius-sm: 12px;
-  --radius-md: 16px;
-  --radius-lg: 20px;
-  --radius-xl: 24px;
+  --surface-muted: #f4f6fa;
+  --text: #0b1a2b;
+  --text-muted: #46586e;
+  --muted: #8493a6;
+  --border: #e2e7ef;
+  --outline: #c9d2df;
+  /* Square editorial geometry (only avatars/dots stay pill). */
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
   --radius-pill: 999px;
-  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.06);
-  --shadow-soft: 0 2px 12px rgba(0, 0, 0, 0.06);
-  --shadow-elevated: 0 8px 32px rgba(21, 101, 192, 0.12);
+  --shadow-card: 0 4px 24px rgba(11, 26, 43, 0.06);
+  --shadow-soft: 0 2px 12px rgba(11, 26, 43, 0.06);
+  --shadow-elevated: 0 8px 32px rgba(27, 95, 217, 0.14);
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 1rem;
@@ -27,7 +30,7 @@
   --container-max: 1040px;
   --container-narrow: 720px;
   --touch-min: 44px;
-  --focus-ring: 0 0 0 3px rgba(21, 101, 192, 0.35);
+  --focus-ring: 0 0 0 3px rgba(27, 95, 217, 0.35);
 }
 
 *,
@@ -42,17 +45,22 @@ html {
 
 body {
   margin: 0;
-  font-family: "Nunito", "Segoe UI", system-ui, sans-serif;
+  font-family: "Hanken Grotesk", "Archivo", "Segoe UI", system-ui, sans-serif;
   color: var(--text);
   background: var(--surface-muted);
   line-height: 1.55;
   font-size: 1rem;
 }
 
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Archivo", "Hanken Grotesk", system-ui, sans-serif;
+  letter-spacing: -0.02em;
+}
+
 a {
   color: var(--brand);
   text-decoration: none;
-  border-radius: 4px;
+  border-radius: 0;
 }
 
 a:hover {
