@@ -187,3 +187,17 @@ def test_focal_loss_mask_skips_masked_entries():
     # Removing the low-loss column raises the masked mean -> must differ.
     assert not torch.isclose(full, masked)
     assert masked > full
+
+
+def test_build_model_arch_selection():
+    import torch
+    from heartscan_ml.cnn1d import ECGResNet1D, ECGResNetDeep1D, build_model
+    light = build_model("resnet", num_classes=5, length=1024, in_channels=12)
+    deep = build_model("deep", num_classes=5, length=4096, in_channels=12)
+    assert isinstance(light, ECGResNet1D)
+    assert isinstance(deep, ECGResNetDeep1D)
+    # Deep net is length-agnostic and emits (B, num_classes).
+    assert tuple(deep(torch.randn(2, 12, 4096)).shape) == (2, 5)
+    assert tuple(deep(torch.randn(1, 12, 5000)).shape) == (1, 5)
+    # Deep net has substantially more capacity than the light serving net.
+    assert sum(p.numel() for p in deep.parameters()) > 10 * sum(p.numel() for p in light.parameters())

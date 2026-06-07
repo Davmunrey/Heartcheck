@@ -14,7 +14,7 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 
-from heartscan_ml.cnn1d import ECGResNet1D
+from heartscan_ml.cnn1d import build_model
 from ml.training.data import PTBXL_DIAGNOSTIC_CLASSES, PTBXLDiagnosticDataset
 
 
@@ -38,6 +38,7 @@ class MultiLabelTrainConfig:
     augment: bool = True
     init_checkpoint: str | None = None
     mask_partial_labels: bool = False
+    arch: str = "resnet"
 
 
 def _pos_weight(ds: PTBXLDiagnosticDataset, device: torch.device) -> torch.Tensor:
@@ -204,7 +205,8 @@ def run(cfg: MultiLabelTrainConfig) -> dict:
     train_loader = DataLoader(train_ds, batch_size=cfg.batch_size, shuffle=True, num_workers=cfg.num_workers)
     val_loader = DataLoader(val_ds, batch_size=cfg.batch_size, num_workers=cfg.num_workers)
     device = _select_device()
-    model = ECGResNet1D(
+    model = build_model(
+        cfg.arch,
         num_classes=len(PTBXL_DIAGNOSTIC_CLASSES),
         length=cfg.target_len,
         in_channels=12,
@@ -296,6 +298,7 @@ def run(cfg: MultiLabelTrainConfig) -> dict:
                 {
                     "state_dict": model.state_dict(),
                     "version": "ecg-resnet1d-ptbxl-multilabel-0.1.0",
+                    "arch": cfg.arch,
                     "classes": list(PTBXL_DIAGNOSTIC_CLASSES),
                     "task": "ptbxl_diagnostic_multilabel",
                     "threshold": cfg.threshold,
@@ -351,6 +354,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--target-fs", type=int, default=100, help="resample rate; use 500 with records500 for finer morphology")
     p.add_argument("--target-len", type=int, default=1024, help="samples per lead fed to the model")
     p.add_argument("--mask-partial-labels", action="store_true", help="ignore loss on classes a source dataset never annotates (partial-label safe)")
+    p.add_argument("--arch", choices=["resnet", "deep"], default="resnet", help="resnet=light serving net; deep=Ribeiro-style high-capacity net")
     args = p.parse_args(argv)
     run(
         MultiLabelTrainConfig(
@@ -370,6 +374,7 @@ def main(argv: list[str] | None = None) -> int:
             target_len=args.target_len,
             target_fs=args.target_fs,
             mask_partial_labels=args.mask_partial_labels,
+            arch=args.arch,
         )
     )
     return 0

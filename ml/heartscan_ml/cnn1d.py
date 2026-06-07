@@ -113,9 +113,96 @@ class ECGResNet1D(nn.Module):
         return self.head(x)
 
 
+class _ResidualUnit1D(nn.Module):
+    """Ribeiro-style residual unit with strided downsampling and a pooled skip.
+
+    Adapted from Ribeiro et al. (Nature Comms 2020;
+    antonior92/automatic-ecg-diagnosis). Each unit halves/quarters the temporal
+    length and grows channels, so the network learns multi-scale morphology
+    natively — robust to sampling-rate / QRS-width changes.
+    """
+
+    def __init__(self, in_ch: int, out_ch: int, kernel: int = 17, downsample: int = 4, dropout: float = 0.2) -> None:
+        super().__init__()
+        pad = kernel // 2
+        self.main = nn.Sequential(
+            nn.Conv1d(in_ch, out_ch, kernel, padding=pad),
+            nn.BatchNorm1d(out_ch),
+            nn.ReLU(inplace=True),
+            nn.Dropout(dropout),
+            nn.Conv1d(out_ch, out_ch, kernel, stride=downsample, padding=pad),
+            nn.BatchNorm1d(out_ch),
+        )
+        self.skip = nn.Sequential(
+            nn.MaxPool1d(downsample),
+            nn.Conv1d(in_ch, out_ch, kernel_size=1),
+        )
+        self.act = nn.ReLU(inplace=True)
+        self.drop = nn.Dropout(dropout)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        m = self.main(x)
+        s = self.skip(x)
+        # Align lengths if even kernel/stride produced an off-by-one.
+        if m.shape[-1] != s.shape[-1]:
+            n = min(m.shape[-1], s.shape[-1])
+            m, s = m[..., :n], s[..., :n]
+        return self.drop(self.act(m + s))
+
+
+class ECGResNetDeep1D(nn.Module):
+    """Deeper Ribeiro-style residual net for high-resolution (500 Hz/4096) ECG.
+
+    ~4 residual units, channels 64→128→196→256→320, each downsampling ×4.
+    Length-agnostic (AdaptiveAvgPool head), so the same weights serve any input
+    length. Heavier than ``ECGResNet1D`` (~few M params) — train on GPU/MPS.
+    """
+
+    def __init__(
+        self,
+        num_classes: int = 5,
+        length: int = 4096,
+        in_channels: int = 12,
+        channels: tuple[int, ...] = (128, 196, 256, 320),
+        kernel: int = 17,
+        dropout: float = 0.2,
+    ) -> None:
+        super().__init__()
+        self.length = length
+        self.in_channels = in_channels
+        self.stem = nn.Sequential(
+            nn.Conv1d(in_channels, 64, kernel_size=kernel, padding=kernel // 2),
+            nn.BatchNorm1d(64),
+            nn.ReLU(inplace=True),
+        )
+        units = []
+        prev = 64
+        for ch in channels:
+            units.append(_ResidualUnit1D(prev, ch, kernel=kernel, downsample=4, dropout=dropout))
+            prev = ch
+        self.blocks = nn.Sequential(*units)
+        self.pool = nn.AdaptiveAvgPool1d(1)
+        self.dropout = nn.Dropout(dropout)
+        self.head = nn.Linear(prev, num_classes)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.stem(x)
+        x = self.blocks(x)
+        x = self.pool(x).flatten(1)
+        x = self.dropout(x)
+        return self.head(x)
+
+
 def build_default_model(num_classes: int = 3, length: int = 1024, in_channels: int = 1) -> nn.Module:
     """Construct the default classifier; switch architectures here in the future."""
     return ECGResNet1D(num_classes=num_classes, length=length, in_channels=in_channels)
+
+
+def build_model(arch: str = "resnet", **kwargs) -> nn.Module:
+    """Factory: ``resnet`` (default, serving) or ``deep`` (Ribeiro-style)."""
+    if arch in ("deep", "ribeiro", "resnet_deep"):
+        return ECGResNetDeep1D(**kwargs)
+    return ECGResNet1D(**kwargs)
 
 
 def default_model_version() -> str:

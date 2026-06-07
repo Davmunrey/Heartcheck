@@ -11,7 +11,7 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 
-from heartscan_ml.cnn1d import ECGResNet1D
+from heartscan_ml.cnn1d import build_model
 from ml.training.data import PTBXL_DIAGNOSTIC_CLASSES, PTBXLDiagnosticDataset
 from ml.training.train_multilabel import _multilabel_report
 
@@ -45,7 +45,8 @@ def evaluate(
     if not ds.rows:
         raise RuntimeError(f"Split {split!r} is empty.")
 
-    model = ECGResNet1D(num_classes=len(PTBXL_DIAGNOSTIC_CLASSES), length=target_len, in_channels=12).to(device)
+    arch = str(state.get("arch", "resnet")) if isinstance(state, dict) else "resnet"
+    model = build_model(arch, num_classes=len(PTBXL_DIAGNOSTIC_CLASSES), length=target_len, in_channels=12).to(device)
     payload = state.get("state_dict") if isinstance(state, dict) else state
     model.load_state_dict(payload, strict=True)
     model.eval()
