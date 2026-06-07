@@ -139,3 +139,51 @@ def test_multilabel_threshold_tuning_and_focal_loss():
     assert len(thresholds) == 5
     assert report["macro_f1"] >= 0.4
     assert float(loss) >= 0.0
+
+
+def _write_manifest(path, rows):
+    pq.write_table(pa.Table.from_pylist(rows), path)
+
+
+def test_partial_label_mask_ignores_unobserved_classes(tmp_path):
+    """A source that never expresses a class must get that class masked out."""
+    manifest = tmp_path / "m.parquet"
+    rows = [
+        # PTB-XL: expresses MI and HYP -> both observed
+        {"file_path": "a", "label_id": 1, "sampling_rate_hz": 100, "n_leads": 12,
+         "duration_s": 10.0, "source_dataset": "ptb_xl", "split": "train",
+         "metadata": {"diagnostic_classes": ["MI"]}},
+        {"file_path": "b", "label_id": 1, "sampling_rate_hz": 100, "n_leads": 12,
+         "duration_s": 10.0, "source_dataset": "ptb_xl", "split": "train",
+         "metadata": {"diagnostic_classes": ["HYP"]}},
+        # cpsc-like: only ever expresses MI -> HYP/STTC/CD/NORM unobserved
+        {"file_path": "c", "label_id": 1, "sampling_rate_hz": 500, "n_leads": 12,
+         "duration_s": 10.0, "source_dataset": "cpsc", "split": "train",
+         "metadata": {"diagnostic_classes": ["MI"]}},
+    ]
+    _write_manifest(manifest, rows)
+    ds = PTBXLDiagnosticDataset(manifest, split="train", return_mask=True)
+    classes = list(ds.classes)
+    mi, hyp = classes.index("MI"), classes.index("HYP")
+    masks = {s: m for s, m in zip(ds._sources, ds.masks)}
+    # cpsc never expresses HYP -> masked (0); MI is observed -> kept (1)
+    assert masks["cpsc"][hyp] == 0.0
+    assert masks["cpsc"][mi] == 1.0
+    # ptb_xl expresses both -> all observed entries kept
+    assert masks["ptb_xl"][hyp] == 1.0
+
+
+def test_focal_loss_mask_skips_masked_entries():
+    import torch
+    loss = FocalBCEWithLogitsLoss()
+    # Non-uniform logits so per-element losses differ across columns.
+    logits = torch.tensor([[5.0, 0.0, 0.0, 0.0, 0.0], [5.0, 0.0, 0.0, 0.0, 0.0]])
+    targets = torch.zeros(2, 5)
+    targets[:, 0] = 1.0  # class 0 positive and well-predicted (low loss)
+    full = loss(logits, targets)
+    mask = torch.ones(2, 5)
+    mask[:, 0] = 0.0  # mask out the well-predicted positive column
+    masked = loss(logits, targets, mask)
+    # Removing the low-loss column raises the masked mean -> must differ.
+    assert not torch.isclose(full, masked)
+    assert masked > full

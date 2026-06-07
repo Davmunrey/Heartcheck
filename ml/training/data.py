@@ -256,6 +256,7 @@ class PTBXLDiagnosticDataset(ParquetECGDataset):
         target_fs: int = 100,
         augment: bool = False,
         seed: int = 1234,
+        return_mask: bool = False,
     ) -> None:
         try:
             import pyarrow.parquet as pq
@@ -267,12 +268,14 @@ class PTBXLDiagnosticDataset(ParquetECGDataset):
             rows = [r for r in rows if r.get("split") == split]
         self.rows = []
         self.targets: list[np.ndarray] = []
+        self._sources: list[str] = []
         for r in rows:
             metadata = r.get("metadata") or {}
             diagnostic_classes = metadata.get("diagnostic_classes") or []
             target = np.asarray([1.0 if c in diagnostic_classes else 0.0 for c in self.classes], dtype=np.float32)
             if not target.any():
                 continue
+            source = str(r.get("source_dataset") or "unknown")
             self.rows.append(
                 ManifestRow(
                     file_path=r["file_path"],
@@ -281,17 +284,39 @@ class PTBXLDiagnosticDataset(ParquetECGDataset):
                     sampling_rate_hz=int(r.get("sampling_rate_hz") or 500),
                     n_leads=int(r.get("n_leads") or 12),
                     duration_s=float(r.get("duration_s") or 10.0),
-                    source_dataset=str(r.get("source_dataset") or "unknown"),
+                    source_dataset=source,
                 )
             )
             self.targets.append(target)
+            self._sources.append(source)
         self.target_len = target_len
         self.target_fs = target_fs
         self.lead = "ii"
         self.augment = augment
+        self.return_mask = return_mask
         self.rng = np.random.default_rng(seed)
         self._hdf5_files = {}
         self._hdf5_indices = {}
+        self.masks = self._build_partial_label_masks()
+
+    def _build_partial_label_masks(self) -> list[np.ndarray]:
+        """Per-record loss mask for partial-label datasets.
+
+        A source whose coding scheme never expresses a superclass (e.g.
+        CPSC-2018 carries no MI/HYP codes) produces *unreliable negatives* for
+        that class — every record reads 0 only because the annotator never
+        looked. Treating those as true negatives poisons MI/STTC precision.
+
+        We mark a class ``observed`` for a source iff it is positive in at least
+        one of that source's records; the loss then ignores un-observed classes.
+        Fully-annotated sources (PTB-XL: all 5 present) get an all-ones mask, so
+        this is a no-op for them.
+        """
+        observed: dict[str, np.ndarray] = {}
+        for src, tgt in zip(self._sources, self.targets):
+            observed[src] = observed.get(src, np.zeros(len(self.classes), np.float32)) + tgt
+        source_mask = {s: (v > 0).astype(np.float32) for s, v in observed.items()}
+        return [source_mask[s] for s in self._sources]
 
     def _augment_signal(self, signal: np.ndarray) -> np.ndarray:
         """Apply conservative ECG augmentations to improve demo robustness."""
@@ -323,4 +348,8 @@ class PTBXLDiagnosticDataset(ParquetECGDataset):
         stacked = np.stack(resampled)
         if self.augment:
             stacked = self._augment_signal(stacked)
-        return torch.from_numpy(stacked.astype(np.float32)), torch.from_numpy(self.targets[idx])
+        signal = torch.from_numpy(stacked.astype(np.float32))
+        target = torch.from_numpy(self.targets[idx])
+        if self.return_mask:
+            return signal, target, torch.from_numpy(self.masks[idx])
+        return signal, target

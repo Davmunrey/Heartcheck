@@ -37,6 +37,7 @@ class MultiLabelTrainConfig:
     monitor: str = "tuned_macro_f1"
     augment: bool = True
     init_checkpoint: str | None = None
+    mask_partial_labels: bool = False
 
 
 def _pos_weight(ds: PTBXLDiagnosticDataset, device: torch.device) -> torch.Tensor:
@@ -138,7 +139,12 @@ class FocalBCEWithLogitsLoss(torch.nn.Module):
         self.pos_weight = pos_weight
         self.gamma = gamma
 
-    def forward(self, logits: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self,
+        logits: torch.Tensor,
+        targets: torch.Tensor,
+        mask: torch.Tensor | None = None,
+    ) -> torch.Tensor:
         bce = torch.nn.functional.binary_cross_entropy_with_logits(
             logits,
             targets,
@@ -147,7 +153,11 @@ class FocalBCEWithLogitsLoss(torch.nn.Module):
         )
         probs = torch.sigmoid(logits)
         pt = torch.where(targets > 0, probs, 1 - probs)
-        return (bce * (1 - pt).pow(self.gamma)).mean()
+        per_elem = bce * (1 - pt).pow(self.gamma)
+        if mask is not None:
+            # Average only over observed (mask=1) entries (partial-label safe).
+            return (per_elem * mask).sum() / mask.sum().clamp_min(1.0)
+        return per_elem.mean()
 
 
 def _select_device() -> torch.device:
@@ -185,6 +195,7 @@ def run(cfg: MultiLabelTrainConfig) -> dict:
         target_fs=cfg.target_fs,
         augment=cfg.augment,
         seed=cfg.seed,
+        return_mask=cfg.mask_partial_labels,
     )
     val_ds = PTBXLDiagnosticDataset(cfg.manifest, split="val", target_len=cfg.target_len, target_fs=cfg.target_fs)
     if not train_ds.rows or not val_ds.rows:
@@ -225,10 +236,25 @@ def run(cfg: MultiLabelTrainConfig) -> dict:
         model.train()
         t0 = time.perf_counter()
         losses = []
-        for x, y in train_loader:
-            x, y = x.to(device), y.to(device)
+        for batch in train_loader:
+            if cfg.mask_partial_labels:
+                x, y, m = batch
+                x, y, m = x.to(device), y.to(device), m.to(device)
+            else:
+                x, y = batch
+                x, y, m = x.to(device), y.to(device), None
             optim.zero_grad()
-            loss = loss_fn(model(x), y)
+            logits = model(x)
+            if m is not None and isinstance(loss_fn, FocalBCEWithLogitsLoss):
+                loss = loss_fn(logits, y, m)
+            elif m is not None:
+                # masked plain BCE
+                per = torch.nn.functional.binary_cross_entropy_with_logits(
+                    logits, y, pos_weight=pos_weight, reduction="none"
+                )
+                loss = (per * m).sum() / m.sum().clamp_min(1.0)
+            else:
+                loss = loss_fn(logits, y)
             loss.backward()
             optim.step()
             losses.append(float(loss.item()))
@@ -324,6 +350,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--init-checkpoint", default=None)
     p.add_argument("--target-fs", type=int, default=100, help="resample rate; use 500 with records500 for finer morphology")
     p.add_argument("--target-len", type=int, default=1024, help="samples per lead fed to the model")
+    p.add_argument("--mask-partial-labels", action="store_true", help="ignore loss on classes a source dataset never annotates (partial-label safe)")
     args = p.parse_args(argv)
     run(
         MultiLabelTrainConfig(
@@ -342,6 +369,7 @@ def main(argv: list[str] | None = None) -> int:
             init_checkpoint=args.init_checkpoint,
             target_len=args.target_len,
             target_fs=args.target_fs,
+            mask_partial_labels=args.mask_partial_labels,
         )
     )
     return 0

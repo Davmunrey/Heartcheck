@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import ast
 import csv
+import os
 from pathlib import Path
 from typing import Iterator
 
@@ -82,7 +83,10 @@ def _parse(target_dir: Path) -> Iterator[Sample]:
                 }
                 - {""}
             )
-            rec_path = data_root / row["filename_lr"]  # 100 Hz
+            # Opt into the 500 Hz records (finer QRS/ST morphology for HYP/MI)
+            # with PTBXL_USE_HR=1; default stays 100 Hz for speed/compat.
+            use_hr = os.environ.get("PTBXL_USE_HR") == "1"
+            rec_path = data_root / (row["filename_hr"] if use_hr else row["filename_lr"])
             yield Sample(
                 record_id=str(row["ecg_id"]),
                 label=label,
@@ -90,7 +94,7 @@ def _parse(target_dir: Path) -> Iterator[Sample]:
                 source_dataset="ptb_xl",
                 source_label=";".join(scp.keys()),
                 file_path=rec_path,
-                sampling_rate_hz=100,
+                sampling_rate_hz=500 if use_hr else 100,
                 n_leads=12,
                 duration_s=10.0,
                 patient_id=str(row.get("patient_id") or ""),
