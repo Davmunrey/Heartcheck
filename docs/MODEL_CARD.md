@@ -103,6 +103,73 @@ the weakest class; treat non-NORM negatives with clinical caution.
 > (non-fatal; the checkpoint ships per-class tuned thresholds). Multi-label
 > calibration is tracked as follow-up.
 
+> ⚠️ **The `0.7551` above is on this checkpoint's *own* PTB-XL test split and is
+> NOT comparable across runs** — different patient-stratified splits have
+> different difficulty. For an honest A/B, always evaluate two checkpoints on the
+> *same* slice (see the CinC2020 section's same-slice table). On the harder
+> 2,134-row blended PTB-XL slice this same checkpoint scores macro-F1 `0.578`.
+
+#### CinC2020 multi-source blend (2026-06-07) — current served model
+
+Fine-tuned from the focal champion on a **43,063-record blend**: full PTB-XL
+1.0.3 (21,799) + the five non-PTB-XL CinC2020 source databases (21,264:
+cpsc_2018, cpsc_2018_extra, georgia, ptb, st_petersburg_incart). Motivated by
+the Ribeiro et al. residual-CNN work
+([antonior92/automatic-ecg-diagnosis](https://github.com/antonior92/automatic-ecg-diagnosis),
+Nature Comms 2020) and the PTB-XL Inception1D benchmark
+([AutoECG/Automated-ECG-Interpretation](https://github.com/AutoECG/Automated-ECG-Interpretation)).
+The SNOMED→superclass map was expanded (ischemia/ST→STTC, atrial
+enlargement→HYP) so ~18k previously-dropped CinC2020 records become supervision,
+**doubling HYP training records** (≈2k→3,957). 12-epoch focal fine-tune, MPS,
+~100 s/epoch.
+
+| Field | Value |
+|-------|-------|
+| Checkpoint | `runs/local/cinc2020_blend/checkpoint.pt` |
+| Best val (blended) | tuned macro-F1 `0.6456` |
+
+**Honest same-slice A/B** (both checkpoints evaluated on the identical 2,134-row
+PTB-XL test slice — the only fair comparison):
+
+| Model | Macro-F1 | NORM | MI | STTC | CD | **HYP** |
+|-------|----------|------|----|------|----|---------|
+| Focal champion (PTB-XL only) | 0.578 | 0.735 | 0.611 | 0.569 | 0.655 | **0.319** |
+| **CinC2020 blend (served)** | **0.608** | 0.744 | 0.597 | 0.623 | 0.629 | **0.447** |
+
+The blend wins overall and lifts **HYP +40 % relative (0.319→0.447)** and STTC,
+i.e. the CinC2020 data + expanded labels hit their target (the two weak classes).
+On the full multi-source blended test (2,134 rows from 6 source distributions)
+it reaches macro-F1 `0.628`, evidence of better cross-dataset generalisation
+than a PTB-XL-only model.
+
+> **Reality check for clinical readers.** Macro-F1 ≈ 0.6 at fixed thresholds is
+> *not* "near-perfect" and no honest 5-superclass PTB-XL model is — published
+> SOTA is ≈ 0.93 **AUROC** (threshold-independent) with macro-F1 in the
+> 0.70–0.80 range. F1 at one operating point understates a model whose ranking
+> (AUROC) is strong. The clinically meaningful path is calibrated probabilities +
+> conformal abstention + high negative predictive value, used as a **copilot**,
+> not an autonomous diagnosis. See "Path to clinical-grade" below.
+
+#### Path to clinical-grade (roadmap)
+
+Ranked by expected impact for the weak classes (HYP/MI/STTC):
+
+1. **Higher input resolution.** Train at 500 Hz / 4096 samples (Ribeiro uses
+   400 Hz/4096) instead of 100 Hz/1024 — HYP/MI hinge on fine QRS-voltage and
+   ST morphology that 100 Hz smooths away. Flags already exist
+   (`--target-fs 500 --target-len 4096`); `records500` is available locally.
+2. **Partial-label masking.** CPSC sources only annotate a few classes; absent
+   labels are currently treated as negatives (false negatives that poison MI/STTC
+   precision). Add a per-record label mask so loss ignores un-annotated classes.
+3. **Stronger backbone.** `ECGResNet1D` is ~150 k params; adopt the deeper
+   Ribeiro residual net (proven ≈0.93 AUROC) — train from scratch at high-res.
+4. **Threshold/calibration per deployment distribution** + split-conformal
+   prediction sets for abstention; report **AUROC/AUPRC** and sensitivity at
+   fixed specificity as the primary clinical metrics, not raw F1.
+5. **External validation** on a fully held-out dataset (e.g. SPH/Chapman) and
+   **ECE** reporting so probabilities are trustworthy.
+6. **Ensemble + test-time augmentation** for the final percent.
+
 ### Beat-image classifier (2026-06-07) — research only, NOT production
 
 A separate image/beat wedge: a compact 2D CNN

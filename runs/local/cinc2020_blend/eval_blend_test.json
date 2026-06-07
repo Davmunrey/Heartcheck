@@ -1,0 +1,73 @@
+{
+  "threshold": [
+    0.44999998807907104,
+    0.550000011920929,
+    0.5,
+    0.550000011920929,
+    0.550000011920929
+  ],
+  "macro_f1": 0.6284874299347298,
+  "macro_precision": 0.5619587039409271,
+  "macro_recall": 0.7363854251774397,
+  "exact_match": 0.3722590515043345,
+  "hamming_accuracy": 0.7962774094849566,
+  "classes": [
+    "NORM",
+    "MI",
+    "STTC",
+    "CD",
+    "HYP"
+  ],
+  "per_class": {
+    "NORM": {
+      "precision": 0.5845410628019324,
+      "recall": 0.9272030651340997,
+      "f1": 0.717037037037037,
+      "support": 1305,
+      "tp": 1210,
+      "fp": 860,
+      "fn": 95
+    },
+    "MI": {
+      "precision": 0.4686840253342716,
+      "recall": 0.76905311778291,
+      "f1": 0.5824223874070835,
+      "support": 866,
+      "tp": 666,
+      "fp": 755,
+      "fn": 200
+    },
+    "STTC": {
+      "precision": 0.6432234432234433,
+      "recall": 0.7244224422442245,
+      "f1": 0.6814124951493986,
+      "support": 1212,
+      "tp": 878,
+      "fp": 487,
+      "fn": 334
+    },
+    "CD": {
+      "precision": 0.7585470085470085,
+      "recall": 0.6947162426614482,
+      "f1": 0.7252298263534219,
+      "support": 1022,
+      "tp": 710,
+      "fp": 226,
+      "fn": 312
+    },
+    "HYP": {
+      "precision": 0.3547979797979798,
+      "recall": 0.5665322580645161,
+      "f1": 0.43633540372670804,
+      "support": 496,
+      "tp": 281,
+      "fp": 511,
+      "fn": 215
+    }
+  },
+  "manifest": "/Users/mac/dev/Heartcheck/runs/local/cinc2020_blend/manifest_split.parquet",
+  "checkpoint": "/Users/mac/dev/Heartcheck/runs/local/cinc2020_blend/checkpoint.pt",
+  "split": "test",
+  "n": 3922,
+  "device": "mps"
+}
