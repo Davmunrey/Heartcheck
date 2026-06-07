@@ -1,7 +1,7 @@
 """Textos educativos (no diagnóstico clínico)."""
 
 DISCLAIMER_ES = (
-    "HeartScan ofrece información educativa únicamente. No sustituye el consejo médico "
+    "Axis ofrece información educativa únicamente. No sustituye el consejo médico "
     "profesional, el diagnóstico ni el tratamiento. Consulte siempre a un profesional sanitario."
 )
 

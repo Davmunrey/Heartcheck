@@ -1,1 +1,1 @@
-"""HeartScan API application package."""
+"""Axis API application package."""

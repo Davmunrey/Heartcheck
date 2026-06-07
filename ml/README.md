@@ -1,4 +1,4 @@
-# HeartScan ML (ECG)
+# Axis ML (ECG)
 
 Pipeline de **entrenamiento** (PTB-XL + CNN1D), **inferencia** WFDB o **foto de papel**, **BPM** (SleepECG), **guardrails** y **API HTTP** (FastAPI).
 

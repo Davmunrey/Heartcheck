@@ -1,7 +1,7 @@
 """Icentia11k — single-lead Holter dataset (CC BY-NC-SA 4.0, NON-COMMERCIAL).
 
 11,000 patients, 2 billion labelled beats. **Not usable in a commercial
-build** of HeartScan. Useful for internal research and pretraining whose
+build** of Axis. Useful for internal research and pretraining whose
 weights never ship to the production app.
 """
 

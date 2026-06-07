@@ -1,4 +1,4 @@
-"""Pure-python evaluation metrics for the HeartScan harness.
+"""Pure-python evaluation metrics for the Axis harness.
 
 No sklearn dependency: keeps the eval pipeline shippable inside any minimal
 backend image and trivially reviewable. Inputs are aligned numpy arrays.

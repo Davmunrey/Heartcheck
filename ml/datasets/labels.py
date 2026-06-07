@@ -1,4 +1,4 @@
-"""Cross-dataset label harmonisation to the three HeartScan classes.
+"""Cross-dataset label harmonisation to the three Axis classes.
 
 Each upstream dataset uses its own coding system (SCP-ECG, SNOMED-CT,
 ad-hoc challenge labels). These helpers normalise everything to
@@ -43,7 +43,7 @@ PTBXL_ARRHYTHMIA_SCP = {
 
 
 def map_ptbxl_codes(scp_codes: Iterable[str]) -> str:
-    """Map a list of SCP codes to a HeartScan class with the multi-label rule."""
+    """Map a list of SCP codes to a Axis class with the multi-label rule."""
     codes = set(scp_codes)
     if codes & PTBXL_ARRHYTHMIA_SCP:
         return ARRHYTHMIA

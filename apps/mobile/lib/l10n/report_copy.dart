@@ -45,7 +45,7 @@ class ReportCopy {
   }
 
   static const _en = ReportCopy(
-    docTitle: 'HeartScan analysis report',
+    docTitle: 'Axis analysis report',
     docSubtitle: 'Educational wellbeing software — not a certified medical device.',
     sectionInterpretation: 'Interpretation',
     sectionTechnical: 'Technical traceability',
@@ -65,7 +65,7 @@ class ReportCopy {
   );
 
   static const _es = ReportCopy(
-    docTitle: 'Informe de análisis HeartScan',
+    docTitle: 'Informe de análisis Axis',
     docSubtitle: 'Software educativo de bienestar — no es un dispositivo médico certificado.',
     sectionInterpretation: 'Interpretación',
     sectionTechnical: 'Trazabilidad técnica',

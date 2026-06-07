@@ -18,7 +18,7 @@ class HeartscanApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final router = createRouter();
     return MaterialApp.router(
-      title: 'HeartScan',
+      title: 'Axis',
       theme: buildAppTheme(),
       routerConfig: router,
       localizationsDelegates: const [

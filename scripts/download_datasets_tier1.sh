@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Download HeartScan training tier 1: PTB-XL, Chapman-Shaoxing, CinC 2017, BUT QDB.
+# Download Axis training tier 1: PTB-XL, Chapman-Shaoxing, CinC 2017, BUT QDB.
 # All four are CC BY 4.0 (open) — no PhysioNet credentials required.
 #
 # Defaults:

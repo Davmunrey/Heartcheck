@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# One-shot autonomous training pipeline for HeartScan.
+# One-shot autonomous training pipeline for Axis.
 #
 # Defaults to the tier-1 commercial-safe blend (PTB-XL + Chapman + CinC2017
 # + BUT QDB) and skips fine-tune unless image datasets exist on disk. Use

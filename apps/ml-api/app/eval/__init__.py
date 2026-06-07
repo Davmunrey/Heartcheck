@@ -1,4 +1,4 @@
-"""Evaluation harness for HeartScan.
+"""Evaluation harness for Axis.
 
 Submodules:
 - ``metrics``: classification, calibration, abstention, latency.

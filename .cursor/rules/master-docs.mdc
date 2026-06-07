@@ -1,5 +1,5 @@
 ---
-description: All HeartScan documentation lives under docs/ and must be indexed in docs/MASTER_DOCS.md
+description: All Axis documentation lives under docs/ and must be indexed in docs/MASTER_DOCS.md
 alwaysApply: true
 globs:
   - "docs/**/*.md"
@@ -8,7 +8,7 @@ globs:
 
 # Master docs rule
 
-HeartScan keeps **all** narrative documentation under
+Axis keeps **all** narrative documentation under
 [`docs/`](mdc:docs) and indexes every file from
 [`docs/MASTER_DOCS.md`](mdc:docs/MASTER_DOCS.md). Treat that index as the
 single source of truth for what documentation exists.

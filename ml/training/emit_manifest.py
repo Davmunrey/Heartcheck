@@ -9,7 +9,7 @@ takes:
 - the eval JSON produced by ``app.eval.cli`` against a held-out manifest;
 - the list of datasets that fed the run.
 
-It writes ``<checkpoint>.yaml`` (PhysioNet / HeartScan convention) so
+It writes ``<checkpoint>.yaml`` (PhysioNet / Axis convention) so
 ``inference._resolve_manifest`` finds it automatically.
 """
 

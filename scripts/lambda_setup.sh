@@ -2,7 +2,7 @@
 # scripts/lambda_setup.sh
 #
 # Bootstrap a fresh Lambda Labs / RunPod / Vast.ai GPU instance for a
-# full HeartScan training run. Idempotent: re-running on the same VM
+# full Axis training run. Idempotent: re-running on the same VM
 # only does work that's missing.
 #
 # Expected target: Ubuntu 22.04 LTS + CUDA 12.x base image, single A100

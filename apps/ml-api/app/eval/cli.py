@@ -1,4 +1,4 @@
-"""Command-line entry point for the HeartScan evaluation harness.
+"""Command-line entry point for the Axis evaluation harness.
 
 Used by the repo-level ``Makefile`` target ``make eval``.
 """
@@ -19,7 +19,7 @@ MAX_ECE_REGRESSION = 0.05
 
 
 def _parse() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="HeartScan evaluation harness")
+    p = argparse.ArgumentParser(description="Axis evaluation harness")
     p.add_argument("--manifest", type=Path, default=Path("data/synth_v1/manifest.jsonl"))
     p.add_argument(
         "--generate-synth",

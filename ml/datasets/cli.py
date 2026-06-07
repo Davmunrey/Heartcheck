@@ -1,4 +1,4 @@
-"""Command-line interface for the HeartScan dataset registry.
+"""Command-line interface for the Axis dataset registry.
 
 Usage examples
 --------------
@@ -115,7 +115,7 @@ def _sample_to_row(sample, version: str) -> dict:
 
 
 def main(argv: list[str] | None = None) -> int:
-    p = argparse.ArgumentParser(description="HeartScan dataset registry CLI")
+    p = argparse.ArgumentParser(description="Axis dataset registry CLI")
     sub = p.add_subparsers(dest="cmd", required=True)
 
     sub.add_parser("list", help="list datasets").set_defaults(func=_cmd_list)

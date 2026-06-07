@@ -69,7 +69,7 @@ async def lifespan(app: FastAPI):
     _state.clear()
 
 
-app = FastAPI(title="HeartScan ML", version=PIPELINE_VERSION, lifespan=lifespan)
+app = FastAPI(title="Axis ML", version=PIPELINE_VERSION, lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=os.environ.get("HEARTSCAN_CORS_ORIGINS", "*").split(","),

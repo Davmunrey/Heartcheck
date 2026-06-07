@@ -1,4 +1,4 @@
-"""Registry of every ECG dataset HeartScan can train against.
+"""Registry of every ECG dataset Axis can train against.
 
 This module is the canonical truth about *which* datasets exist, *what*
 their licenses are, and *how* to download them. The CLI and the training
@@ -18,7 +18,7 @@ LicenseClass = Literal[
     "restricted",        # MTA, registration, CITI course, etc.
 ]
 
-# Harmonised HeartScan classes — keep in sync with apps/ml-api/app/services/inference.py
+# Harmonised Axis classes — keep in sync with apps/ml-api/app/services/inference.py
 HEARTSCAN_CLASSES = ("normal", "arrhythmia", "noise")
 CLASS_TO_ID = {n: i for i, n in enumerate(HEARTSCAN_CLASSES)}
 

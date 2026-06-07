@@ -1,4 +1,4 @@
-"""Autonomous training orchestrator for HeartScan.
+"""Autonomous training orchestrator for Axis.
 
 Chains every step of the public-data training plan into one idempotent
 command:

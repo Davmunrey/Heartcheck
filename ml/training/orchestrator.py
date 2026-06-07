@@ -1,6 +1,6 @@
 """End-to-end autonomous training orchestrator.
 
-Runs every step of the HeartScan training plan in order and is fully
+Runs every step of the Axis training plan in order and is fully
 idempotent: each step skips itself when its expected output already exists,
 so the orchestrator can be safely re-run from a cron job or CI.
 
@@ -345,7 +345,7 @@ def run(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    p = argparse.ArgumentParser(description="HeartScan autonomous training orchestrator")
+    p = argparse.ArgumentParser(description="Axis autonomous training orchestrator")
     p.add_argument("--raw-root", default="data/raw")
     p.add_argument("--work-root", default="runs/auto")
     p.add_argument("--weights-dir", default="apps/ml-api/weights")

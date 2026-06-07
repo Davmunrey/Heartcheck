@@ -1,4 +1,4 @@
-# Example crontab line for nightly retraining of HeartScan.
+# Example crontab line for nightly retraining of Axis.
 #
 # - Run at 03:30 server time, when traffic is low.
 # - Auto-promote when F1 macro improves by >= 2 pts over the recorded baseline.

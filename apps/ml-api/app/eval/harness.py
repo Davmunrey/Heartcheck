@@ -216,7 +216,7 @@ def _render_html(payload: dict[str, Any]) -> str:
         for i, n in enumerate(cls["class_names"])
     )
     return f"""<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><title>HeartScan eval — {payload['label']}</title>
+<html lang="en"><head><meta charset="utf-8"><title>Axis eval — {payload['label']}</title>
 <style>
 body{{font-family:system-ui,sans-serif;max-width:920px;margin:2rem auto;padding:1rem;color:#111}}
 h1{{font-size:1.4rem}} table{{border-collapse:collapse;margin:1rem 0}}
@@ -225,7 +225,7 @@ th:first-child{{text-align:left;background:#f7f7f7}}
 .kv{{display:grid;grid-template-columns:200px 1fr;gap:0.4rem 1rem;margin:1rem 0}}
 .kv dt{{color:#555}} .kv dd{{margin:0;font-weight:600}}
 </style></head><body>
-<h1>HeartScan eval — {payload['label']}</h1>
+<h1>Axis eval — {payload['label']}</h1>
 <p>{payload['timestamp']} · {payload['n_samples']} samples</p>
 <dl class="kv">
   <dt>Accuracy</dt><dd>{cls['accuracy']:.4f}</dd>

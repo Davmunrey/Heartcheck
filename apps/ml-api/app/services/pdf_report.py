@@ -19,7 +19,7 @@ def _t(locale: str) -> dict[str, str]:
     lc = (locale or "en")[:2].lower()
     if lc == "es":
         return {
-            "title": "Informe de análisis HeartScan",
+            "title": "Informe de análisis Axis",
             "subtitle": (
                 "Software educativo de bienestar digital. No sustituye un electrocardiograma clínico "
                 "ni la valoración médica."
@@ -46,7 +46,7 @@ def _t(locale: str) -> dict[str, str]:
             "disclaimer_heading": "Aviso legal",
         }
     return {
-        "title": "HeartScan Analysis Report",
+        "title": "Axis Analysis Report",
         "subtitle": (
             "Educational wellbeing software. Does not replace a clinical ECG or professional "
             "medical assessment."
@@ -99,8 +99,8 @@ def build_analysis_pdf_bytes(
         leftMargin=1.8 * cm,
         topMargin=1.6 * cm,
         bottomMargin=1.6 * cm,
-        title="HeartScan Report",
-        author="HeartScan",
+        title="Axis Report",
+        author="Axis",
     )
     styles = getSampleStyleSheet()
     title_style = ParagraphStyle(

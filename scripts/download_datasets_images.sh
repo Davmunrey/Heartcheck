@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Download HeartScan image-domain datasets:
+# Download Axis image-domain datasets:
 #   - ECG-Image-Database (PhysioNet 2024 challenge, ~60 GB)
 #   - PTB-XL-Image-17K   (synthetic with grid + masks, ~20 GB)
 #

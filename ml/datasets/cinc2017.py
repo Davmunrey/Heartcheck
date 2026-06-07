@@ -63,5 +63,5 @@ def dataset() -> Dataset:
         expected_size_gb=0.4,
         download=_download,
         parse=_parse,
-        notes="Single-lead — ideal benchmark for HeartScan's photo-derived 1D signal.",
+        notes="Single-lead — ideal benchmark for Axis's photo-derived 1D signal.",
     )

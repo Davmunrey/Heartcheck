@@ -1,4 +1,4 @@
--- HeartScan RLS isolation tests using pgTAP.
+-- Axis RLS isolation tests using pgTAP.
 -- Run via: supabase test db
 -- Requires pgTAP extension (enabled in Supabase by default).
 --

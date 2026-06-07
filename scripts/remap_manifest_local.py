@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Remap a HeartScan signal manifest's file_path column to a local (non-iCloud)
+"""Remap a Axis signal manifest's file_path column to a local (non-iCloud)
 data root, preserving every other column and the train/val/test split.
 
 Motivation: the repo lives under ~/Desktop which iCloud evicts ("dataless"

@@ -1,5 +1,5 @@
 """Fine-tune the pretrained ``ECGResNet1D`` on ECG **images** by routing each
-image through HeartScan's own extraction pipeline.
+image through Axis's own extraction pipeline.
 
 This closes the foto↔señal gap: instead of training on clean PTB-XL signals
 and hoping the production extractor doesn't introduce distribution shift,
@@ -57,7 +57,7 @@ class FinetuneConfig:
     sample_balanced: bool = True
 
 
-class HeartScanImageDataset(Dataset):
+class AxisImageDataset(Dataset):
     """Reads images from disk and runs them through the production extractor."""
 
     def __init__(self, manifest_path: str | Path, split: str | None = None, target_len: int = 1024) -> None:
@@ -101,7 +101,7 @@ class HeartScanImageDataset(Dataset):
         )
 
 
-def _balanced_sampler(ds: HeartScanImageDataset) -> WeightedRandomSampler:
+def _balanced_sampler(ds: AxisImageDataset) -> WeightedRandomSampler:
     counts = Counter(int(r["label_id"]) for r in ds.rows)
     weights = [1.0 / counts[int(r["label_id"])] for r in ds.rows]
     return WeightedRandomSampler(weights, num_samples=len(weights), replacement=True)
@@ -113,8 +113,8 @@ def run(cfg: FinetuneConfig) -> dict:
     out_dir = Path(cfg.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    train_ds = HeartScanImageDataset(cfg.manifest, split="train", target_len=cfg.target_len)
-    val_ds = HeartScanImageDataset(cfg.manifest, split="val", target_len=cfg.target_len)
+    train_ds = AxisImageDataset(cfg.manifest, split="train", target_len=cfg.target_len)
+    val_ds = AxisImageDataset(cfg.manifest, split="val", target_len=cfg.target_len)
     if not train_ds.rows:
         raise RuntimeError("Train split is empty")
 

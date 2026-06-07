@@ -1,4 +1,4 @@
-# HeartScan mobile (Flutter)
+# Axis mobile (Flutter)
 
 ## Setup
 

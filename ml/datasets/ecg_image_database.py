@@ -2,7 +2,7 @@
 
 35,595 software-labeled ECG images with real-world artifacts: noise, wrinkles,
 stains, perspective, photographs of computer monitors. Built from PTB-XL +
-Emory Healthcare. **The most directly relevant dataset for HeartScan**.
+Emory Healthcare. **The most directly relevant dataset for Axis**.
 """
 
 from __future__ import annotations
@@ -61,5 +61,5 @@ def dataset() -> Dataset:
         expected_size_gb=60.0,
         download=_download,
         parse=_parse,
-        notes="Critical: image domain matches HeartScan exactly; use for fine-tuning.",
+        notes="Critical: image domain matches Axis exactly; use for fine-tuning.",
     )

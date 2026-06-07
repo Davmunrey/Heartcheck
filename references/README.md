@@ -21,9 +21,9 @@ pip install -e ".[api]"   # o lo que indique el README de ml/
 
 Lee el [`HeartDiagnosis/README.md`](HeartDiagnosis/README.md) de esta carpeta para los comandos exactos.
 
-## Relación con HeartScan
+## Relación con Axis
 
-- **HeartScan** (FastAPI + Flutter + `web_public`) sigue en la raíz del mismo repo: `apps/ml-api/`, `apps/mobile/`, `web_public/`.
+- **Axis** (FastAPI + Flutter + `web_public`) sigue en la raíz del mismo repo: `apps/ml-api/`, `apps/mobile/`, `web_public/`.
 - **HeartDiagnosis** es otro stack (React + Python `ml/`) que convive en `references/HeartDiagnosis/` como proyecto hermano, no como “anexo de solo lectura”.
 
 Solo volver a sincronizar **sin** borrar el origen (p. ej. otra máquina): `scripts/sync_references_from_proposal_engine.sh`.

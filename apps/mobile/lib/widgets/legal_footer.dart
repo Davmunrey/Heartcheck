@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
-/// Legal footer + link to the "When NOT to use HeartScan" guidance.
+/// Legal footer + link to the "When NOT to use Axis" guidance.
 ///
 /// The URL is pinned to the public docs path; if the documentation moves,
 /// update [whenNotToUseUrl] and regenerate the localized strings.
@@ -26,7 +26,7 @@ class LegalFooter extends StatelessWidget {
           Text(t.legalFooter, textAlign: TextAlign.center, style: style),
           const SizedBox(height: 6),
           SelectableText(
-            'Cuándo NO usar HeartScan: $whenNotToUseUrl',
+            'Cuándo NO usar Axis: $whenNotToUseUrl',
             textAlign: TextAlign.center,
             style: style,
           ),

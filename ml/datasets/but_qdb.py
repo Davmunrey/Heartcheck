@@ -1,7 +1,7 @@
 """Brno University of Technology ECG Quality Database (BUT QDB) — CC BY 4.0.
 
 18 long-term single-lead ECG recordings with 3-class quality annotations
-(usable / partially-usable / unusable). Used to train HeartScan's quality gate.
+(usable / partially-usable / unusable). Used to train Axis's quality gate.
 """
 
 from __future__ import annotations

@@ -1,7 +1,7 @@
 """Lobachevsky University Database (LUDB) — 200 records with cardiologist
 delineation of P/QRS/T (open via PhysioNet).
 
-Used by HeartScan to validate R-peak detection and to seed segmentation
+Used by Axis to validate R-peak detection and to seed segmentation
 training for the U-Net trace extractor.
 """
 

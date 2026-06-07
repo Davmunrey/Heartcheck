@@ -1,4 +1,4 @@
--- HeartScan multi-tenant tables + RLS (org_id from Clerk JWT template "supabase")
+-- Axis multi-tenant tables + RLS (org_id from Clerk JWT template "supabase")
 -- Apply in Supabase SQL editor or via supabase db push.
 -- Requires: JWT from Clerk includes claim "org_id" matching companies.id
 

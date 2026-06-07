@@ -1,4 +1,4 @@
-"""Unified loaders for public ECG datasets used to train HeartScan.
+"""Unified loaders for public ECG datasets used to train Axis.
 
 Each dataset in :mod:`ml.datasets.registry` declares:
 
@@ -7,7 +7,7 @@ Each dataset in :mod:`ml.datasets.registry` declares:
 - ``download(target_dir)`` callable — prints what to do for restricted
   datasets, runs ``wget``/``zip``/``physionet`` for open ones;
 - ``parse(target_dir)`` callable returning a :class:`SampleStream` of
-  ``Sample`` records with the harmonised HeartScan label.
+  ``Sample`` records with the harmonised Axis label.
 
 The submodules are intentionally side-effect-free at import time so a
 laptop without 300 GB of disk can still ``python -m ml.datasets.cli list``.

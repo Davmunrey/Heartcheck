@@ -1,6 +1,6 @@
 # Real-photo evaluation set (gitignored content, public protocol)
 
-This directory holds the labelled photos used to evaluate HeartScan against
+This directory holds the labelled photos used to evaluate Axis against
 real-world conditions (lighting, perspective, glare, paper variants). The
 **images themselves are never committed** because they may contain identifiable
 clinical context; only the `manifest.jsonl` template and protocol live here.
