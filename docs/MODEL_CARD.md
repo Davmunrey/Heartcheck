@@ -150,6 +150,34 @@ than a PTB-XL-only model.
 > conformal abstention + high negative predictive value, used as a **copilot**,
 > not an autonomous diagnosis. See "Path to clinical-grade" below.
 
+#### 500 Hz + deep backbone (2026-06-08) — negative result, NOT promoted
+
+Two experiments testing the "higher resolution + bigger net" hypothesis on the
+same 43k blend, evaluated on the identical 2,134-row PTB-XL slice as the
+champion (macro-F1 `0.608`):
+
+| Run | Arch | Input | Levers | Val tuned-F1 | Slice macro-F1 |
+|-----|------|-------|--------|--------------|----------------|
+| `hr500_masked` | ECGResNet1D (~150k) | 500 Hz / 4096 | mask | 0.491 | ~0.40 |
+| `deep500` | ECGResNetDeep1D (6.8M) | 500 Hz / 4096 | mask + balanced + warmup + clip | 0.511 | ~0.40 |
+
+**Both underperform the 100 Hz champion (0.608).** Findings:
+
+1. *Warm-starting the shallow net at 500 Hz hurt* — a fixed-width conv kernel
+   covers 5× less time at 500 Hz, so the champion's filters were the wrong
+   temporal scale and had to re-learn (epoch-1 F1 cratered 0.64→0.45, never
+   recovered within 12 epochs).
+2. *The deep net cold-started is data-starved* — 6.8M params on ~34k records.
+   Ribeiro et al. trained an analogous net on **2M+** ECGs. It plateaued at
+   val-F1 ~0.51 by epoch 12 of 20 and never approached the champion.
+
+Conclusion: at this data scale, a **well-initialised smaller model (the served
+champion) beats a high-capacity model trained from scratch.** The deep backbone
+and 500 Hz path are kept in code (`--arch deep`, `PTBXL_USE_HR=1`) but the
+correct way to use them is **pretrain on a large corpus (CODE-15 ~345k /
+MIMIC-IV-ECG ~800k) then fine-tune**, not cold-start. The served model remains
+the 100 Hz CinC2020 blend (`runs/local/cinc2020_blend/checkpoint.pt`).
+
 #### Path to clinical-grade (roadmap)
 
 Ranked by expected impact for the weak classes (HYP/MI/STTC):
