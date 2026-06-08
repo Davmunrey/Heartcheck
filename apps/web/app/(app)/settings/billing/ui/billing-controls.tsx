@@ -30,7 +30,7 @@ export function BillingControls({ planId }: { planId?: string }) {
           type="button"
           disabled={pending}
           onClick={() => post("/api/billing/checkout", { planId })}
-          className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+          className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
         >
           Checkout {planId}
         </button>
@@ -39,12 +39,12 @@ export function BillingControls({ planId }: { planId?: string }) {
           type="button"
           disabled={pending}
           onClick={() => post("/api/billing/portal")}
-          className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium disabled:opacity-50"
+          className="rounded-lg border border-line-2 px-4 py-2 text-sm font-medium disabled:opacity-50"
         >
           Abrir portal Stripe
         </button>
       )}
-      {message && <p className="text-sm text-zinc-600">{message}</p>}
+      {message && <p className="text-sm text-ink-2">{message}</p>}
     </div>
   );
 }

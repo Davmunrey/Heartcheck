@@ -11,7 +11,7 @@ export default async function AnalyzePage() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
       <h1 className="text-2xl font-bold">Analizar ECG</h1>
-      <p className="mt-2 text-zinc-600">
+      <p className="mt-2 text-ink-2">
         Sube una <strong>foto</strong> de tira de ECG o una <strong>señal 12
         derivaciones</strong> (.npy/.csv). Axis es un copilot de apoyo a la
         decisión clínica: las salidas son probabilísticas y requieren revisión

@@ -55,7 +55,7 @@ export function AnalyzeClient() {
 
   return (
     <div className="mt-8 space-y-6">
-      <div className="inline-flex rounded-lg border border-zinc-200 bg-white p-1 text-sm">
+      <div className="inline-flex rounded-lg border border-line bg-white p-1 text-sm">
         {(["photo", "signal"] as const).map((m) => (
           <button
             key={m}
@@ -65,7 +65,7 @@ export function AnalyzeClient() {
               reset();
             }}
             className={`rounded-md px-3 py-1.5 ${
-              mode === m ? "bg-zinc-900 text-white" : "text-zinc-600 hover:text-zinc-900"
+              mode === m ? "bg-ink text-white" : "text-ink-2 hover:text-ink"
             }`}
           >
             {m === "photo" ? "Foto (1 derivación)" : "Señal 12 derivaciones"}
@@ -84,7 +84,7 @@ export function AnalyzeClient() {
         ) : (
           <div className="space-y-3">
             <input name="file" type="file" accept=".npy,.csv,text/csv" className="block w-full text-sm" />
-            <label className="block text-sm text-zinc-600">
+            <label className="block text-sm text-ink-2">
               Frecuencia de muestreo (Hz)
               <input
                 name="sampling_rate_hz"
@@ -92,10 +92,10 @@ export function AnalyzeClient() {
                 defaultValue={500}
                 min={1}
                 max={5000}
-                className="ml-2 w-28 rounded border border-zinc-300 px-2 py-1"
+                className="ml-2 w-28 rounded border border-line-2 px-2 py-1"
               />
             </label>
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-ink-3">
               Sube una matriz 12×N (`.npy`) o CSV de 12 derivaciones. PTB-XL records100 = 100 Hz.
             </p>
           </div>
@@ -103,7 +103,7 @@ export function AnalyzeClient() {
         <button
           type="submit"
           disabled={pending}
-          className="rounded-lg bg-rose-600 px-4 py-2 text-white disabled:opacity-50"
+          className="rounded-lg bg-brand px-4 py-2 text-white disabled:opacity-50"
         >
           {pending ? "Analizando…" : "Analizar"}
         </button>
@@ -116,23 +116,23 @@ export function AnalyzeClient() {
       )}
 
       {photo && (
-        <div className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
+        <div className="rounded-lg border border-line bg-white p-4 shadow-sm">
           <p className="font-semibold">Estado: {photo.status}</p>
-          <p className="mt-2 text-sm text-zinc-600">{photo.message}</p>
+          <p className="mt-2 text-sm text-ink-2">{photo.message}</p>
           <dl className="mt-4 grid grid-cols-2 gap-2 text-sm">
-            <dt className="text-zinc-500">BPM</dt>
+            <dt className="text-ink-3">BPM</dt>
             <dd>{photo.bpm ?? "—"}</dd>
-            <dt className="text-zinc-500">Confianza</dt>
+            <dt className="text-ink-3">Confianza</dt>
             <dd>{Math.round(photo.confidence_score * 100)}%</dd>
-            <dt className="text-zinc-500">Clase</dt>
+            <dt className="text-ink-3">Clase</dt>
             <dd>{photo.class_label}</dd>
           </dl>
-          <p className="mt-4 text-xs text-zinc-500">{photo.disclaimer}</p>
+          <p className="mt-4 text-xs text-ink-3">{photo.disclaimer}</p>
         </div>
       )}
 
       {signal && (
-        <div className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
+        <div className="rounded-lg border border-line bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between">
             <p className="font-semibold">
               {signal.abnormal ? "Hallazgos a revisar" : "Sin hallazgos sobre el umbral"}
@@ -147,7 +147,7 @@ export function AnalyzeClient() {
           </div>
           <table className="mt-4 w-full text-sm">
             <thead>
-              <tr className="text-left text-zinc-500">
+              <tr className="text-left text-ink-3">
                 <th className="pb-1">Superclase</th>
                 <th className="pb-1">Probabilidad</th>
                 <th className="pb-1">Umbral</th>
@@ -156,13 +156,13 @@ export function AnalyzeClient() {
             </thead>
             <tbody>
               {signal.findings.map((f) => (
-                <tr key={f.code} className={f.positive ? "font-medium text-zinc-900" : "text-zinc-600"}>
+                <tr key={f.code} className={f.positive ? "font-medium text-ink" : "text-ink-2"}>
                   <td className="py-1">{f.label}</td>
                   <td className="py-1">{Math.round(f.probability * 100)}%</td>
-                  <td className="py-1 text-zinc-400">{Math.round(f.threshold * 100)}%</td>
+                  <td className="py-1 text-ink-3">{Math.round(f.threshold * 100)}%</td>
                   <td className="py-1">
                     {f.positive && (
-                      <span className="rounded bg-rose-100 px-1.5 py-0.5 text-xs text-rose-700">
+                      <span className="rounded bg-signal-tint px-1.5 py-0.5 text-xs text-signal-700">
                         positivo
                       </span>
                     )}
@@ -171,10 +171,10 @@ export function AnalyzeClient() {
               ))}
             </tbody>
           </table>
-          <p className="mt-3 text-xs text-zinc-500">
+          <p className="mt-3 text-xs text-ink-3">
             Modelo {signal.model_version} · {signal.n_leads} derivaciones · {signal.sampling_rate_hz} Hz
           </p>
-          <p className="mt-2 text-xs text-zinc-500">{signal.disclaimer}</p>
+          <p className="mt-2 text-xs text-ink-3">{signal.disclaimer}</p>
         </div>
       )}
     </div>
