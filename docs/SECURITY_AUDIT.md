@@ -44,10 +44,24 @@ moderate advisories with no safe upstream fix.
 ## Accepted residual risk
 
 3 **moderate, dev/build-time-only** npm advisories remain (`esbuild`, `next`,
-`postcss`): not reachable in the production runtime (build-time CSS / local dev
-server), and npm's only "fix" is a `next` major **downgrade** (to a 9.x canary)
-that would break the framework. Re-evaluate when Next ships a patched `postcss`
-in the 16.x line. Track via `npm audit` in CI.
+`postcss`). Mitigations applied:
+
+- **`postcss`** — top-level pinned to `>=8.5.10` (8.5.15, patched) via npm
+  `overrides`. The advisory still flags the copy **vendored inside `next@16`**,
+  which `overrides` cannot reach (Next bundles its own); npm's only listed "fix"
+  is a `next` major **downgrade to a 9.x canary** that would break the framework.
+  The PostCSS bug is XSS in CSS *stringify* output — only reachable if
+  attacker-controlled CSS is run through the stringifier, which the Next build
+  does not do with user input. **Not runtime-exploitable.**
+- **`esbuild`** — overridden to `^0.27` (matches what `vite@8`/`vitest@4`
+  require, and is the patched range). It is a **dev/test-only** dependency
+  (vitest in `packages/api-client`), never shipped to production. The dev-server
+  request advisory only applies while running the local test server.
+- **`next`** — flagged transitively via the vendored `postcss` above; clears
+  when Next ships a patched `postcss` in the 16.x line.
+
+None are reachable in the deployed runtime. Tracked via `npm audit` in CI;
+re-evaluate on the next Next.js / Vite minor.
 
 ## Re-run
 
