@@ -44,6 +44,29 @@ export function SiteHeader() {
             Trial 7 días
           </Link>
         </nav>
+
+        {/* Mobile menu — no-JS <details> disclosure */}
+        <details className="relative md:hidden">
+          <summary
+            aria-label="Abrir menú"
+            className="grid size-9 cursor-pointer list-none place-items-center border-2 border-ink/15 text-ink [&::-webkit-details-marker]:hidden"
+          >
+            <span className="text-lg leading-none">≡</span>
+          </summary>
+          <div className="absolute right-0 top-full z-50 mt-2 flex w-52 flex-col gap-1 border-2 border-line bg-surface p-2 shadow-lg">
+            {navLinks.map((link) => (
+              <Link key={link.href} href={link.href} className="px-3 py-2 text-sm text-ink-2 hover:bg-paper-2 hover:text-brand">
+                {link.label}
+              </Link>
+            ))}
+            <Link href="/sign-in" className="px-3 py-2 text-sm text-ink-2 hover:bg-paper-2 hover:text-brand">
+              Entrar
+            </Link>
+            <Link href="/sign-up" className="mt-1 bg-brand px-3 py-2 text-center text-sm font-semibold text-white hover:bg-brand-strong">
+              Trial 7 días
+            </Link>
+          </div>
+        </details>
       </div>
     </header>
   );
