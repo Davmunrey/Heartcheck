@@ -21,6 +21,16 @@ Canonical source: [`apps/web/app/globals.css`](../apps/web/app/globals.css)
 (`:root` + Tailwind v4 `@theme`). Reference brand book assets live outside the
 repo under `~/Downloads/ECGs Copilot/` (Brand Book, axis.css, mockups).
 
+> **Two front-ends share these tokens.** The Next.js app
+> ([`apps/web`](../apps/web)) is the primary console/marketing site. The
+> FastAPI backend also serves a static marketing/app site from
+> [`web_public/`](../web_public) (mounted at `/`, `/app`, `/faq.html`); its
+> [`web_public/static/saas.css`](../web_public/static/saas.css) `:root` mirrors
+> the same token values (brand `#1B5FD9`, paper `#F4F6FA`, ink `#0B1A2B`,
+> signal `#E5202A`) with square geometry and Archivo/Hanken type. When a token
+> value changes, update **both** `globals.css` and `saas.css` so the two
+> surfaces stay identical.
+
 | Token | Value | Use |
 |-------|-------|-----|
 | `--paper` | `#F4F6FA` | app / marketing background |
