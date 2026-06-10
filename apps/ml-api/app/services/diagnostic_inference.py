@@ -67,6 +67,7 @@ _DEFAULT_CANDIDATES = (
 @dataclass
 class _DiagState:
     model: Any = None
+    extra_models: list = field(default_factory=list)  # ensemble: averaged with `model`
     classes: tuple[str, ...] = SUPERCLASS_ORDER
     thresholds: list[float] = field(default_factory=lambda: [0.5] * 5)
     target_len: int = 1024
@@ -120,6 +121,24 @@ def load_diagnostic_model() -> bool:
     _STATE.target_fs = target_fs
     _STATE.version = str(state.get("version", "ecg-resnet1d-ptbxl-multilabel"))
     _STATE.checkpoint_path = str(ckpt)
+
+    # Optional ensemble: extra checkpoints averaged with the primary at predict
+    # time (comma-separated paths). Improves AUROC ~+0.6pt incl. HYP (see
+    # docs/MODEL_CARD.md). Must share class order / target_len.
+    extra_env = os.environ.get("HEARTSCAN_DIAGNOSTIC_ENSEMBLE_PATHS", "")
+    for raw in (p.strip() for p in extra_env.split(",") if p.strip()):
+        ep = Path(raw)
+        ep = ep if ep.is_file() else (Path(__file__).resolve().parents[4] / raw)
+        if not ep.is_file():
+            logger.info("diagnostic_ensemble_skip", path=raw, reason="not_found")
+            continue
+        es = torch.load(ep, map_location="cpu", weights_only=True)
+        em = ECGResNet1D(num_classes=len(classes), length=target_len, in_channels=12)
+        em.load_state_dict(es["state_dict"], strict=True)
+        em.eval()
+        _STATE.extra_models.append(em)
+    if _STATE.extra_models:
+        _STATE.version = f"{_STATE.version}+ensemble{len(_STATE.extra_models)}"
     _STATE.loaded = True
     logger.info(
         "diagnostic_model_loaded",
@@ -220,8 +239,11 @@ def predict(signal: np.ndarray, fs_in: int) -> DiagnosticResult:
     import torch
 
     x = preprocess(signal, fs_in)
+    xt = torch.from_numpy(x).unsqueeze(0)
     with torch.no_grad():
-        logits = _STATE.model(torch.from_numpy(x).unsqueeze(0)).numpy()[0]
+        outs = [_STATE.model(xt).numpy()[0]]
+        outs += [m(xt).numpy()[0] for m in _STATE.extra_models]
+    logits = np.mean(outs, axis=0)  # ensemble = mean logits (1 model if no extras)
     probs = 1.0 / (1.0 + np.exp(-logits))
 
     findings: list[Finding] = []

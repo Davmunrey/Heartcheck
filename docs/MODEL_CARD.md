@@ -210,6 +210,13 @@ F1 (0.447) — ranks at **0.806 AUROC**. The gap between F1 and AUROC is the
 operating point, not the model: it discriminates well, the thresholds just trade
 precision/recall.
 
+**Ensemble (2026-06-10, no retraining):** averaging the logits of three existing
+100 Hz checkpoints (cinc2020_blend + focal_from_champion + ptbxl_georgia_8857)
+lifts macro-AUROC **0.852 → 0.858**, incl. MI 0.844→0.865 and HYP 0.806→**0.816**
+— a free gain on the weakest class. Served via
+`HEARTSCAN_DIAGNOSTIC_ENSEMBLE_PATHS` (comma-separated extra checkpoints averaged
+with the primary at predict time).
+
 **Implication for the roadmap:** chasing macro-F1 with bigger models was the wrong
 target (deep/500 Hz/CODE-15-pretrain experiments all plateaued below the champion).
 The model is already a strong ranker; the launch-blocking work is **calibration +
