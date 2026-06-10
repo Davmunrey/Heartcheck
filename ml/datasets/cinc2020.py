@@ -21,7 +21,11 @@ import os
 from pathlib import Path
 from typing import Iterator
 
-from ml.datasets.labels import diagnostic_superclasses_from_snomed, map_chapman_codes
+from ml.datasets.labels import (
+    cinc2020_27_from_snomed,
+    diagnostic_superclasses_from_snomed,
+    map_chapman_codes,
+)
 from ml.datasets.registry import CLASS_TO_ID, Dataset, Sample
 
 # Source sub-databases shipped under ``training/``. Per-source sampling rates
@@ -92,7 +96,10 @@ def _parse(target_dir: Path) -> Iterator[Sample]:
                 sampling_rate_hz=fs,
                 n_leads=12,
                 duration_s=10.0,
-                metadata={"diagnostic_classes": diagnostic_superclasses_from_snomed(codes)},
+                metadata={
+                    "diagnostic_classes": diagnostic_superclasses_from_snomed(codes),
+                    "cinc2020_27": cinc2020_27_from_snomed(codes),
+                },
             )
     if not found_any:
         raise FileNotFoundError(

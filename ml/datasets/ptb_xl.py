@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Iterator
 
 from ml.datasets._common import physionet_wget
-from ml.datasets.labels import map_ptbxl_codes
+from ml.datasets.labels import cinc2020_27_from_ptbxl_scp, map_ptbxl_codes
 from ml.datasets.registry import CLASS_TO_ID, Dataset, Sample
 
 _PHYSIONET_SLUG = "ptb-xl/1.0.3"
@@ -106,6 +106,7 @@ def _parse(target_dir: Path) -> Iterator[Sample]:
                     "scp_codes": scp,
                     "scp_code_list": scp_codes,
                     "diagnostic_classes": diagnostic_classes,
+                    "cinc2020_27": cinc2020_27_from_ptbxl_scp(scp_codes),
                     "diagnostic_subclasses": diagnostic_subclasses,
                 },
             )
