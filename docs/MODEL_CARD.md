@@ -195,6 +195,27 @@ The transfer path above is now implemented end-to-end:
 Blocked only on the CODE-15 download. Backbone-transfer + AUROC logic are unit
 tested (`ml/tests/test_training_data.py`).
 
+#### AUROC — the honest clinical metric (2026-06-10)
+
+F1 at a fixed threshold badly *understated* the served champion. Evaluated on the
+same 2,134-row PTB-XL slice, the champion's **threshold-independent AUROC** is:
+
+| | NORM | MI | STTC | CD | HYP | **macro** |
+|-|------|----|------|----|----|-----------|
+| AUROC | 0.879 | 0.844 | 0.858 | 0.873 | 0.806 | **0.852** |
+
+So the model that "only" scored macro-F1 0.608 actually **ranks sick-vs-healthy at
+0.85 AUROC** (SOTA on these superclasses is ≈0.93). Even HYP — the "weak" class by
+F1 (0.447) — ranks at **0.806 AUROC**. The gap between F1 and AUROC is the
+operating point, not the model: it discriminates well, the thresholds just trade
+precision/recall.
+
+**Implication for the roadmap:** chasing macro-F1 with bigger models was the wrong
+target (deep/500 Hz/CODE-15-pretrain experiments all plateaued below the champion).
+The model is already a strong ranker; the launch-blocking work is **calibration +
+conformal abstention + reporting AUROC/sensitivity-at-fixed-specificity**, not more
+capacity. Report AUROC as the headline metric going forward.
+
 #### Path to clinical-grade (roadmap)
 
 Ranked by expected impact for the weak classes (HYP/MI/STTC):
