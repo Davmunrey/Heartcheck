@@ -239,3 +239,30 @@ def test_warmup_cosine_scheduler_shape():
     assert lrs[0] < lrs[2] <= lrs[3]      # increasing during warmup
     assert lrs[-1] < lrs[3]               # decaying after
     assert lrs[-1] < 0.1
+
+
+def test_transfer_backbone_loads_conv_drops_head():
+    import torch
+    from heartscan_ml.cnn1d import build_model
+    from ml.training.train_multilabel import transfer_backbone
+    # A 6-class pretrained deep net (CODE-15) -> transfer into a fresh 5-class net.
+    pre = build_model("deep", num_classes=6, length=4096, in_channels=12)
+    tgt = build_model("deep", num_classes=5, length=4096, in_channels=12)
+    payload = pre.state_dict()
+    n, missing, unexpected = transfer_backbone(tgt, payload)
+    # Backbone tensors (stem/blocks) transfer; head.* excluded -> not unexpected.
+    assert n > 0
+    assert unexpected == 0           # no stray (head excluded from payload)
+    # The target's stem weight now equals the pretrained one (transferred).
+    assert torch.equal(tgt.stem[0].weight, pre.stem[0].weight)
+    # Head stayed its own shape (5 classes), not overwritten by the 6-class head.
+    assert tgt.head.weight.shape[0] == 5
+
+
+def test_code15_auroc_helper():
+    import numpy as np
+    from ml.training.pretrain_code15 import _auroc
+    y = np.array([0, 0, 1, 1])
+    assert _auroc(y, np.array([0.1, 0.2, 0.8, 0.9])) == 1.0   # perfect ranking
+    assert _auroc(y, np.array([0.9, 0.8, 0.2, 0.1])) == 0.0   # inverted
+    assert abs(_auroc(y, np.array([0.5, 0.5, 0.5, 0.5])) - 0.5) < 1e-9  # ties

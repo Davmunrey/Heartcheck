@@ -178,6 +178,23 @@ correct way to use them is **pretrain on a large corpus (CODE-15 ~345k /
 MIMIC-IV-ECG ~800k) then fine-tune**, not cold-start. The served model remains
 the 100 Hz CinC2020 blend (`runs/local/cinc2020_blend/checkpoint.pt`).
 
+#### Pretrain → fine-tune pipeline (ready to run)
+
+The transfer path above is now implemented end-to-end:
+
+1. **Pretrain** the deep backbone on CODE-15% (345k records, 6 abnormality
+   labels) — [`ml/training/pretrain_code15.py`](../ml/training/pretrain_code15.py).
+   Patient-disjoint val, macro-AUROC monitored, saves `backbone.pt`.
+2. **Transfer + fine-tune** — `train_multilabel --arch deep --init-backbone
+   backbone.pt` loads every conv/stem tensor and re-initialises only the head
+   (`transfer_backbone()`), then fine-tunes the 5 superclasses on the blend.
+3. **Orchestration** — [`scripts/pretrain_finetune_code15.sh`](../scripts/pretrain_finetune_code15.sh)
+   runs both; [`scripts/download_code15.sh`](../scripts/download_code15.sh)
+   fetches the corpus (~50 GB, Zenodo 4916206).
+
+Blocked only on the CODE-15 download. Backbone-transfer + AUROC logic are unit
+tested (`ml/tests/test_training_data.py`).
+
 #### Path to clinical-grade (roadmap)
 
 Ranked by expected impact for the weak classes (HYP/MI/STTC):

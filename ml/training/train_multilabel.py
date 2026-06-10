@@ -43,6 +43,7 @@ class MultiLabelTrainConfig:
     warmup_epochs: int = 0
     grad_clip: float = 0.0
     balanced_sampler: bool = False
+    init_backbone: str | None = None
 
 
 def _pos_weight(ds: PTBXLDiagnosticDataset, device: torch.device) -> torch.Tensor:
@@ -202,6 +203,19 @@ class FocalBCEWithLogitsLoss(torch.nn.Module):
         return per_elem.mean()
 
 
+def transfer_backbone(model: torch.nn.Module, payload: dict) -> tuple[int, int, int]:
+    """Load every non-head tensor from ``payload`` into ``model`` (strict=False).
+
+    Used for CODE-15 pretraining transfer: a backbone pretrained with a 6-class
+    head is reused under a fresh 5-superclass head. ``head.*`` keys are dropped
+    so the head is re-initialised. Returns (transferred, missing, unexpected).
+    """
+    backbone = {k: v for k, v in payload.items() if not k.startswith("head.")}
+    result = model.load_state_dict(backbone, strict=False)
+    missing = [k for k in result.missing_keys if not k.startswith("head.")]
+    return len(backbone), len(missing), len(result.unexpected_keys)
+
+
 def _select_device() -> torch.device:
     if torch.cuda.is_available():
         return torch.device("cuda")
@@ -266,6 +280,14 @@ def run(cfg: MultiLabelTrainConfig) -> dict:
             raise RuntimeError(f"Unsupported init checkpoint class order: {classes}")
         payload = state.get("state_dict") if isinstance(state, dict) else state
         model.load_state_dict(payload, strict=True)
+    elif cfg.init_backbone:
+        state = torch.load(cfg.init_backbone, map_location=device, weights_only=True)
+        payload = state.get("state_dict") if isinstance(state, dict) else state
+        n, missing, unexpected = transfer_backbone(model, payload)
+        print(
+            f"[init-backbone] transferred {n} tensors from {cfg.init_backbone}; "
+            f"head re-initialised (missing={missing}, unexpected={unexpected})"
+        )
     optim = torch.optim.AdamW(model.parameters(), lr=cfg.lr, weight_decay=cfg.weight_decay)
     scheduler = _build_scheduler(optim, cfg.epochs, cfg.warmup_epochs)
     pos_weight = _pos_weight(train_ds, device)
@@ -405,6 +427,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--target-len", type=int, default=1024, help="samples per lead fed to the model")
     p.add_argument("--mask-partial-labels", action="store_true", help="ignore loss on classes a source dataset never annotates (partial-label safe)")
     p.add_argument("--arch", choices=["resnet", "deep"], default="resnet", help="resnet=light serving net; deep=Ribeiro-style high-capacity net")
+    p.add_argument("--init-backbone", default=None, help="transfer conv/stem weights from a pretrained checkpoint (drops the head; e.g. CODE-15 pretrained deep net)")
     p.add_argument("--warmup-epochs", type=int, default=0, help="linear LR warmup before cosine decay (recommended for --arch deep from scratch)")
     p.add_argument("--grad-clip", type=float, default=0.0, help="max grad norm (0=off); 1.0 stabilises the deep net")
     p.add_argument("--balanced-sampler", action="store_true", help="oversample records carrying rare classes (directly lifts HYP)")
@@ -431,6 +454,7 @@ def main(argv: list[str] | None = None) -> int:
             warmup_epochs=args.warmup_epochs,
             grad_clip=args.grad_clip,
             balanced_sampler=args.balanced_sampler,
+            init_backbone=args.init_backbone,
         )
     )
     return 0
