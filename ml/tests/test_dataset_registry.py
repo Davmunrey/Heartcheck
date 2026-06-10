@@ -155,3 +155,14 @@ def test_cinc2020_27class_taxonomy():
     assert cinc2020_27_from_snomed(["63593006"]) == ["PAC"]
     assert len(CINC2020_27_CLASSES) >= 27  # CinC2020 27-set + a few blend extras
     assert cinc2020_27_from_snomed(["99999999"]) == []               # unknown -> empty
+
+
+def test_cinc2020_27_from_ptbxl_scp():
+    from ml.datasets.labels import cinc2020_27_from_ptbxl_scp
+    # PTB-XL SCP codes map into the SAME 27-class space as SNOMED
+    assert cinc2020_27_from_ptbxl_scp(["NORM"]) == ["SNR"]
+    assert cinc2020_27_from_ptbxl_scp(["AFIB"]) == ["AF"]            # rhythm captured
+    assert cinc2020_27_from_ptbxl_scp(["CRBBB"]) == ["RBBB"]         # merged equivalent
+    out = cinc2020_27_from_ptbxl_scp(["AFIB", "1AVB", "IMI"])
+    assert out == ["AF", "IAVB", "MI"]                              # canonical order
+    assert cinc2020_27_from_ptbxl_scp(["UNKNOWN"]) == []

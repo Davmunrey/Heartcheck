@@ -151,6 +151,39 @@ def cinc2020_27_from_snomed(snomed_codes: Iterable[str]) -> list[str]:
     return [c for c in CINC2020_27_CLASSES if c in present]
 
 
+# PTB-XL uses SCP-ECG codes (not SNOMED); map them to the same 27-class space so
+# PTB-XL and the SNOMED datasets share one label vocabulary for the complete head.
+PTBXL_SCP_TO_27: dict[str, str] = {
+    # rhythm
+    "SR": "SNR", "NORM": "SNR", "AFIB": "AF", "AFLT": "AFL", "STACH": "STach",
+    "SBRAD": "SB", "SARRH": "SA", "PACE": "PR", "PAC": "PAC", "SVARR": "SA",
+    "BIGU": "PVC", "TRIGU": "PVC", "PVC": "PVC", "SVPB": "PAC",
+    # conduction
+    "1AVB": "IAVB", "LBBB": "LBBB", "CLBBB": "LBBB", "RBBB": "RBBB", "CRBBB": "RBBB",
+    "IRBBB": "IRBBB", "ILBBB": "LBBB", "LAFB": "LAnFB", "IVCD": "NSIVCB",
+    # axis / intervals / morphology
+    "LAD": "LAD", "RAD": "RAD", "LVOLT": "LQRSV", "LNGQT": "LQT", "QWAVE": "QAb",
+    "ABQRS": "QAb",
+    # ST/T
+    "NDT": "TAb", "NST_": "TAb", "INVT": "TInv", "STE_": "STE", "STD_": "STD",
+    "ISC_": "STD", "ISCAL": "STD", "ISCIN": "STD", "ISCIL": "STD", "ISCAS": "STD",
+    "ISCLA": "STD", "ISCAN": "STD",
+    # hypertrophy / infarct
+    "LVH": "LVH", "RVH": "LVH", "AMI": "MI", "IMI": "MI", "ASMI": "MI", "ALMI": "MI",
+    "ILMI": "MI", "IPMI": "MI", "IPLMI": "MI", "LMI": "MI", "PMI": "MI", "INJAL": "MI",
+}
+
+
+def cinc2020_27_from_ptbxl_scp(scp_codes: Iterable[str]) -> list[str]:
+    """Map PTB-XL SCP-ECG codes to the CinC2020 27-class taxonomy."""
+    present = {
+        PTBXL_SCP_TO_27[str(c).strip()]
+        for c in scp_codes
+        if str(c).strip() in PTBXL_SCP_TO_27
+    }
+    return [c for c in CINC2020_27_CLASSES if c in present]
+
+
 def map_chapman_codes(snomed_codes: Iterable[str]) -> str:
     codes = {str(c) for c in snomed_codes}
     if codes & CHAPMAN_ARRHYTHMIA_SNOMED:
