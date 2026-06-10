@@ -116,6 +116,8 @@ async def analyze_signal(
 
     return DiagnosticResponse(
         abnormal=result.abnormal,
+        requires_review=result.requires_review,
+        macro_auroc=result.macro_auroc,
         findings=[
             DiagnosticFinding(
                 code=f.code,
@@ -123,6 +125,9 @@ async def analyze_signal(
                 probability=round(f.probability, 4),
                 positive=f.positive,
                 threshold=f.threshold,
+                uncertain=f.uncertain,
+                confidence=f.confidence,
+                auroc=f.auroc,
             )
             for f in result.findings
         ],

@@ -84,3 +84,37 @@ def test_preprocess_pads_fewer_than_12_leads() -> None:
 
     x = diag.preprocess(_fake_12lead(600)[:3], fs_in=100)  # 3 leads -> padded to 12
     assert x.shape == (12, diag._STATE.target_len)
+
+
+def test_abstention_and_auroc_in_predict(monkeypatch):
+    """Findings near the threshold are flagged uncertain; AUROC is surfaced."""
+    import numpy as np
+
+    from app.services import diagnostic_inference as di
+
+    class _FakeModel:
+        def __call__(self, x):
+            # logits chosen so sigmoid gives: NORM 0.90 (far>thr), HYP ~thr (uncertain)
+            import torch
+            return torch.tensor([[2.2, -3.0, -3.0, -3.0, 0.0]])
+        def eval(self):
+            return self
+
+    monkeypatch.setattr(di._STATE, "model", _FakeModel())
+    monkeypatch.setattr(di._STATE, "loaded", True)
+    monkeypatch.setattr(di._STATE, "classes", di.SUPERCLASS_ORDER)
+    monkeypatch.setattr(di._STATE, "thresholds", [0.45, 0.55, 0.55, 0.55, 0.50])
+    monkeypatch.setattr(di._STATE, "target_len", 1024)
+    monkeypatch.setattr(di._STATE, "target_fs", 100)
+
+    res = di.predict(np.zeros((12, 1024), dtype="float32"), fs_in=100)
+    by = {f.code: f for f in res.findings}
+    # HYP logit 0.0 -> p=0.5, threshold 0.50 -> within margin -> uncertain
+    assert by["HYP"].uncertain is True
+    assert by["HYP"].confidence == "low"
+    # NORM p~0.90 far from 0.45 -> confident
+    assert by["NORM"].uncertain is False
+    # AUROC surfaced per finding + macro
+    assert by["MI"].auroc == di.MODEL_AUROC["MI"]
+    assert res.macro_auroc == di.MACRO_AUROC
+    assert res.requires_review is True  # HYP uncertain -> review

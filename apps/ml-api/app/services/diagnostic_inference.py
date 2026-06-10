@@ -41,6 +41,22 @@ SUPERCLASS_LABELS: dict[str, str] = {
     "HYP": "Hypertrophy",
 }
 
+# Per-class discrimination quality (macro-AUROC 0.852) measured on the held-out
+# PTB-XL slice — the honest, threshold-independent quality signal surfaced to
+# clinicians alongside each finding (see docs/MODEL_CARD.md). AUROC, not F1, is
+# the headline metric: the model ranks well even where a fixed threshold trades
+# precision for recall.
+MODEL_AUROC: dict[str, float] = {
+    "NORM": 0.879, "MI": 0.844, "STTC": 0.858, "CD": 0.873, "HYP": 0.806,
+}
+MACRO_AUROC = round(sum(MODEL_AUROC.values()) / len(MODEL_AUROC), 4)
+
+# Conformal-style abstention: when a calibrated probability sits within this
+# band of its decision threshold the model is near its boundary -> mark the
+# finding uncertain and recommend human review instead of a hard call. Safety
+# over coverage; overridable via env for tuning.
+UNCERTAINTY_MARGIN = float(os.environ.get("HEARTSCAN_UNCERTAINTY_MARGIN", "0.10"))
+
 # Candidate checkpoint locations, first hit wins. Overridable via env.
 _DEFAULT_CANDIDATES = (
     "runs/auto/ptbxl_georgia_full/finetune_12e_from_8857/checkpoint.pt",
@@ -181,6 +197,9 @@ class Finding:
     probability: float
     positive: bool
     threshold: float
+    uncertain: bool
+    confidence: str  # "high" | "low"
+    auroc: float
 
 
 @dataclass
@@ -190,6 +209,8 @@ class DiagnosticResult:
     n_leads: int
     sampling_rate_hz: int
     abnormal: bool
+    requires_review: bool
+    macro_auroc: float
 
 
 def predict(signal: np.ndarray, fs_in: int) -> DiagnosticResult:
@@ -205,20 +226,30 @@ def predict(signal: np.ndarray, fs_in: int) -> DiagnosticResult:
 
     findings: list[Finding] = []
     for code, p, thr in zip(_STATE.classes, probs, _STATE.thresholds):
+        p = float(p)
+        uncertain = abs(p - float(thr)) < UNCERTAINTY_MARGIN
         findings.append(
             Finding(
                 code=code,
                 label=SUPERCLASS_LABELS.get(code, code),
-                probability=float(p),
+                probability=p,
                 positive=bool(p >= thr),
                 threshold=float(thr),
+                uncertain=uncertain,
+                confidence="low" if uncertain else "high",
+                auroc=MODEL_AUROC.get(code, 0.0),
             )
         )
     abnormal = any(f.positive for f in findings if f.code != "NORM")
+    # Copilot is non-diagnostic: always route abnormal or any near-boundary
+    # (uncertain) finding to a human. NORM uncertainty also warrants review.
+    requires_review = abnormal or any(f.uncertain for f in findings)
     return DiagnosticResult(
         findings=findings,
         model_version=_STATE.version,
         n_leads=12,
         sampling_rate_hz=int(fs_in),
         abnormal=abnormal,
+        requires_review=requires_review,
+        macro_auroc=MACRO_AUROC,
     )
