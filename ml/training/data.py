@@ -257,7 +257,14 @@ class PTBXLDiagnosticDataset(ParquetECGDataset):
         augment: bool = False,
         seed: int = 1234,
         return_mask: bool = False,
+        classes: tuple[str, ...] | None = None,
+        label_key: str = "diagnostic_classes",
     ) -> None:
+        # Override the 5-superclass default to train a richer head (e.g. the
+        # 27-class rhythm+diagnostic taxonomy via classes=CINC2020_27_CLASSES,
+        # label_key="cinc2020_27"). Default keeps backward-compatible behaviour.
+        if classes is not None:
+            self.classes = tuple(classes)
         try:
             import pyarrow.parquet as pq
         except ImportError as exc:
@@ -271,8 +278,8 @@ class PTBXLDiagnosticDataset(ParquetECGDataset):
         self._sources: list[str] = []
         for r in rows:
             metadata = r.get("metadata") or {}
-            diagnostic_classes = metadata.get("diagnostic_classes") or []
-            target = np.asarray([1.0 if c in diagnostic_classes else 0.0 for c in self.classes], dtype=np.float32)
+            positive = metadata.get(label_key) or []
+            target = np.asarray([1.0 if c in positive else 0.0 for c in self.classes], dtype=np.float32)
             if not target.any():
                 continue
             source = str(r.get("source_dataset") or "unknown")

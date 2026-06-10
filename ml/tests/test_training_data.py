@@ -266,3 +266,27 @@ def test_code15_auroc_helper():
     assert _auroc(y, np.array([0.1, 0.2, 0.8, 0.9])) == 1.0   # perfect ranking
     assert _auroc(y, np.array([0.9, 0.8, 0.2, 0.1])) == 0.0   # inverted
     assert abs(_auroc(y, np.array([0.5, 0.5, 0.5, 0.5])) - 0.5) < 1e-9  # ties
+
+
+def test_dataset_27class_label_key(tmp_path, monkeypatch):
+    import sys
+    from types import SimpleNamespace
+    from ml.datasets.labels import CINC2020_27_CLASSES
+    rec = tmp_path / "records100" / "00000" / "00001_lr"
+    rec.parent.mkdir(parents=True)
+    rec.with_suffix(".hea").write_text("stub\n"); rec.with_suffix(".dat").write_bytes(b"x")
+    manifest = tmp_path / "m.parquet"
+    pq.write_table(pa.Table.from_pylist([{
+        "file_path": str(rec), "label_id": 1, "sampling_rate_hz": 100, "n_leads": 12,
+        "duration_s": 10.0, "source_dataset": "ptb_xl", "split": "train",
+        "metadata": {"cinc2020_27": ["AF", "RBBB"]},
+    }]), manifest)
+    raw = np.tile(np.linspace(-1, 1, 1000, dtype=np.float32)[:, None], (1, 12))
+    monkeypatch.setitem(sys.modules, "wfdb", SimpleNamespace(rdrecord=lambda _: SimpleNamespace(p_signal=raw)))
+    ds = PTBXLDiagnosticDataset(manifest, split="train", classes=CINC2020_27_CLASSES, label_key="cinc2020_27")
+    assert ds.classes == tuple(CINC2020_27_CLASSES)
+    _, target = ds[0]
+    assert target.shape[0] == len(CINC2020_27_CLASSES)
+    # AF and RBBB positive, rest zero
+    pos = {CINC2020_27_CLASSES[i] for i, v in enumerate(target.tolist()) if v == 1.0}
+    assert pos == {"AF", "RBBB"}
