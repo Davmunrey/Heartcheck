@@ -24,12 +24,14 @@ PY="${PY:-python3}"
 
 echo "[0/3] env"
 "$PY" -c "import sys; print('python', sys.version.split()[0])"
-"$PY" -m pip install -q --upgrade pip
-# Minimal deps for pretraining only (NOT the full ml-api). torch is usually
-# preinstalled on GPU images; install if missing.
+# Fast multi-connection downloader (turns ~15h of Zenodo throttling into <1h).
+command -v aria2c >/dev/null 2>&1 || (command -v apt-get >/dev/null 2>&1 && sudo apt-get -qq update && sudo apt-get -qq install -y aria2) || true
+# Minimal deps for pretraining only (NOT the full ml-api). torch is preinstalled
+# on GPU images. --no-deps on ml/ avoids dragging pandas/wfdb/etc. (and the
+# pandas-version conflict with the host image); pretrain only needs numpy+h5py.
 "$PY" -c "import torch" 2>/dev/null || "$PY" -m pip install -q torch
 "$PY" -m pip install -q numpy h5py
-"$PY" -m pip install -q -e ml/        # installs the heartscan_ml package
+"$PY" -m pip install -q --no-deps -e ml/   # installs heartscan_ml package only
 "$PY" -c "import torch; print('CUDA:', torch.cuda.is_available(), torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU only')"
 
 echo "[1/3] download CODE-15 -> $CODE15_ROOT (~50 GB, resumable)"
