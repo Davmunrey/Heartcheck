@@ -217,6 +217,11 @@ lifts macro-AUROC **0.852 → 0.858**, incl. MI 0.844→0.865 and HYP 0.806→**
 `HEARTSCAN_DIAGNOSTIC_ENSEMBLE_PATHS` (comma-separated extra checkpoints averaged
 with the primary at predict time).
 
+Re-tuning the per-class thresholds on the blend val for the ensemble lifts
+**macro-F1 0.608 → 0.622** on the PTB-XL slice too (HYP 0.447→**0.484**, MI
+0.597→0.625, CD 0.629→0.644). Optimal ensemble thresholds:
+`NORM 0.50, MI 0.60, STTC 0.70, CD 0.60, HYP 0.65`.
+
 **Implication for the roadmap:** chasing macro-F1 with bigger models was the wrong
 target (deep/500 Hz/CODE-15-pretrain experiments all plateaued below the champion).
 The model is already a strong ranker; the launch-blocking work is **calibration +
