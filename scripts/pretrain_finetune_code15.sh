@@ -25,13 +25,19 @@ BLEND_SPLIT="${BLEND_SPLIT:-$ROOT/runs/local/deep500/manifest_split.parquet}"
 PRETRAIN_EPOCHS="${PRETRAIN_EPOCHS:-8}"
 FT_EPOCHS="${FT_EPOCHS:-20}"
 
-[[ -f "$CODE15_ROOT/exams.csv" ]] || { echo "[abort] CODE-15 not found at $CODE15_ROOT — run scripts/download_code15.sh"; exit 2; }
 [[ -f "$BLEND_SPLIT" ]] || { echo "[abort] blend split missing at $BLEND_SPLIT — build the 500Hz manifest first"; exit 2; }
 
-echo "[1/2] pretrain deep backbone on CODE-15 ($PRETRAIN_EPOCHS epochs)"
-PYTORCH_ENABLE_MPS_FALLBACK=1 "$PY" -m ml.training.pretrain_code15 \
-  --data-root "$CODE15_ROOT" --out "$PRETRAIN_OUT" \
-  --epochs "$PRETRAIN_EPOCHS" --batch-size 64 --lr 1e-3 --workers 6
+# If a pretrained backbone is already present (e.g. brought back from the cloud
+# run), skip the expensive pretraining step and go straight to fine-tune.
+if [[ -f "$PRETRAIN_OUT/backbone.pt" ]]; then
+  echo "[1/2] backbone already present at $PRETRAIN_OUT/backbone.pt — skipping pretrain"
+else
+  [[ -f "$CODE15_ROOT/exams.csv" ]] || { echo "[abort] no backbone.pt and CODE-15 not found at $CODE15_ROOT — run scripts/download_code15.sh or bring back the cloud backbone"; exit 2; }
+  echo "[1/2] pretrain deep backbone on CODE-15 ($PRETRAIN_EPOCHS epochs)"
+  PYTORCH_ENABLE_MPS_FALLBACK=1 "$PY" -m ml.training.pretrain_code15 \
+    --data-root "$CODE15_ROOT" --out "$PRETRAIN_OUT" \
+    --epochs "$PRETRAIN_EPOCHS" --batch-size 64 --lr 1e-3 --workers 6
+fi
 
 echo "[2/2] fine-tune 5-superclass head on the blend from the pretrained backbone"
 PYTORCH_ENABLE_MPS_FALLBACK=1 "$PY" -m ml.training.train_multilabel \
