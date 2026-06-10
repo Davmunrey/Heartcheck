@@ -29,7 +29,10 @@ jobs:
       - name: pip-audit
         run: |
           uv pip install --system pip-audit
-          pip-audit -r requirements.txt --desc on
+          # Ignore CVE-2025-3000: local memory corruption in torch.jit.script,
+          # which we never call (inference uses torch.load weights_only + forward).
+          # No fixed torch version exists. Re-evaluate when PyTorch ships a patch.
+          pip-audit -r requirements.txt --desc on --ignore-vuln CVE-2025-3000
       - name: Ruff
         run: ruff check app tests
       - name: Pytest
