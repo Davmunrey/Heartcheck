@@ -114,6 +114,43 @@ SNOMED_TO_DIAGNOSTIC_SUPERCLASS = {
 }
 
 
+# ---- Complete model: CinC 2020 27-class taxonomy (rhythm + diagnostic) -----
+# The shared label space for a *complete* ECG model — covers rhythm (AF, flutter,
+# brady/tachy, ectopy), conduction, axis, intervals and morphology that the
+# 5-superclass head throws away. SNOMED-CT keys; equivalent pairs from the
+# official challenge are merged (CRBBB->RBBB, SVPB->PAC, VPB->PVC).
+CINC2020_27_SNOMED: dict[str, str] = {
+    "270492004": "IAVB", "164889003": "AF", "164890007": "AFL", "426627000": "Brady",
+    "713427006": "RBBB", "713426002": "IRBBB", "445118002": "LAnFB", "39732003": "LAD",
+    "164909002": "LBBB", "251146004": "LQRSV", "698252002": "NSIVCB", "10370003": "PR",
+    "284470004": "PAC", "427172004": "PVC", "164947007": "LPR", "111975006": "LQT",
+    "164917005": "QAb", "47665007": "RAD", "59118001": "RBBB", "427393009": "SA",
+    "426177001": "SB", "426783006": "SNR", "427084000": "STach", "63593006": "PAC",
+    "164934002": "TAb", "59931005": "TInv", "17338001": "PVC",
+    # extras seen in the blend that map cleanly into the 27-set
+    "164865005": "MI", "164931005": "STE", "164930006": "STD", "164873001": "LVH",
+}
+# Canonical class order for the complete-model multi-label head.
+CINC2020_27_CLASSES = (
+    "SNR", "AF", "AFL", "SB", "STach", "SA", "Brady",          # rhythm
+    "PAC", "PVC",                                              # ectopy
+    "IAVB", "LPR", "LBBB", "RBBB", "IRBBB", "LAnFB", "NSIVCB", "PR",  # conduction
+    "LAD", "RAD", "LQRSV", "LQT", "QAb",                       # axis / intervals / morphology
+    "TAb", "TInv", "STE", "STD",                               # ST/T
+    "LVH", "MI",                                               # hypertrophy / infarct
+)
+
+
+def cinc2020_27_from_snomed(snomed_codes: Iterable[str]) -> list[str]:
+    """Map SNOMED-CT codes to the CinC2020 27-class taxonomy (complete model)."""
+    present = {
+        CINC2020_27_SNOMED[str(c).strip()]
+        for c in snomed_codes
+        if str(c).strip() in CINC2020_27_SNOMED
+    }
+    return [c for c in CINC2020_27_CLASSES if c in present]
+
+
 def map_chapman_codes(snomed_codes: Iterable[str]) -> str:
     codes = {str(c) for c in snomed_codes}
     if codes & CHAPMAN_ARRHYTHMIA_SNOMED:

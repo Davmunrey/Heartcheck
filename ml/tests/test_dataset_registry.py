@@ -140,3 +140,18 @@ def test_code15_parser_filters_existing_hdf5_and_emits_diagnostic_classes(tmp_pa
     assert str(rows[0].file_path).endswith("exams_part0.hdf5::1")
     assert rows[0].source_label == "RBBB"
     assert rows[0].metadata["diagnostic_classes"] == ["CD"]
+
+
+def test_cinc2020_27class_taxonomy():
+    from ml.datasets.labels import CINC2020_27_CLASSES, cinc2020_27_from_snomed
+    # rhythm + diagnostic captured (was discarded by the 5-superclass head)
+    assert cinc2020_27_from_snomed(["164889003"]) == ["AF"]          # atrial fib (rhythm!)
+    assert cinc2020_27_from_snomed(["426783006"]) == ["SNR"]         # sinus rhythm
+    # multi-label, returned in canonical order
+    out = cinc2020_27_from_snomed(["59118001", "164889003", "164934002"])
+    assert out == ["AF", "RBBB", "TAb"]
+    # merged equivalents: VPB(17338001)->PVC, SVPB(63593006)->PAC
+    assert cinc2020_27_from_snomed(["17338001"]) == ["PVC"]
+    assert cinc2020_27_from_snomed(["63593006"]) == ["PAC"]
+    assert len(CINC2020_27_CLASSES) >= 27  # CinC2020 27-set + a few blend extras
+    assert cinc2020_27_from_snomed(["99999999"]) == []               # unknown -> empty
