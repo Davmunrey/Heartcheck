@@ -274,7 +274,8 @@ def test_dataset_27class_label_key(tmp_path, monkeypatch):
     from ml.datasets.labels import CINC2020_27_CLASSES
     rec = tmp_path / "records100" / "00000" / "00001_lr"
     rec.parent.mkdir(parents=True)
-    rec.with_suffix(".hea").write_text("stub\n"); rec.with_suffix(".dat").write_bytes(b"x")
+    rec.with_suffix(".hea").write_text("stub\n")
+    rec.with_suffix(".dat").write_bytes(b"x")
     manifest = tmp_path / "m.parquet"
     pq.write_table(pa.Table.from_pylist([{
         "file_path": str(rec), "label_id": 1, "sampling_rate_hz": 100, "n_leads": 12,
