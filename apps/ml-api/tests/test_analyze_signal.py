@@ -50,9 +50,9 @@ def test_signal_success_or_unavailable(client: TestClient) -> None:
     if r.status_code == 200:
         body = r.json()
         assert isinstance(body["abnormal"], bool)
-        assert len(body["findings"]) == 5
+        assert len(body["findings"]) >= 5  # 5-class or 27-class model
         codes = {f["code"] for f in body["findings"]}
-        assert codes == {"NORM", "MI", "STTC", "CD", "HYP"}
+        assert len(codes) >= 5  # 5-superclass or 27-class taxonomy
         for f in body["findings"]:
             assert 0.0 <= f["probability"] <= 1.0
             assert isinstance(f["positive"], bool)
@@ -101,9 +101,11 @@ def test_abstention_and_auroc_in_predict(monkeypatch):
             return self
 
     monkeypatch.setattr(di._STATE, "model", _FakeModel())
+    monkeypatch.setattr(di._STATE, "extra_models", [])
     monkeypatch.setattr(di._STATE, "loaded", True)
     monkeypatch.setattr(di._STATE, "classes", di.SUPERCLASS_ORDER)
     monkeypatch.setattr(di._STATE, "thresholds", [0.45, 0.55, 0.55, 0.55, 0.50])
+    monkeypatch.setattr(di._STATE, "auroc", dict(di.MODEL_AUROC))
     monkeypatch.setattr(di._STATE, "target_len", 1024)
     monkeypatch.setattr(di._STATE, "target_fs", 100)
 
