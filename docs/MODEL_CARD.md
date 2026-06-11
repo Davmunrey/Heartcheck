@@ -228,6 +228,26 @@ The model is already a strong ranker; the launch-blocking work is **calibration 
 conformal abstention + reporting AUROC/sensitivity-at-fixed-specificity**, not more
 capacity. Report AUROC as the headline metric going forward.
 
+#### Complete 27-class model (2026-06-11) — rhythm + diagnostic
+
+The 5-superclass head discards rhythm (half of clinical ECG reading). The
+**complete model** (`ml/training/train_multilabel27.py`, deep backbone from
+CODE-15, trained on the PTB-XL + CinC2020 blend, `runs/local/full27/checkpoint.pt`)
+predicts the **27-class CinC2020 taxonomy** — rhythm, conduction, axis, intervals,
+ST/T, hypertrophy, infarct. **Val macro-AUROC `0.883`** (higher than the
+5-class model's 0.858), and it now detects rhythm it previously could not:
+
+| Group | Per-class AUROC |
+|-------|-----------------|
+| Rhythm | STach .986, SB .970, AF .959, PVC .957, AFL .949, Brady .931, PAC .844, SA .809 |
+| Conduction | LBBB .985, RBBB .978, LAnFB .963, IAVB .947, PR .907, IRBBB .890, NSIVCB .798 |
+| Axis / intervals / morphology | LAD .945, LQT .891, LQRSV .840, RAD .812, QAb .740 |
+| ST/T / hypertrophy / infarct | STD .832, STE .828, LVH .812, TAb .802, MI .799, TInv .790 |
+
+This turns the product from a 5-category detector into a **27-affection ECG
+report**. Trained in Colab on GPU (`notebooks/cloud_train_27class.ipynb`).
+Serving it in the API (deep arch + 27 labels) is the next step.
+
 #### Path to clinical-grade (roadmap)
 
 Ranked by expected impact for the weak classes (HYP/MI/STTC):
