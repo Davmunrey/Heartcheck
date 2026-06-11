@@ -83,3 +83,59 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
+
+/* ============================================================
+   Motion — Apple-style scroll reveals + ECG line draw.
+   Reduced-motion users get instant, static content.
+   ============================================================ */
+html { scroll-behavior: smooth; }
+
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+.reveal.in { opacity: 1; transform: none; }
+.reveal-scale { transform: translateY(28px) scale(0.96); }
+.reveal-scale.in { transform: none; }
+
+/* staggered children */
+.stagger > * { opacity: 0; transform: translateY(22px); transition: opacity 0.7s cubic-bezier(0.22,1,0.36,1), transform 0.7s cubic-bezier(0.22,1,0.36,1); }
+.stagger.in > * { opacity: 1; transform: none; }
+.stagger.in > *:nth-child(2) { transition-delay: 0.08s; }
+.stagger.in > *:nth-child(3) { transition-delay: 0.16s; }
+.stagger.in > *:nth-child(4) { transition-delay: 0.24s; }
+.stagger.in > *:nth-child(5) { transition-delay: 0.32s; }
+.stagger.in > *:nth-child(6) { transition-delay: 0.40s; }
+
+/* ECG trace drawing itself across the hero */
+@keyframes ecg-draw { to { stroke-dashoffset: 0; } }
+@keyframes ecg-sweep { 0% { transform: translateX(-30%);} 100% { transform: translateX(130%);} }
+.ecg-path { stroke-dasharray: 2400; stroke-dashoffset: 2400; animation: ecg-draw 3.4s cubic-bezier(0.65,0,0.35,1) 0.3s forwards; }
+.ecg-blip { animation: ecg-sweep 3.4s linear 0.3s infinite; }
+
+/* slow floating gradient orbs */
+@keyframes float-a { 0%,100%{ transform: translate(0,0) scale(1);} 50%{ transform: translate(24px,-30px) scale(1.08);} }
+@keyframes float-b { 0%,100%{ transform: translate(0,0) scale(1);} 50%{ transform: translate(-28px,26px) scale(1.1);} }
+.orb-a { animation: float-a 14s ease-in-out infinite; }
+.orb-b { animation: float-b 18s ease-in-out infinite; }
+
+/* hero headline gradient shimmer */
+@keyframes shimmer { to { background-position: 200% center; } }
+.text-shimmer {
+  background: linear-gradient(100deg, var(--ink) 30%, var(--brand) 50%, var(--ink) 70%);
+  background-size: 200% auto;
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 6s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .reveal, .reveal-scale, .stagger > * { opacity: 1 !important; transform: none !important; transition: none !important; }
+  .ecg-path { stroke-dashoffset: 0; animation: none; }
+  .ecg-blip, .orb-a, .orb-b, .text-shimmer { animation: none; }
+}
