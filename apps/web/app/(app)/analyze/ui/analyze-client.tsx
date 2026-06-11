@@ -161,32 +161,54 @@ export function AnalyzeClient() {
               </tr>
             </thead>
             <tbody>
-              {[...signal.findings]
-                .sort((a, b) => Number(b.positive) - Number(a.positive) || b.probability - a.probability)
-                .map((f) => (
-                <tr key={f.code} className={f.positive ? "font-medium text-ink" : "text-ink-2"}>
-                  <td className="py-1">{f.label}</td>
-                  <td className="py-1">{Math.round(f.probability * 100)}%</td>
-                  <td className="py-1 text-ink-3">{Math.round(f.threshold * 100)}%</td>
-                  <td className="py-1 text-ink-3">{f.auroc ? f.auroc.toFixed(2) : "—"}</td>
-                  <td className="py-1">
-                    {f.positive && (
-                      <span className="rounded bg-signal-tint px-1.5 py-0.5 text-xs text-signal-700">
-                        positivo
-                      </span>
+              {(() => {
+                const relevant = [...signal.findings]
+                  .filter((f) => f.positive || f.uncertain)
+                  .sort((a, b) => Number(b.positive) - Number(a.positive) || b.probability - a.probability);
+                const normalCount = signal.findings.length - relevant.length;
+                return (
+                  <>
+                    {relevant.map((f) => (
+                      <tr key={f.code} className={f.positive ? "font-medium text-ink" : "text-ink-2"}>
+                        <td className="py-1">{f.label}</td>
+                        <td className="py-1">{Math.round(f.probability * 100)}%</td>
+                        <td className="py-1 text-ink-3">{Math.round(f.threshold * 100)}%</td>
+                        <td className="py-1 text-ink-3">{f.auroc ? f.auroc.toFixed(2) : "—"}</td>
+                        <td className="py-1">
+                          {f.positive && (
+                            <span className="rounded bg-signal-tint px-1.5 py-0.5 text-xs text-signal-700">
+                              positivo
+                            </span>
+                          )}
+                          {!f.positive && f.uncertain && (
+                            <span className="rounded bg-brand-tint px-1.5 py-0.5 text-xs text-brand">
+                              incierto
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                    {relevant.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="py-2 text-ink-2">
+                          Sin hallazgos positivos ni inciertos.
+                        </td>
+                      </tr>
                     )}
-                    {!f.positive && f.uncertain && (
-                      <span className="rounded bg-brand-tint px-1.5 py-0.5 text-xs text-brand">
-                        incierto
-                      </span>
+                    {normalCount > 0 && (
+                      <tr className="text-ink-3">
+                        <td colSpan={5} className="py-1 text-xs">
+                          + {normalCount} afecciones en rango normal (no detectadas).
+                        </td>
+                      </tr>
                     )}
-                  </td>
-                </tr>
-              ))}
+                  </>
+                );
+              })()}
             </tbody>
           </table>
           <p className="mt-3 text-xs text-ink-3">
-            Modelo {signal.model_version} · {signal.findings.length} afecciones · AUROC {signal.macro_auroc.toFixed(2)} · {signal.n_leads} derivaciones · {signal.sampling_rate_hz} Hz
+            Modelo {signal.model_version} · {signal.findings.length} afecciones evaluadas · AUROC {signal.macro_auroc.toFixed(2)} · {signal.n_leads} derivaciones · {signal.sampling_rate_hz} Hz
           </p>
           <p className="mt-2 text-xs text-ink-3">{signal.disclaimer}</p>
         </div>
