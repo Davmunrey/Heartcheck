@@ -37,12 +37,18 @@ const nextConfig: NextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.accounts.dev https://*.clerk.com",
+              // Clerk JS + Cloudflare Turnstile (Clerk bot/captcha challenge).
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.accounts.dev https://*.clerk.com https://challenges.cloudflare.com",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https:",
               "font-src 'self' data:",
-              "connect-src 'self' https://*.supabase.co https://*.clerk.accounts.dev https://*.clerk.com wss:",
-              "frame-src https://*.clerk.accounts.dev https://*.clerk.com",
+              // Clerk frontend API + telemetry + Supabase. (without these the
+              // sign-in/up form renders but cannot complete -> 'nothing works'.)
+              "connect-src 'self' https://*.supabase.co https://*.clerk.accounts.dev https://*.clerk.com https://clerk-telemetry.com wss:",
+              // Clerk hosted pages + the Turnstile captcha iframe.
+              "frame-src 'self' https://*.clerk.accounts.dev https://*.clerk.com https://challenges.cloudflare.com",
+              // Clerk uses web workers (blob:).
+              "worker-src 'self' blob:",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",
