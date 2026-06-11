@@ -16,7 +16,7 @@ export function Reveal({
   children: ReactNode;
   className?: string;
   variant?: "reveal" | "reveal reveal-scale" | "stagger";
-  as?: "div" | "section" | "ul" | "header";
+  as?: "div" | "section" | "ul" | "dl" | "header";
 }) {
   const ref = useRef<HTMLElement>(null);
   const [shown, setShown] = useState(false);
