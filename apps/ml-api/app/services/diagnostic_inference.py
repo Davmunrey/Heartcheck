@@ -70,8 +70,9 @@ UNCERTAINTY_MARGIN = float(os.environ.get("HEARTSCAN_UNCERTAINTY_MARGIN", "0.10"
 
 # Candidate checkpoint locations, first hit wins. Overridable via env.
 _DEFAULT_CANDIDATES = (
+    "runs/local/full27/checkpoint.pt",            # complete 27-class model (AUROC 0.883)
+    "runs/local/cinc2020_blend/checkpoint.pt",    # 5-superclass blend champion
     "runs/auto/ptbxl_georgia_full/finetune_12e_from_8857/checkpoint.pt",
-    "runs/auto/ptbxl_georgia_chapman/finetune_12e_from_georgia_full/checkpoint.pt",
 )
 
 
