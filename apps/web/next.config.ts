@@ -11,6 +11,14 @@ const nextConfig: NextConfig = {
     // unrelated lockfiles from parent folders on developer machines.
     root: path.join(__dirname, "../.."),
   },
+  // ONE DOMAIN: the Next app is the only public origin. Browser/clients can hit
+  // the ML backend under this same domain at /ml-api/* — Next proxies it to the
+  // private FastAPI (ML_API_URL, default localhost:8000 in dev). No second
+  // public site, no CORS, no separate :8000 origin for users.
+  async rewrites() {
+    const ml = process.env.ML_API_URL ?? "http://localhost:8000";
+    return [{ source: "/ml-api/:path*", destination: `${ml.replace(/\/$/, "")}/:path*` }];
+  },
   async headers() {
     return [
       {

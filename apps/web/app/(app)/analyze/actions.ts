@@ -14,10 +14,7 @@ export async function analyzeImageAction(formData: FormData): Promise<AnalysisRe
 
   const file = validateAnalyzeFile(formData.get("file"));
 
-  const mlUrl = process.env.ML_API_URL;
-  if (!mlUrl) {
-    throw new Error("ML_API_URL no está configurado.");
-  }
+  const mlUrl = process.env.ML_API_URL ?? "http://localhost:8000";
 
   const token = await getToken();
   if (!token) throw new Error("No se pudo obtener el token de sesión.");
@@ -84,8 +81,9 @@ export async function analyzeSignalAction(formData: FormData): Promise<Diagnosti
     throw new Error("Frecuencia de muestreo inválida (1–5000 Hz).");
   }
 
-  const mlUrl = process.env.ML_API_URL;
-  if (!mlUrl) throw new Error("ML_API_URL no está configurado.");
+  // Internal ML backend URL. Defaults to localhost:8000 for dev so the app
+  // works out of the box; set ML_API_URL to the private backend in prod.
+  const mlUrl = process.env.ML_API_URL ?? "http://localhost:8000";
 
   const token = await getToken();
   if (!token) throw new Error("No se pudo obtener el token de sesión.");
