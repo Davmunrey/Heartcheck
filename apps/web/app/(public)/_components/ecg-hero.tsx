@@ -33,9 +33,9 @@ export function EcgHero() {
         </svg>
         <div className="mt-5 grid grid-cols-3 gap-3 font-mono text-[11px]">
           {[
-            ["RHYTHM", "Sinus 72 bpm"],
-            ["FLAGS", "RBBB · STTC"],
-            ["AUROC", "0.88"],
+            ["RITMO", "Sinusal 72 lpm"],
+            ["HALLAZGOS", "2 a revisar"],
+            ["LISTO EN", "~20 s"],
           ].map(([k, v]) => (
             <div key={k} className="border border-white/10 bg-white/5 p-3">
               <div className="text-scope-ink/50">{k}</div>

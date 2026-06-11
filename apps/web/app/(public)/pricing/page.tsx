@@ -1,21 +1,25 @@
 import Link from "next/link";
 import { plans } from "@/lib/billing/plans";
 
+import { Reveal } from "../_components/reveal";
+
 export default function PricingPage() {
   return (
-    <section className="px-5 py-20">
+    <section className="px-5 py-24 md:py-32">
       <div className="mx-auto max-w-6xl">
-        <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand">Pricing</p>
-        <h1 className="mt-3 max-w-3xl text-5xl font-black tracking-[-0.04em] text-ink">
-          Trial 7 días. Luego plan por organización.
-        </h1>
-        <p className="mt-4 max-w-2xl text-ink-2">
-          Facturación por hospital/clínica. Uso médico real requiere contrato,
-          validación local, privacidad, seguridad, aprobación regulatoria.
-        </p>
-        <div className="mt-10 grid gap-4 md:grid-cols-4">
+        <Reveal variant="stagger">
+          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand">Pricing</p>
+          <h1 className="mt-4 max-w-3xl text-[clamp(2.4rem,5vw,4.25rem)] font-black leading-[0.98] tracking-[-0.045em] text-ink">
+            Trial 7 días. Luego plan por organización.
+          </h1>
+          <p className="mt-5 max-w-2xl text-lg text-ink-2">
+            Facturación por hospital/clínica. Uso médico real requiere contrato,
+            validación local, privacidad, seguridad, aprobación regulatoria.
+          </p>
+        </Reveal>
+        <Reveal variant="stagger" as="div" className="mt-12 grid gap-4 md:grid-cols-4">
           {plans.map((plan) => (
-            <article key={plan.id} className="flex flex-col border-2 border-line bg-surface p-6">
+            <article key={plan.id} className="flex flex-col border-2 border-line bg-surface p-6 transition-all hover:-translate-y-1 hover:border-brand hover:shadow-xl hover:shadow-brand/10">
               <h2 className="text-xl font-black text-ink">{plan.name}</h2>
               <p className="mt-2 text-3xl font-black text-ink">{plan.price}</p>
               <p className="mt-2 text-sm text-ink-2">{plan.tagline}</p>
@@ -37,7 +41,7 @@ export default function PricingPage() {
               </Link>
             </article>
           ))}
-        </div>
+        </Reveal>
       </div>
     </section>
   );

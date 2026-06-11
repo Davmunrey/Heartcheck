@@ -4,29 +4,29 @@ import { EcgHero } from "./_components/ecg-hero";
 import { Reveal } from "./_components/reveal";
 
 const stats = [
-  ["27", "afecciones detectadas", "ritmo + diagnóstico, no 5 categorías"],
-  ["0.88", "AUROC macro", "discriminación a nivel clínico"],
-  ["43k", "ECG de entrenamiento", "PTB-XL + CinC2020 multi-fuente"],
+  ["27", "afecciones en un informe", "ritmo, bloqueos, infarto y más"],
+  ["~20s", "por electrocardiograma", "sube, lee, comparte"],
+  ["12", "derivaciones", "el ECG estándar que ya usas"],
 ];
 
 const pillars = [
   {
-    kicker: "Lectura completa",
-    title: "Detecta el ritmo, no solo la morfología.",
-    body: "Fibrilación auricular, flutter, taquicardia y bradicardia sinusal, extrasístoles auriculares y ventriculares — además de bloqueos, ST/T, hipertrofia e infarto. El informe que un cardiólogo espera.",
-    chips: ["AF 0.96", "Flutter 0.95", "PVC 0.96", "RBBB 0.98"],
+    kicker: "Informe completo",
+    title: "Todo lo que importa, en una sola lectura.",
+    body: "Arritmias, bloqueos, signos de infarto, cambios isquémicos y más — clasificados y priorizados. Tu equipo ve de un vistazo qué revisar primero, sin perder tiempo.",
+    chips: ["Arritmias", "Bloqueos", "Infarto", "Isquemia"],
   },
   {
-    kicker: "Confianza, no caja negra",
-    title: "Probabilidades calibradas y abstención.",
-    body: "Cada hallazgo trae su AUROC y un umbral. Cuando el modelo duda, lo dice y escala a revisión humana — diseñado como copiloto clínico, nunca como diagnóstico autónomo.",
-    chips: ["AUROC por clase", "Abstención conformal", "Human-in-the-loop"],
+    kicker: "Decides tú",
+    title: "Una segunda opinión, no un veredicto.",
+    body: "Axis señala los hallazgos y su nivel de confianza. Cuando algo no está claro, lo marca para que lo revise una persona. El criterio médico siempre tiene la última palabra.",
+    chips: ["Hallazgos priorizados", "Nivel de confianza", "Revisión humana"],
   },
   {
-    kicker: "Listo para empresa",
-    title: "Aislamiento por hospital desde el día cero.",
-    body: "Tenant por organización con Clerk + RLS de Supabase, audit log append-only, almacenamiento privado, JWT y rate limits. Un solo dominio, cero PHI en logs.",
-    chips: ["RLS por org", "Audit chain", "API + consola"],
+    kicker: "Listo para tu clínica",
+    title: "Funciona desde el primer día.",
+    body: "Cada equipo y cada paciente, en su sitio y seguro. Acceso por roles, todo queda registrado y los datos nunca salen de tu control. Sin instalaciones complicadas.",
+    chips: ["Seguro por diseño", "Cada equipo aislado", "Web + API"],
   },
 ];
 
@@ -57,9 +57,9 @@ export default function LandingPage() {
               leído al completo.
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-8 text-ink-2">
-              Axis interpreta un electrocardiograma de 12 derivaciones y devuelve un
-              informe de 27 afecciones — ritmo y diagnóstico — con probabilidades
-              calibradas. Para equipos clínicos. No sustituye criterio médico.
+              Sube un electrocardiograma y recibe un informe claro de 27 afecciones
+              en segundos. Tu equipo revisa lo que importa, más rápido. Una segunda
+              opinión inteligente — el criterio médico siempre decide.
             </p>
             <div className="mt-9 flex flex-wrap items-center gap-4">
               <Link
@@ -148,14 +148,14 @@ export default function LandingPage() {
       <section className="relative overflow-hidden bg-scope text-scope-ink">
         <div className="orb-a absolute -left-20 top-10 h-72 w-72 rounded-full bg-brand/20 blur-[100px]" />
         <Reveal className="relative mx-auto max-w-7xl px-5 py-24 md:py-32">
-          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand-bright">Enterprise</p>
+          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand-bright">Para tu organización</p>
           <h2 className="mt-4 max-w-4xl text-[clamp(2.2rem,5vw,4rem)] font-black leading-[1.0] tracking-[-0.045em] text-white">
-            Seguridad antes que crecimiento.
+            Tus datos, bajo tu control.
           </h2>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-scope-ink/75">
-            Aislamiento por organización, audit log hash-chain, almacenamiento privado,
-            firmas de webhook y cero secretos en cliente. Listo para evaluación
-            DPA/BAA y despliegue privado.
+            Pensado para clínicas y hospitales: seguro por diseño, cada equipo
+            aislado y todo queda registrado. Despliegue privado y soporte para tu
+            proceso de evaluación. Sin sorpresas.
           </p>
           <div className="mt-10 flex flex-wrap gap-4">
             <Link href="/enterprise" className="bg-white px-7 py-3.5 font-semibold text-scope transition-colors hover:bg-scope-ink">
