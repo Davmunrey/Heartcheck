@@ -1,12 +1,12 @@
 import { Reveal } from "../_components/reveal";
 
 const lanes = [
-  ["Upload", "JPEG/PNG/WebP ECG, API o consola"],
-  ["Quality gate", "rotación, grid, trazado, ruido, derivaciones"],
-  ["AI assist", "probabilidades de 27 afecciones + heurísticas"],
-  ["Doctor review", "validación humana, notas, override"],
-  ["Report", "PDF/API, disclaimers, request id"],
-  ["Learning", "feedback seguro → cola entrenamiento"],
+  ["Subes el ECG", "Una foto o un archivo. JPEG, PNG o por API — como te venga mejor."],
+  ["Comprobamos la calidad", "Axis revisa que la imagen sea legible antes de leerla. Nada de basura dentro, basura fuera."],
+  ["Lee 27 afecciones", "Probabilidades claras de ritmo, bloqueos, infarto y más. Lo importante, primero."],
+  ["Tú revisas y decides", "Confirmas, ajustas o descartas. La última palabra siempre es tuya."],
+  ["Informe listo", "PDF o API, con su identificador. Fácil de compartir y de auditar."],
+  ["Mejora contigo", "Tu feedback afina el sistema con el tiempo, de forma segura."],
 ];
 
 export default function CopilotPage() {
@@ -16,13 +16,13 @@ export default function CopilotPage() {
       <div className="orb-b pointer-events-none absolute -right-16 bottom-10 h-64 w-64 rounded-full bg-signal/15 blur-[100px]" />
       <div className="relative mx-auto max-w-6xl">
         <Reveal variant="stagger">
-          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand-bright">ECG Copilot</p>
+          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand-bright">Cómo funciona</p>
           <h1 className="mt-4 max-w-4xl text-[clamp(2.4rem,5.5vw,4.5rem)] font-black leading-[0.98] tracking-[-0.045em] text-white">
-            Ayuda clínica trazable, no caja negra autónoma.
+            De la imagen al informe, en un flujo claro.
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-scope-ink/70">
-            Axis prepara casos, reduce fricción, genera evidencia operativa.
-            El médico conserva la decisión final. Cada paso queda auditable.
+            Axis hace el trabajo pesado y te lo deja todo ordenado. Tú revisas y
+            decides — siempre con la última palabra. Sin cajas negras.
           </p>
         </Reveal>
         <Reveal variant="stagger" as="div" className="mt-12 grid gap-4 md:grid-cols-3">

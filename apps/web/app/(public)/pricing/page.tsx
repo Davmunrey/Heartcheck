@@ -13,8 +13,8 @@ export default function PricingPage() {
             Trial 7 días. Luego plan por organización.
           </h1>
           <p className="mt-5 max-w-2xl text-lg text-ink-2">
-            Facturación por hospital/clínica. Uso médico real requiere contrato,
-            validación local, privacidad, seguridad, aprobación regulatoria.
+            Facturación por organización. El trial es para que lo pruebes a fondo;
+            el uso clínico real lo cerramos con contrato y validación sobre tus casos.
           </p>
         </Reveal>
         <Reveal variant="stagger" as="div" className="mt-12 grid gap-4 md:grid-cols-4">
