@@ -145,25 +145,39 @@ export function AnalyzeClient() {
               {signal.abnormal ? "review" : "normal range"}
             </span>
           </div>
+          {signal.requires_review && (
+            <p className="mt-3 bg-brand-tint px-3 py-2 text-sm font-medium text-brand">
+              Requiere revisión médica (hallazgo positivo o incierto).
+            </p>
+          )}
           <table className="mt-4 w-full text-sm">
             <thead>
               <tr className="text-left text-ink-3">
-                <th className="pb-1">Superclase</th>
+                <th className="pb-1">Afección</th>
                 <th className="pb-1">Probabilidad</th>
                 <th className="pb-1">Umbral</th>
+                <th className="pb-1">AUROC</th>
                 <th className="pb-1"></th>
               </tr>
             </thead>
             <tbody>
-              {signal.findings.map((f) => (
+              {[...signal.findings]
+                .sort((a, b) => Number(b.positive) - Number(a.positive) || b.probability - a.probability)
+                .map((f) => (
                 <tr key={f.code} className={f.positive ? "font-medium text-ink" : "text-ink-2"}>
                   <td className="py-1">{f.label}</td>
                   <td className="py-1">{Math.round(f.probability * 100)}%</td>
                   <td className="py-1 text-ink-3">{Math.round(f.threshold * 100)}%</td>
+                  <td className="py-1 text-ink-3">{f.auroc ? f.auroc.toFixed(2) : "—"}</td>
                   <td className="py-1">
                     {f.positive && (
                       <span className="rounded bg-signal-tint px-1.5 py-0.5 text-xs text-signal-700">
                         positivo
+                      </span>
+                    )}
+                    {!f.positive && f.uncertain && (
+                      <span className="rounded bg-brand-tint px-1.5 py-0.5 text-xs text-brand">
+                        incierto
                       </span>
                     )}
                   </td>
@@ -172,7 +186,7 @@ export function AnalyzeClient() {
             </tbody>
           </table>
           <p className="mt-3 text-xs text-ink-3">
-            Modelo {signal.model_version} · {signal.n_leads} derivaciones · {signal.sampling_rate_hz} Hz
+            Modelo {signal.model_version} · {signal.findings.length} afecciones · AUROC {signal.macro_auroc.toFixed(2)} · {signal.n_leads} derivaciones · {signal.sampling_rate_hz} Hz
           </p>
           <p className="mt-2 text-xs text-ink-3">{signal.disclaimer}</p>
         </div>

@@ -9,10 +9,15 @@ export interface DiagnosticFinding {
   probability: number;
   positive: boolean;
   threshold: number;
+  uncertain: boolean;
+  confidence: string;
+  auroc: number;
 }
 
 export interface DiagnosticResponse {
   abnormal: boolean;
+  requires_review: boolean;
+  macro_auroc: number;
   findings: DiagnosticFinding[];
   n_leads: number;
   sampling_rate_hz: number;
@@ -48,10 +53,15 @@ export function parseDiagnosticResponse(raw: unknown): DiagnosticResponse {
       probability: num(x.probability, "probability"),
       positive: Boolean(x.positive),
       threshold: num(x.threshold, "threshold"),
+      uncertain: Boolean(x.uncertain),
+      confidence: String(x.confidence ?? (x.uncertain ? "low" : "high")),
+      auroc: typeof x.auroc === "number" ? x.auroc : 0,
     };
   });
   return {
     abnormal: Boolean(o.abnormal),
+    requires_review: Boolean(o.requires_review ?? o.abnormal),
+    macro_auroc: typeof o.macro_auroc === "number" ? o.macro_auroc : 0,
     findings,
     n_leads: typeof o.n_leads === "number" ? o.n_leads : 12,
     sampling_rate_hz: typeof o.sampling_rate_hz === "number" ? o.sampling_rate_hz : 0,
