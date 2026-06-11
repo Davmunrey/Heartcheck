@@ -39,6 +39,17 @@ SUPERCLASS_LABELS: dict[str, str] = {
     "STTC": "ST/T change",
     "CD": "Conduction disturbance",
     "HYP": "Hypertrophy",
+    # Complete 27-class taxonomy (rhythm + diagnostic), non-diagnostic phrasing.
+    "SNR": "Sinus rhythm (normal)", "AF": "Atrial fibrillation", "AFL": "Atrial flutter",
+    "SB": "Sinus bradycardia", "STach": "Sinus tachycardia", "SA": "Sinus arrhythmia",
+    "Brady": "Bradycardia", "PAC": "Atrial premature beats", "PVC": "Ventricular premature beats",
+    "IAVB": "1st-degree AV block", "LPR": "Prolonged PR", "LBBB": "Left bundle branch block",
+    "RBBB": "Right bundle branch block", "IRBBB": "Incomplete RBBB",
+    "LAnFB": "Left anterior fascicular block", "NSIVCB": "Nonspecific IV conduction delay",
+    "PR": "Pacing rhythm", "LAD": "Left axis deviation", "RAD": "Right axis deviation",
+    "LQRSV": "Low QRS voltage", "LQT": "Prolonged QT", "QAb": "Abnormal Q wave",
+    "TAb": "T-wave abnormality", "TInv": "T-wave inversion", "STE": "ST elevation",
+    "STD": "ST depression", "LVH": "Left ventricular hypertrophy",
 }
 
 # Per-class discrimination quality (macro-AUROC 0.852) measured on the held-out
