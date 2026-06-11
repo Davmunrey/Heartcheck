@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { EcgHero } from "./_components/ecg-hero";
+import { pillarVisuals } from "./_components/pillar-visuals";
 import { Reveal } from "./_components/reveal";
 
 const stats = [
@@ -95,34 +96,28 @@ export default function LandingPage() {
 
       {/* ===== PILLARS ===== */}
       <div className="mx-auto max-w-7xl px-5">
-        {pillars.map((p, i) => (
-          <Reveal key={p.title} className="grid items-center gap-10 border-b-2 border-line py-20 md:grid-cols-2 md:py-28">
-            <div className={i % 2 ? "md:order-2" : ""}>
-              <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand">{p.kicker}</p>
-              <h2 className="mt-4 text-[clamp(2rem,4vw,3.25rem)] font-black leading-[1.02] tracking-[-0.04em] text-ink">
-                {p.title}
-              </h2>
-              <p className="mt-5 max-w-lg text-lg leading-8 text-ink-2">{p.body}</p>
-              <div className="mt-7 flex flex-wrap gap-2">
-                {p.chips.map((c) => (
-                  <span key={c} className="bg-brand-tint px-3 py-1 font-mono text-sm text-brand">{c}</span>
-                ))}
+        {pillars.map((p, i) => {
+          const Visual = pillarVisuals[i % pillarVisuals.length];
+          return (
+            <Reveal key={p.title} className="grid items-center gap-10 border-b-2 border-line py-20 md:grid-cols-2 md:py-28">
+              <div className={i % 2 ? "md:order-2" : ""}>
+                <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand">{p.kicker}</p>
+                <h2 className="mt-4 text-[clamp(2rem,4vw,3.25rem)] font-black leading-[1.02] tracking-[-0.04em] text-ink">
+                  {p.title}
+                </h2>
+                <p className="mt-5 max-w-lg text-lg leading-8 text-ink-2">{p.body}</p>
+                <div className="mt-7 flex flex-wrap gap-2">
+                  {p.chips.map((c) => (
+                    <span key={c} className="bg-brand-tint px-3 py-1 font-mono text-sm text-brand">{c}</span>
+                  ))}
+                </div>
               </div>
-            </div>
-            <div className={i % 2 ? "md:order-1" : ""}>
-              <div className="relative aspect-[4/3] overflow-hidden border-2 border-line bg-scope">
-                <div className="absolute inset-0 opacity-20 [background:repeating-linear-gradient(0deg,rgba(61,123,255,.5)_0_1px,transparent_1px_20px),repeating-linear-gradient(90deg,rgba(61,123,255,.5)_0_1px,transparent_1px_20px)]" />
-                <div className={`absolute h-24 w-24 rounded-full blur-2xl ${i % 2 ? "right-8 top-8 bg-signal/40 orb-b" : "left-8 bottom-8 bg-brand/40 orb-a"}`} />
-                <svg viewBox="0 0 400 300" className="relative h-full w-full" preserveAspectRatio="none">
-                  <path
-                    d="M0 160 l60 0 q8 0 12 -14 q4 -14 9 0 l7 0 l6 42 l7 -90 l7 64 l7 -16 q7 0 12 18 q4 14 9 0 l180 0"
-                    className="ecg-path" fill="none" stroke="var(--brand-bright)" strokeWidth="2.5" strokeLinejoin="round"
-                  />
-                </svg>
+              <div className={i % 2 ? "md:order-1" : ""}>
+                <Visual />
               </div>
-            </div>
-          </Reveal>
-        ))}
+            </Reveal>
+          );
+        })}
       </div>
 
       {/* ===== 27 AFFECTIONS ===== */}

@@ -8,15 +8,33 @@ const navLinks = [
   { href: "/faq", label: "FAQ" },
 ];
 
-/** Axis brandmark: red square (the ECG signal) + blue wordmark (the product). */
+/**
+ * Axis mark — the cardiac electrical *axis* (blue vector) with the patient's
+ * ECG pulse (red) crossing it, on a dark scope tile with a faint grid. Ties
+ * the brand name to its meaning. Pure SVG, scales crisply at any size.
+ */
+export function AxisMark({ className = "size-9" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 36 36" className={className} aria-hidden="true" role="img">
+      <rect width="36" height="36" fill="var(--scope)" />
+      <path d="M0 12h36M0 24h36M12 0v36M24 0v36" stroke="rgba(61,123,255,.20)" strokeWidth="1" />
+      <path d="M6 30 30 9" stroke="var(--brand-bright)" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+      <path
+        d="M3 21h7l2-5 3 11 3-16 3 12 2-2h6"
+        fill="none" stroke="var(--signal-bright)" strokeWidth="2"
+        strokeLinejoin="round" strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+/** Axis brandmark: the Axis mark + wordmark + positioning tag. */
 export function Brandmark() {
   return (
     <Link href="/" className="flex items-center gap-2.5 font-semibold tracking-tight text-ink">
-      <span className="grid size-9 place-items-center bg-signal font-mono text-sm font-bold text-white">
-        ECG
-      </span>
+      <AxisMark />
       <span className="text-lg">Axis</span>
-      <span className="bg-brand-tint px-2 py-0.5 text-xs font-medium text-brand">
+      <span className="hidden bg-brand-tint px-2 py-0.5 text-xs font-medium text-brand sm:inline">
         clinical copilot
       </span>
     </Link>
