@@ -37,10 +37,13 @@ def meta(settings: Settings = Depends(get_settings)) -> dict[str, Any]:
     manifest = inf.get_manifest()
     if manifest is not None:
         payload["model"] = manifest.public_meta()
+    diag.is_loaded()  # ensure load attempted so _STATE reflects the served head
     payload["diagnostic_model"] = {
-        "loaded": diag.is_loaded(),
+        "loaded": diag._STATE.model is not None,
         "version": diag.model_version(),
-        "classes": list(diag.SUPERCLASS_ORDER),
+        "classes": list(diag._STATE.classes),  # actual served head (5 or 27)
+        "n_classes": len(diag._STATE.classes),
+        "macro_auroc": round(sum(diag._STATE.auroc.values()) / max(1, len(diag._STATE.auroc)), 4),
         "wedge": "signal-12-lead",
     }
     return payload
