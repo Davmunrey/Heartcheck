@@ -68,6 +68,7 @@ _DEFAULT_CANDIDATES = (
 class _DiagState:
     model: Any = None
     extra_models: list = field(default_factory=list)  # ensemble: averaged with `model`
+    auroc: dict = field(default_factory=lambda: dict(MODEL_AUROC))
     classes: tuple[str, ...] = SUPERCLASS_ORDER
     thresholds: list[float] = field(default_factory=lambda: [0.5] * 5)
     target_len: int = 1024
@@ -104,13 +105,14 @@ def load_diagnostic_model() -> bool:
         logger.info("diagnostic_model_absent", reason="no_checkpoint")
         return False
     import torch
-    from heartscan_ml.cnn1d import ECGResNet1D
+    from heartscan_ml.cnn1d import build_model
 
     state = torch.load(ckpt, map_location="cpu", weights_only=True)
     classes = tuple(state.get("classes", SUPERCLASS_ORDER))
     target_len = int(state.get("target_len", 1024))
     target_fs = int(state.get("target_fs", 100))
-    model = ECGResNet1D(num_classes=len(classes), length=target_len, in_channels=12)
+    arch = str(state.get("arch", "resnet"))  # "deep" for the 27-class model
+    model = build_model(arch, num_classes=len(classes), length=target_len, in_channels=12)
     model.load_state_dict(state["state_dict"], strict=True)
     model.eval()
 
@@ -119,8 +121,11 @@ def load_diagnostic_model() -> bool:
     _STATE.thresholds = list(state.get("thresholds") or [0.5] * len(classes))
     _STATE.target_len = target_len
     _STATE.target_fs = target_fs
-    _STATE.version = str(state.get("version", "ecg-resnet1d-ptbxl-multilabel"))
+    _STATE.version = str(state.get("version", state.get("task", "ecg-multilabel")))
     _STATE.checkpoint_path = str(ckpt)
+    # Per-class AUROC from the checkpoint (complete model ships per_class_auroc);
+    # fall back to the 5-superclass reference for the legacy head.
+    _STATE.auroc = dict(state.get("per_class_auroc") or MODEL_AUROC)
 
     # Optional ensemble: extra checkpoints averaged with the primary at predict
     # time (comma-separated paths). Improves AUROC ~+0.6pt incl. HYP (see
@@ -133,7 +138,7 @@ def load_diagnostic_model() -> bool:
             logger.info("diagnostic_ensemble_skip", path=raw, reason="not_found")
             continue
         es = torch.load(ep, map_location="cpu", weights_only=True)
-        em = ECGResNet1D(num_classes=len(classes), length=target_len, in_channels=12)
+        em = build_model(str(es.get("arch", arch)), num_classes=len(classes), length=target_len, in_channels=12)
         em.load_state_dict(es["state_dict"], strict=True)
         em.eval()
         _STATE.extra_models.append(em)
@@ -259,7 +264,7 @@ def predict(signal: np.ndarray, fs_in: int) -> DiagnosticResult:
                 threshold=float(thr),
                 uncertain=uncertain,
                 confidence="low" if uncertain else "high",
-                auroc=MODEL_AUROC.get(code, 0.0),
+                auroc=_STATE.auroc.get(code, 0.0),
             )
         )
     abnormal = any(f.positive for f in findings if f.code != "NORM")
@@ -273,5 +278,5 @@ def predict(signal: np.ndarray, fs_in: int) -> DiagnosticResult:
         sampling_rate_hz=int(fs_in),
         abnormal=abnormal,
         requires_review=requires_review,
-        macro_auroc=MACRO_AUROC,
+        macro_auroc=round(sum(_STATE.auroc.values()) / max(1, len(_STATE.auroc)), 4),
     )
