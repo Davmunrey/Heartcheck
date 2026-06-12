@@ -31,19 +31,34 @@ backend is an **internal service**, never exposed to users directly.
 ## Local dev (one command each)
 
 ```bash
-# 1. ML backend (private), serves the 27-class model by default
-cd apps/ml-api && HEARTSCAN_API_KEY=dev-key .venv/bin/uvicorn app.main:app --port 8000
+# 1. ML backend (private), serves the 27-class model by default.
+#    apps/ml-api/.env (gitignored) holds the dev config: Clerk JWKS/issuer,
+#    ML_INTERNAL_TOKEN (must match apps/web/.env.local), HEARTSCAN_WEB_APP_URL,
+#    and HEARTSCAN_REQUIRE_ORGANIZATION=false (single-tenant dev).
+cd apps/ml-api && .venv/bin/uvicorn app.main:app --port 8000
 
 # 2. The app (the domain) — talks to :8000 via ML_API_URL
-cd apps/web && ML_API_URL=http://localhost:8000 npm run dev   # http://localhost:3000
+cd apps/web && npm run dev   # http://localhost:3000
 ```
 
-Everything users touch is under `http://localhost:3000`. `:8000` is internal.
+Everything users touch is under `http://localhost:3000`. `:8000` is internal —
+and with `HEARTSCAN_WEB_APP_URL=http://localhost:3000` set, hitting `:8000/`
+or `:8000/app` **307-redirects to the app**, so there is genuinely one URL.
+
+## Tenancy
+
+`/analyze` derives the tenant from the Clerk session. With
+`HEARTSCAN_REQUIRE_ORGANIZATION=true` (prod default) an active Clerk
+Organization is required (B2B, RLS by `org_id`). Set it `false` for
+single-tenant setups: the tenant becomes `clerk-user:<sub>` and no Clerk
+Organization (nor the Organizations feature) is needed. See
+[`TENANCY.md`](./TENANCY.md).
 
 ## Prod
 
 - Deploy `apps/web` to the public domain (Vercel/host). Set `ML_API_URL` to the
   private FastAPI URL + `ML_API_INTERNAL_TOKEN`.
 - Deploy `apps/ml-api` privately (no public ingress). It still enforces auth.
-- **`web_public/`** (the FastAPI-served static site) is a legacy/standalone
-  surface — not the public face when the Next app is deployed.
+- **`web_public/`** (the FastAPI-served static site) is a legacy surface. Set
+  `HEARTSCAN_WEB_APP_URL` so the ML API redirects `/`, `/app`, `/faq.html` to
+  the Next.js app — the static site is never the public face in this setup.

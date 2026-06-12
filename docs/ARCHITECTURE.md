@@ -5,37 +5,29 @@
 - **`apps/mobile/`** (Flutter): cámara, captura, UI de resultados, export PDF/JSON, i18n.
 - **`apps/ml-api/`** (FastAPI): API SaaS principal con auth, cuotas, observabilidad y pipeline OpenCV + CNN-1D.
 - **`ml/`** (Python): paquete `heartscan_ml` con entrenamiento PTB-XL y un API ligero alternativo.
-- **`apps/web/`** (Next.js + Clerk + Supabase): consola SaaS; el análisis llama al ML API con JWT de organización.
-- **`web_public/`** (HTML estático): landing y app web servidas por el propio FastAPI.
+- **`apps/web/`** (Next.js + Clerk + Supabase): **la única URL de cara al usuario**
+  (landing + producto). El análisis se hace en un *server action* que llama al ML
+  API con el JWT de Clerk.
+- **`web_public/`** (HTML estático): consola/landing heredada. Con
+  `HEARTSCAN_WEB_APP_URL` configurado, el FastAPI redirige `/`, `/app`,
+  `/faq.html` a la app Next.js → no es superficie de usuario.
 - **`infra/`** (Docker Compose): orquestación local (Postgres + API).
 
 ```mermaid
 flowchart LR
-  subgraph clients [Clientes]
-    SPA[Next.js app]
-    static[web_public app.html]
-    mobile[Flutter]
-  end
-  subgraph api [Backends]
-    fastapi[FastAPI :8000]
-    ml[heartscan_ml :8000]
-  end
-  subgraph data [Datos]
-    pg[(Postgres / SQLite)]
-  end
-  SPA -->|"/api/v1/*"| fastapi
-  SPA -->|"/api/v1/* (alias)"| ml
-  static --> fastapi
-  mobile --> fastapi
-  fastapi --> pg
+  browser[Navegador] -->|única URL :3000| web[Next.js apps/web]
+  mobile[Flutter] -->|Bearer Clerk| fastapi
+  web -->|"server action · ML_API_URL · Bearer Clerk + X-Internal-Token"| fastapi[FastAPI :8000 · interno]
+  fastapi -->|"307 / , /app → :3000"| web
+  fastapi --> pg[(Postgres / SQLite)]
 ```
 
 ## Endpoints públicos del FastAPI
 
 - `GET /health` — liveness simple.
 - `GET /api/v1/meta` — versión de pipeline y modelo (público; consumido por la SPA).
-- `POST /api/v1/auth/{register,login,me}` — JWT HS256, rate-limited.
-- `POST /api/v1/analyze` — multipart, requiere Bearer JWT o `X-API-Key` (legacy), validación por magic bytes y cuota diaria.
+- `POST /api/v1/auth/{register,login,me}` — JWT HS256 legacy, sólo si `HEARTSCAN_AUTH_LEGACY_ENABLED=true` (dev/tests).
+- `POST /api/v1/analyze` — multipart. Auth: **Clerk Bearer** (verificado vía JWKS) — el camino del producto — o `X-API-Key` legacy (dev). Tenant por organización Clerk o, en modo org-opcional, `clerk-user:<sub>`. Validación por magic bytes y cuota diaria.
 - `POST /api/v1/reports/pdf` — informe a partir de un `AnalysisResponse` previo.
 - `GET /api/v1/education` — contenido educativo (i18n).
 - `GET /metrics` — métricas Prometheus.

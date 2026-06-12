@@ -1,9 +1,9 @@
 # Axis
 
-**Ruta canónica del monorepo (abre siempre esta carpeta en el IDE):**  
-`/Users/mac/Desktop/Heartcheck`  
-Detalle: [`docs/CANONICAL_PROJECT_PATH.md`](docs/CANONICAL_PROJECT_PATH.md).  
-Stack **HeartDiagnosis** (React + `ml/`): tras migrar, el fuente **completo y editable** queda en [`references/HeartDiagnosis/`](references/README.md). Para copiar desde Proposal-Engine y **borrar el origen**: [`scripts/unify_and_delete_heartdiagnosis.sh`](scripts/unify_and_delete_heartdiagnosis.sh) (ejecutar en tu Mac; luego `npm install` / `pip` en esa carpeta).
+**Ruta canónica del monorepo (abre siempre esta carpeta en el IDE):** `~/dev/Heartcheck`.
+> ⚠️ La copia en `~/Desktop/Heartcheck` vive en iCloud Drive y quedó *evicted/dataless*
+> (archivos sin contenido local) — **no la uses**: cuelga servidores y entrenamientos.
+> Detalle: [`docs/CANONICAL_PROJECT_PATH.md`](docs/CANONICAL_PROJECT_PATH.md).
 
 Monorepo: **`apps/ml-api`** (FastAPI + OpenCV + PyTorch CNN-1D), **`apps/mobile`** (Flutter), **`apps/web`** (Next.js + Clerk + Supabase), y **`ml/`** (pipeline de entrenamiento standalone).
 
@@ -24,54 +24,38 @@ Instala FastAPI, OpenCV, PyTorch, etc. en `apps/ml-api/.venv` y genera `web_publ
 ./scripts/install_backend.sh
 ```
 
-### 2) Servidor local (API + web)
+### 2) Una sola URL: la app Next.js (:3000)
 
-Un solo proceso sirve **API + landing + app web**:
+Axis vive bajo **una única URL de cara al usuario**: la app Next.js
+(`http://localhost:3000`) = landing + producto + análisis. El ML API (:8000) es
+un **servicio interno**; con `HEARTSCAN_WEB_APP_URL` configurado, `:8000/` y
+`:8000/app` hacen **307 redirect** a `:3000`. (La consola estática heredada
+`web_public/` queda retirada como superficie de usuario.)
 
-```bash
-./scripts/run_local.sh
-```
-
-O manualmente (con venv activado):
-
-```bash
-cd apps/ml-api
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-Abre en el navegador:
-
-- **Landing (SaaS):** [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
-- **App web (subida de imagen):** [http://127.0.0.1:8000/app](http://127.0.0.1:8000/app)
-- **Metadatos del servicio:** [http://127.0.0.1:8000/api/v1/meta](http://127.0.0.1:8000/api/v1/meta)
-- **OpenAPI:** [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
-
-Roadmap SaaS y web a largo plazo: [`docs/SAAS_WEB_ROADMAP.md`](docs/SAAS_WEB_ROADMAP.md).
-
-Variables: copiar [`apps/ml-api/.env.example`](apps/ml-api/.env.example) a `apps/ml-api/.env` y ajustar `HEARTSCAN_API_KEY`. Para Docker / staging usar [`infra/.env.example`](infra/.env.example).
-
-### 3) Web Next.js (Clerk + Vercel-ready)
-
-Desde la raíz del repo (instala dependencias npm una vez: `npm install`):
+Arranca back interno + front de una vez (`npm install` una vez):
 
 ```bash
-# Variables: copia apps/web/.env.example → apps/web/.env.local (Clerk + Supabase + ML_API_URL)
-npm run dev
+npm run dev:stack   # FastAPI :8000 (interno) + Next.js :3000 (la URL)
+# o por separado:
+cd apps/ml-api && .venv/bin/uvicorn app.main:app --port 8000   # interno
+cd apps/web && npm run dev                                      # http://localhost:3000
 ```
 
-**API + web a la vez** (FastAPI :8000 y Next :3000):
+- **App (todo):** http://localhost:3000
+- **API interna / OpenAPI:** http://localhost:8000/docs · http://localhost:8000/api/v1/meta
 
-```bash
-npm run dev:stack
-# o: ./scripts/dev_stack.sh
-```
+Variables:
+- ML API: copia [`apps/ml-api/.env.example`](apps/ml-api/.env.example) → `apps/ml-api/.env`.
+  Dev local: Clerk JWKS/issuer, `HEARTSCAN_ML_INTERNAL_TOKEN` (== el de la web),
+  `HEARTSCAN_WEB_APP_URL=http://localhost:3000`, `HEARTSCAN_REQUIRE_ORGANIZATION=false`.
+- Web: copia `apps/web/.env.example` → `apps/web/.env.local`
+  (Clerk + Supabase + `ML_API_URL` + `ML_API_INTERNAL_TOKEN`).
 
-Esto arranca **`@heartscan/web`**. El análisis llama al ML API (`ML_API_URL`) con JWT de Clerk.
-
-Multi-tenant y despliegue: [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md), [`docs/AUTH_CLERK.md`](docs/AUTH_CLERK.md).
-
-Detalles E2E entre clientes en [`docs/E2E_CLIENTS.md`](docs/E2E_CLIENTS.md).
+El análisis se ejecuta en un **server action** del Next.js que llama al ML API
+con el JWT de Clerk. Tenancy (org-opcional) y despliegue una-URL:
+[`docs/TENANCY.md`](docs/TENANCY.md), [`docs/AUTH_CLERK.md`](docs/AUTH_CLERK.md),
+[`docs/DEPLOY_ONE_DOMAIN.md`](docs/DEPLOY_ONE_DOMAIN.md),
+[`docs/E2E_CLIENTS.md`](docs/E2E_CLIENTS.md).
 
 ### Mobile
 

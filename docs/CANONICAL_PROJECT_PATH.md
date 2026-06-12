@@ -1,29 +1,30 @@
 # Ruta canónica del proyecto
 
-**La raíz de trabajo unificada es:**
+**La raíz de trabajo es:**
 
 ```text
-/Users/mac/Desktop/Heartcheck
+~/dev/Heartcheck
 ```
 
-Abre esta carpeta en el IDE. Aquí está el monorepo **Axis** (`apps/ml-api/`, `apps/mobile/`, `web_public/`) y, tras migrar, el stack **HeartDiagnosis** completo en `references/HeartDiagnosis/` (código editable, no una copia “de archivo”).
+Abre **esta** carpeta en el IDE. Aquí está el monorepo **Axis**
+(`apps/ml-api/`, `apps/web/`, `apps/mobile/`, `ml/`, `web_public/`).
 
-## Migrar HeartDiagnosis y borrar el origen
+## ⚠️ No uses la copia del Desktop
 
-Si aún tienes `Proposal-Engine/src/HeartDiagnosis`, ejecuta **en tu Mac**:
-
-```bash
-bash /Users/mac/Desktop/Heartcheck/scripts/unify_and_delete_heartdiagnosis.sh
+```text
+~/Desktop/Heartcheck   ← NO USAR
 ```
 
-Eso copia **todo el fuente** (excluyendo solo artefactos pesados: `node_modules`, `.venv`, `dist`, etc.) a `references/HeartDiagnosis/` y elimina la carpeta antigua. Luego reinstala dependencias en el destino (ver [`references/README.md`](../references/README.md)).
-
-Solo copiar sin borrar el origen: `scripts/sync_references_from_proposal_engine.sh`.
+Esa carpeta vive en **iCloud Drive** (Desktop & Documents) y quedó *evicted /
+dataless*: los archivos son placeholders sin contenido local. Leerlos cuelga
+servidores (`http.server`, uvicorn) y entrenamientos durante minutos, o
+devuelve respuestas vacías (HTTP 000). La copia limpia y editable está en
+`~/dev/Heartcheck`; trabaja siempre ahí.
 
 ## Comprobar Axis
 
 ```bash
-test -f /Users/mac/Desktop/Heartcheck/apps/mobile/pubspec.yaml \
-  && test -f /Users/mac/Desktop/Heartcheck/apps/ml-api/app/main.py \
-  && echo "OK: Axis"
+test -f ~/dev/Heartcheck/apps/ml-api/app/main.py \
+  && test -f ~/dev/Heartcheck/apps/web/package.json \
+  && echo "OK: Axis en ~/dev/Heartcheck"
 ```

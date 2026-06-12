@@ -10,6 +10,16 @@ Sub-directory `README.md` files are allowed only for *package-local* setup
 notes (Flutter app, ML package, weights folder, etc.) and must link back to
 this index.
 
+> **Estado actual (2026-06):**
+> - **Una sola URL de usuario** = la app Next.js (`:3000`). El ML API (`:8000`) es
+>   interno y redirige su landing/consola a la app cuando `HEARTSCAN_WEB_APP_URL`
+>   está configurado. Ver [`DEPLOY_ONE_DOMAIN.md`](DEPLOY_ONE_DOMAIN.md).
+> - **Marca Axis** alineada al kit *ECGs Copilot 3* (Archivo Black + Hanken Grotesk
+>   + Geist Mono, azul `#1B5FD9` / rojo `#E5202A`, editorial cuadrado). Ver
+>   [`BRAND.md`](BRAND.md) y [`UI_DESIGN_SYSTEM.md`](UI_DESIGN_SYSTEM.md).
+> - **Tenancy org-opcional** (`HEARTSCAN_REQUIRE_ORGANIZATION`). Ver [`TENANCY.md`](TENANCY.md).
+> - Ruta de trabajo: `~/dev/Heartcheck` (la del Desktop está muerta por iCloud).
+
 ## Quick start
 
 | If you want to… | Read |

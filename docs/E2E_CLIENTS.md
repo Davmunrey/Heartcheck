@@ -3,7 +3,7 @@
 Tres superficies de cliente convergen en el mismo API FastAPI ([`apps/ml-api/app/main.py`](../apps/ml-api/app/main.py)):
 
 1. **Next.js (prod/dev)** — [`apps/web/`](../apps/web/), Clerk + server actions → `ML_API_URL/api/v1/analyze`.
-2. **Web estática** — [`web_public/app.html`](../web_public/app.html), servida por FastAPI bajo `/app` (legacy).
+2. **Web estática** — [`web_public/app.html`](../web_public/app.html) (consola heredada). Retirada como superficie de usuario: con `HEARTSCAN_WEB_APP_URL`, FastAPI redirige `/app` → `:3000/analyze`. El flujo real es la app Next.js.
 3. **Mobile Flutter** — [`apps/mobile/`](../apps/mobile/), apunta al backend con `--dart-define=HEARTSCAN_API_BASE=...`.
 
 ## Arranque del backend con cuotas/JWT activos
