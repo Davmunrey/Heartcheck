@@ -22,6 +22,8 @@
   --brand-strong: #0e3e9b;
   --brand-bright: #3d7bff;
   --brand-tint: #e6eefc;
+  --brand-tint-2: #d2e0fb;
+  --line-strong: #0b1a2b;
 
   /* Signal: ECG red (the patient's trace) */
   --signal: #e5202a;
@@ -40,7 +42,20 @@
   /* Dark reading canvas (ECG viewer / hero) */
   --scope: #060b14;
   --scope-2: #0b121e;
+  --scope-line: rgba(120, 150, 200, 0.09);
+  --scope-line-2: rgba(120, 150, 200, 0.16);
   --scope-ink: #c7d2e4;
+  --scope-ink-2: #728299;
+
+  /* Type — Axis brand stack (wired to next/font css vars in layout.tsx) */
+  --font-display: var(--font-archivo-black), "Archivo Black", system-ui, sans-serif;
+  --font-head: var(--font-archivo), "Archivo", system-ui, sans-serif;
+  --font-body: var(--font-hanken), "Hanken Grotesk", system-ui, sans-serif;
+  --font-rubric: var(--font-geist-mono), "Geist Mono", ui-monospace, monospace;
+
+  /* Editorial geometry — square, flat, thick borders */
+  --r: 0px;
+  --bw: 2px;
 
   /* compatibility aliases for existing components */
   --background: var(--paper);
@@ -62,26 +77,51 @@
   --color-brand-strong: var(--brand-strong);
   --color-brand-bright: var(--brand-bright);
   --color-brand-tint: var(--brand-tint);
+  --color-brand-tint-2: var(--brand-tint-2);
+  --color-line-strong: var(--line-strong);
   --color-signal: var(--signal);
   --color-signal-bright: var(--signal-bright);
   --color-signal-700: var(--signal-700);
   --color-signal-tint: var(--signal-tint);
   --color-ok: var(--ok);
+  --color-ok-tint: var(--ok-tint);
   --color-warn: var(--warn);
+  --color-warn-tint: var(--warn-tint);
   --color-crit: var(--crit);
+  --color-crit-tint: var(--crit-tint);
   --color-scope: var(--scope);
   --color-scope-2: var(--scope-2);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-scope-ink: var(--scope-ink);
+  --font-sans: var(--font-body);
+  --font-head: var(--font-head);
+  --font-display: var(--font-display);
+  --font-mono: var(--font-rubric);
 }
 
 body {
   background: var(--paper);
   color: var(--ink);
-  font-family: var(--font-geist-sans), "Hanken Grotesk", system-ui, sans-serif;
+  font-family: var(--font-body);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+/* Display headings — Archivo Black, massive, tight (brand book).
+   In @layer base so it ships with Tailwind's base layer; no utility sets
+   font-family on headings, so the display face wins. */
+@layer base {
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.03em;
+    line-height: 1.04;
+    text-wrap: balance;
+  }
+  h4, h5 {
+    font-family: var(--font-head);
+    letter-spacing: -0.01em;
+  }
+  ::selection { background: var(--signal); color: #fff; }
 }
 
 /* ============================================================

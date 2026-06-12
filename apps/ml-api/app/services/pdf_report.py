@@ -76,10 +76,11 @@ def _t(locale: str) -> dict[str, str]:
 
 def _status_color(status: str) -> colors.Color:
     return {
-        "green": colors.HexColor("#E8F5E9"),
-        "yellow": colors.HexColor("#FFF8E1"),
-        "red": colors.HexColor("#FFEBEE"),
-    }.get(status, colors.HexColor("#F5F5F5"))
+        # Axis clinical status tints (ok / warn / crit).
+        "green": colors.HexColor("#E2F4EC"),
+        "yellow": colors.HexColor("#FAEFD2"),
+        "red": colors.HexColor("#FBE3E4"),
+    }.get(status, colors.HexColor("#E9EDF4"))
 
 
 def build_analysis_pdf_bytes(
@@ -108,7 +109,7 @@ def build_analysis_pdf_bytes(
         parent=styles["Heading1"],
         fontSize=18,
         spaceAfter=6,
-        textColor=colors.HexColor("#1565C0"),
+        textColor=colors.HexColor("#1B5FD9"),
     )
     h2 = ParagraphStyle("H2", parent=styles["Heading2"], fontSize=12, spaceBefore=10, spaceAfter=6)
     body = ParagraphStyle("Body", parent=styles["Normal"], fontSize=10, leading=14)
@@ -118,7 +119,7 @@ def build_analysis_pdf_bytes(
         parent=styles["Normal"],
         fontSize=8,
         leading=11,
-        textColor=colors.HexColor("#424242"),
+        textColor=colors.HexColor("#46586E"),
     )
 
     story: list = []

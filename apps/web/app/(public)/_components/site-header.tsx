@@ -33,7 +33,7 @@ export function Brandmark() {
   return (
     <Link href="/" className="flex items-center gap-2.5 font-semibold tracking-tight text-ink">
       <AxisMark />
-      <span className="text-lg">Axis</span>
+      <span className="font-display text-xl tracking-[-0.04em]">Axis</span>
       <span className="hidden bg-brand-tint px-2 py-0.5 text-xs font-medium text-brand sm:inline">
         clinical copilot
       </span>

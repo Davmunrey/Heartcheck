@@ -16,7 +16,7 @@ export function SiteFooter() {
       <div className="mx-auto flex max-w-7xl flex-col gap-6 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-2.5">
           <AxisMark className="size-7" />
-          <span className="font-semibold text-ink">Axis</span>
+          <span className="font-display text-lg tracking-[-0.04em] text-ink">Axis</span>
           <span className="text-ink-3">· clinical ECG copilot</span>
         </div>
         <nav className="flex flex-wrap gap-x-5 gap-y-2 text-ink-2">

@@ -1,14 +1,29 @@
 import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Archivo, Archivo_Black, Geist_Mono, Hanken_Grotesk } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Axis brand type: Hanken Grotesk (body), Archivo (subheads), Archivo Black
+// (display headings), Geist Mono (rubrics / numerals).
+const fontSans = Hanken_Grotesk({
+  variable: "--font-hanken",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
 });
 
-const geistMono = Geist_Mono({
+const fontHead = Archivo({
+  variable: "--font-archivo",
+  subsets: ["latin"],
+  weight: ["600", "700", "800", "900"],
+});
+
+const fontDisplay = Archivo_Black({
+  variable: "--font-archivo-black",
+  subsets: ["latin"],
+  weight: "400",
+});
+
+const fontMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
@@ -76,13 +91,13 @@ export default function RootLayout({
           colorText: "#0b1a2b",
           colorBackground: "#ffffff",
           borderRadius: "0",
-          fontFamily: "var(--font-geist-sans), Hanken Grotesk, system-ui, sans-serif",
+          fontFamily: 'var(--font-sans), "Hanken Grotesk", system-ui, sans-serif',
         },
       }}
     >
       <html
         lang="es"
-        className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+        className={`${fontSans.variable} ${fontHead.variable} ${fontDisplay.variable} ${fontMono.variable} h-full antialiased`}
       >
         <body className="min-h-full flex flex-col bg-paper text-ink">{children}</body>
       </html>
