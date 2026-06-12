@@ -24,24 +24,24 @@ export function BillingControls({ planId }: { planId?: string }) {
   }
 
   return (
-    <div className="mt-4 space-y-2">
+    <div className="space-y-2">
       {planId ? (
         <button
           type="button"
           disabled={pending}
           onClick={() => post("/api/billing/checkout", { planId })}
-          className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+          className="w-full bg-brand px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-strong disabled:opacity-50"
         >
-          Checkout {planId}
+          {pending ? "Redirigiendo…" : "Suscribirse"}
         </button>
       ) : (
         <button
           type="button"
           disabled={pending}
           onClick={() => post("/api/billing/portal")}
-          className="rounded-lg border border-line-2 px-4 py-2 text-sm font-medium disabled:opacity-50"
+          className="border-2 border-ink px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-ink hover:text-white disabled:opacity-50"
         >
-          Abrir portal Stripe
+          {pending ? "Abriendo…" : "Abrir portal Stripe"}
         </button>
       )}
       {message && <p className="text-sm text-ink-2">{message}</p>}

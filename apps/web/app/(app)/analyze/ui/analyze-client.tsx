@@ -16,6 +16,7 @@ export function AnalyzeClient() {
   const [error, setError] = useState<string | null>(null);
   const [photo, setPhoto] = useState<AnalysisResponse | null>(null);
   const [signal, setSignal] = useState<DiagnosticResponse | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
 
   function reset() {
     setError(null);
@@ -57,7 +58,7 @@ export function AnalyzeClient() {
 
   return (
     <div className="mt-8 space-y-6">
-      <div className="inline-flex rounded-lg border border-line bg-white p-1 text-sm">
+      <div className="inline-flex border-2 border-line bg-surface p-1 text-sm">
         {(["signal", "photo"] as const).map((m) => (
           <button
             key={m}
@@ -65,8 +66,9 @@ export function AnalyzeClient() {
             onClick={() => {
               setMode(m);
               reset();
+              setFileName(null);
             }}
-            className={`rounded-md px-3 py-1.5 ${
+            className={`px-4 py-2 font-medium transition-colors ${
               mode === m ? "bg-ink text-white" : "text-ink-2 hover:text-ink"
             }`}
           >
@@ -76,15 +78,16 @@ export function AnalyzeClient() {
       </div>
 
       {mode === "photo" ? (
-        <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-          <strong>Cribado orientativo.</strong> La lectura por foto usa un clasificador
-          heurístico de 1 derivación (no un modelo diagnóstico entrenado), pensado para
+        <p className="border-2 border-warn/40 bg-warn-tint p-3 text-sm text-warn">
+          <strong className="font-bold">Cribado orientativo.</strong> La lectura por foto usa un
+          clasificador heurístico de 1 derivación (no un modelo diagnóstico entrenado), pensado para
           un triaje rápido. Para la interpretación calibrada de 27 afecciones, usa{" "}
           <button
             type="button"
             onClick={() => {
               setMode("signal");
               reset();
+              setFileName(null);
             }}
             className="font-semibold underline"
           >
@@ -93,60 +96,73 @@ export function AnalyzeClient() {
           .
         </p>
       ) : (
-        <p className="rounded-lg border border-line bg-paper-2 p-3 text-sm text-ink-2">
-          <strong>Copiloto calibrado.</strong> Modelo de 12 derivaciones · 27 afecciones,
+        <p className="border-2 border-line bg-paper-2 p-3 text-sm text-ink-2">
+          <strong className="font-bold text-ink">Copiloto calibrado.</strong> Modelo de 12 derivaciones · 27 afecciones,
           umbrales calibrados y AUROC por hallazgo. Apoyo a la decisión clínica —
           requiere revisión médica, no es un diagnóstico autónomo.
         </p>
       )}
 
       <form onSubmit={onSubmit} className="space-y-4">
-        {mode === "photo" ? (
+        <label className="block cursor-pointer border-2 border-dashed border-line-2 bg-surface px-6 py-10 text-center transition-colors hover:border-ink">
           <input
             name="file"
             type="file"
-            accept="image/png,image/jpeg,image/webp"
-            className="block w-full text-sm"
+            accept={mode === "photo" ? "image/png,image/jpeg,image/webp" : ".npy,.csv,text/csv"}
+            className="sr-only"
+            onChange={(e) => setFileName(e.target.files?.[0]?.name ?? null)}
           />
-        ) : (
-          <div className="space-y-3">
-            <input name="file" type="file" accept=".npy,.csv,text/csv" className="block w-full text-sm" />
-            <label className="block text-sm text-ink-2">
+          <span className="block font-mono text-[10px] uppercase tracking-[0.22em] text-ink-3">
+            {mode === "photo" ? "Imagen de ECG" : "Señal 12 derivaciones"}
+          </span>
+          <span className="mt-2 block font-semibold text-ink">
+            {fileName ?? "Selecciona un archivo"}
+          </span>
+          <span className="mt-1 block text-xs text-ink-3">
+            {mode === "photo"
+              ? "PNG · JPG · WebP — máx. 10 MB"
+              : ".npy (matriz 12×N) o .csv — máx. 10 MB"}
+          </span>
+        </label>
+
+        {mode === "signal" && (
+          <div className="flex flex-wrap items-center gap-3">
+            <label htmlFor="hz" className="text-sm text-ink-2">
               Frecuencia de muestreo (Hz)
-              <input
-                name="sampling_rate_hz"
-                type="number"
-                defaultValue={500}
-                min={1}
-                max={5000}
-                className="ml-2 w-28 rounded border border-line-2 px-2 py-1"
-              />
             </label>
-            <p className="text-xs text-ink-3">
-              Sube una matriz 12×N (`.npy`) o CSV de 12 derivaciones. PTB-XL records100 = 100 Hz.
-            </p>
+            <input
+              id="hz"
+              name="sampling_rate_hz"
+              type="number"
+              defaultValue={500}
+              min={1}
+              max={5000}
+              className="w-28 border-2 border-line-2 px-3 py-1.5 text-sm focus:border-ink focus:outline-none"
+            />
+            <span className="text-xs text-ink-3">PTB-XL records100 = 100 Hz</span>
           </div>
         )}
+
         <button
           type="submit"
           disabled={pending}
-          className="rounded-lg bg-brand px-4 py-2 text-white disabled:opacity-50"
+          className="bg-brand px-6 py-3 font-semibold text-white transition-colors hover:bg-brand-strong disabled:opacity-50"
         >
           {pending ? "Analizando…" : "Analizar"}
         </button>
       </form>
 
       {error && (
-        <p className="rounded-lg border border-red-200 bg-red-50 p-3 text-red-800" role="alert">
+        <p className="border-2 border-crit/40 bg-crit-tint p-3 text-sm text-crit" role="alert">
           {error}
         </p>
       )}
 
       {photo && (
-        <div className="rounded-lg border border-line bg-white p-4 shadow-sm">
+        <div className="border-2 border-line bg-surface p-5">
           <div className="flex items-center justify-between">
             <p className="font-semibold">Estado: {photo.status}</p>
-            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800">
+            <span className="border border-warn/40 bg-warn-tint px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-warn">
               cribado heurístico
             </span>
           </div>
@@ -164,17 +180,18 @@ export function AnalyzeClient() {
       )}
 
       {signal && (
-        <div className="rounded-lg border border-line bg-white p-4 shadow-sm">
+        <div className="border-2 border-line bg-surface p-5">
           <div className="flex items-center justify-between">
             <p className="font-semibold">
               {signal.abnormal ? "Hallazgos a revisar" : "Sin hallazgos sobre el umbral"}
             </p>
             <span
-              className={`rounded-full px-2 py-0.5 text-xs ${
-                signal.abnormal ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"
+              className={`inline-flex items-center gap-1.5 border px-2.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-wide ${
+                signal.abnormal ? "border-warn/40 bg-warn-tint text-warn" : "border-ok/40 bg-ok-tint text-ok"
               }`}
             >
-              {signal.abnormal ? "review" : "normal range"}
+              <span className="size-1.5 rounded-full bg-current" />
+              {signal.abnormal ? "revisar" : "rango normal"}
             </span>
           </div>
           {signal.requires_review && (
