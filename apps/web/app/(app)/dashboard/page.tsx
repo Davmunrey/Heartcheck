@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
-import { createSupabaseForUser } from "@/lib/supabase/server";
+import { getRecentAnalyses } from "@/lib/analyze/history";
 import { getBillingStatus } from "@/lib/billing/status";
 
 interface Analysis {
@@ -16,24 +16,11 @@ export default async function DashboardPage() {
   const { orgId, userId } = await auth();
   const billing = await getBillingStatus();
 
-  let analyses: Analysis[] | null = null;
-  let fetchError: string | null = null;
-
-  if (orgId) {
-    const supabase = await createSupabaseForUser();
-    if (supabase) {
-      const { data, error } = await supabase
-        .from("analyses")
-        .select("id, created_at, status, class_label, confidence, request_id")
-        .order("created_at", { ascending: false })
-        .limit(20);
-      if (error) {
-        fetchError = error.message;
-      } else {
-        analyses = data as Analysis[];
-      }
-    }
-  }
+  // Single-tenant friendly: read history for the active org or, when no org is
+  // active, the per-user tenant. Uses the service-role read in
+  // lib/analyze/history (returns [] when Supabase isn't configured).
+  const tenant = orgId ?? (userId ? `clerk-user:${userId}` : null);
+  const analyses: Analysis[] = tenant ? await getRecentAnalyses(tenant) : [];
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">
@@ -96,20 +83,15 @@ export default async function DashboardPage() {
           </div>
         ))}
       </div>
-      {orgId && (
+      {tenant && (
         <div className="mt-8">
           <h2 className="text-lg font-semibold">Análisis recientes</h2>
-          {fetchError && (
-            <p className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
-              Error al cargar análisis: {fetchError}
-            </p>
-          )}
-          {!fetchError && analyses && analyses.length === 0 && (
+          {analyses.length === 0 && (
             <p className="mt-3 text-sm text-ink-3">
               Aún no hay análisis. Sube tu primer ECG.
             </p>
           )}
-          {!fetchError && analyses && analyses.length > 0 && (
+          {analyses.length > 0 && (
             <ul className="mt-3 divide-y divide-line rounded-lg border border-line">
               {analyses.map((a) => (
                 <li key={a.id} className="flex items-center justify-between px-4 py-3 text-sm">

@@ -4,6 +4,12 @@ import { auth } from "@clerk/nextjs/server";
 import { parseAnalysisResponse, type AnalysisResponse } from "@heartscan/api-client";
 import { validateAnalyzeFile } from "@/lib/analyze/validation";
 import { parseDiagnosticResponse, type DiagnosticResponse } from "@/lib/analyze/diagnostic";
+import { persistAnalysis } from "@/lib/analyze/history";
+
+/** Tenant key for storage: active Clerk org, or per-user in single-tenant mode. */
+function tenantKey(orgId: string | null | undefined, userId: string): string {
+  return orgId ?? `clerk-user:${userId}`;
+}
 
 const SIGNAL_MAX_BYTES = 10 * 1024 * 1024;
 
@@ -60,7 +66,19 @@ export async function analyzeImageAction(formData: FormData): Promise<AnalysisRe
   }
 
   const json = await res.json();
-  return parseAnalysisResponse(json);
+  const analysis = await parseAnalysisResponse(json);
+  await persistAnalysis({
+    tenantId: tenantKey(orgId, userId),
+    userId,
+    requestId: analysis.request_id,
+    status: analysis.status,
+    classLabel: analysis.class_label,
+    confidence: `${Math.round(analysis.confidence_score * 100)}%`,
+    pipelineVersion: analysis.pipeline_version,
+    modelVersion: analysis.model_version,
+    resultJson: analysis,
+  });
+  return analysis;
 }
 
 export async function analyzeSignalAction(formData: FormData): Promise<DiagnosticResponse> {
@@ -130,5 +148,20 @@ export async function analyzeSignalAction(formData: FormData): Promise<Diagnosti
     throw new Error(msg || `Error ${res.status}`);
   }
 
-  return parseDiagnosticResponse(await res.json());
+  const diag = parseDiagnosticResponse(await res.json());
+  const top = diag.findings
+    .filter((f) => f.positive)
+    .sort((a, b) => b.probability - a.probability)[0];
+  await persistAnalysis({
+    tenantId: tenantKey(orgId, userId),
+    userId,
+    requestId: diag.request_id,
+    status: diag.abnormal ? "red" : diag.requires_review ? "yellow" : "green",
+    classLabel: top ? top.label : "normal",
+    confidence: top ? top.confidence : null,
+    pipelineVersion: diag.pipeline_version,
+    modelVersion: diag.model_version,
+    resultJson: diag,
+  });
+  return diag;
 }
