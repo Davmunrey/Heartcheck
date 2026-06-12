@@ -14,14 +14,20 @@ camino claro a clientes de pago. No es "todas las features imaginables" — es
 
 | Dimensión | Hoy | Meta 100% |
 |-----------|-----|-----------|
-| UX/Diseño | 90% — web editorial, app pulida, una URL | mobile + a11y + i18n completos |
-| Producto/flujos | 70% — analyze + historial + billing | detalle de análisis, PDF web, equipos |
+| UX/Diseño | 94% — web editorial, app pulida, una URL, a11y foco | mobile + a11y full + i18n |
+| Producto/flujos | 80% — analyze + historial **+ detalle + PDF web** | equipos, retención, quotas en web |
 | Modelo ML | 55% — señal AUROC 0.88; foto heurística | AUROC ≥0.92 + validación externa |
-| Deploy/Ops | 60% — Supabase live, artefactos listos | en producción + observabilidad + backups |
-| Ingeniería | 65% — ml-api 15 tests; web 2 | cobertura crítica + CI gates |
-| Seguridad | 60% — OWASP hardening, RLS | pentest + RLS probada + rate-limit prod |
+| Deploy/Ops | 60% — Supabase **migrado+live**, artefactos listos | en producción + observabilidad + backups |
+| Ingeniería | 75% — ml-api 19 tests; web **24** (4 archivos) | E2E + CI gates |
+| Seguridad | 62% — OWASP, RLS migrada, org-opcional testeada | pentest + RLS probada + rate-limit prod |
 | Compliance | 25% — disclaimers, retención | DPA/BAA, SOC2, SaMD scoping |
 | GTM/Negocio | 30% — pricing, landing | design partners + analítica + onboarding |
+
+> **Progreso autónomo 2026-06-12:** detalle de análisis `/analyze/[id]` + PDF
+> desde web (verificado E2E contra Supabase real), tests web (billing+parser) y
+> ml-api (org-opcional), foco de teclado a11y, UI/UX editorial del área logueada.
+> Supabase migrado y keys cableadas. Pendiente de usuario: deploy (Render/Vercel),
+> modelo a escala, compliance.
 
 ## Workstreams
 
@@ -86,9 +92,9 @@ camino claro a clientes de pago. No es "todas las features imaginables" — es
 
 ## Próximas 2 semanas (sprint concreto)
 
-1. **Cerrar el deploy** (WS3): Render connect + 4 secrets → Vercel envs + dominio → smoke test prod.
-2. **Detalle de análisis + PDF en web** (WS1): `/analyze/[id]` + botón informe.
-3. **Tests críticos** (WS5): `history.ts`, tenancy, billing fallback; E2E del happy path.
+1. **Cerrar el deploy** (WS3): Render connect + 4 secrets → Vercel envs + dominio → smoke test prod. *(pendiente usuario)*
+2. ~~**Detalle de análisis + PDF en web** (WS1)~~ ✅ hecho (`/analyze/[id]` + `/api/reports/[id]`).
+3. **Tests críticos** (WS5): ✅ web (billing+parser) + ml-api (org-opcional); falta E2E del happy path.
 4. **Consentimiento de retención** (WS4): toggle "guardar imagen" + no guardar por defecto.
 5. **Onboarding primer-uso** (WS7): ECG de ejemplo + CTA en dashboard vacío (parcial).
 
