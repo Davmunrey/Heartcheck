@@ -2,6 +2,7 @@ import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 
 import { AxisMark } from "@/app/(public)/_components/site-header";
+import { AppNav } from "./_components/app-nav";
 
 export default function AppShellLayout({
   children,
@@ -17,17 +18,7 @@ export default function AppShellLayout({
               <AxisMark className="size-8" />
               <span className="font-display text-lg tracking-[-0.04em]">Axis</span>
             </Link>
-            <nav className="flex gap-4 text-sm text-ink-2">
-              <Link href="/dashboard" className="hover:text-brand">
-                Panel
-              </Link>
-              <Link href="/analyze" className="hover:text-brand">
-                Analizar
-              </Link>
-              <Link href="/settings/billing" className="hover:text-brand">
-                Billing
-              </Link>
-            </nav>
+            <AppNav />
           </div>
           <div className="flex items-center gap-3">
             <UserButton />

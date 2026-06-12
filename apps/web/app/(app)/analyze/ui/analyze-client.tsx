@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import type { AnalysisResponse } from "@heartscan/api-client";
 import { analyzeImageAction, analyzeSignalAction } from "../actions";
 import type { DiagnosticResponse } from "@/lib/analyze/diagnostic";
@@ -17,6 +17,8 @@ export function AnalyzeClient() {
   const [photo, setPhoto] = useState<AnalysisResponse | null>(null);
   const [signal, setSignal] = useState<DiagnosticResponse | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   function reset() {
     setError(null);
@@ -104,8 +106,27 @@ export function AnalyzeClient() {
       )}
 
       <form onSubmit={onSubmit} className="space-y-4">
-        <label className="block cursor-pointer border-2 border-dashed border-line-2 bg-surface px-6 py-10 text-center transition-colors hover:border-ink">
+        <label
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragOver(true);
+          }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragOver(false);
+            const f = e.dataTransfer.files?.[0];
+            if (f && inputRef.current) {
+              inputRef.current.files = e.dataTransfer.files;
+              setFileName(f.name);
+            }
+          }}
+          className={`block cursor-pointer border-2 border-dashed px-6 py-10 text-center transition-colors ${
+            dragOver ? "border-ink bg-brand-tint/40" : "border-line-2 bg-surface hover:border-ink"
+          }`}
+        >
           <input
+            ref={inputRef}
             name="file"
             type="file"
             accept={mode === "photo" ? "image/png,image/jpeg,image/webp" : ".npy,.csv,text/csv"}
@@ -116,7 +137,7 @@ export function AnalyzeClient() {
             {mode === "photo" ? "Imagen de ECG" : "Señal 12 derivaciones"}
           </span>
           <span className="mt-2 block font-semibold text-ink">
-            {fileName ?? "Selecciona un archivo"}
+            {fileName ?? "Arrastra un archivo o haz clic para seleccionar"}
           </span>
           <span className="mt-1 block text-xs text-ink-3">
             {mode === "photo"
