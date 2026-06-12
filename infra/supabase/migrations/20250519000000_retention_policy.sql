@@ -7,24 +7,40 @@
 -- must be wired via pg_cron (Supabase Pro) or an external cron job.
 -- A pg_cron example is included at the bottom as a comment.
 
--- ---- Add retention metadata column ----
+-- ---- Retention metadata column (trigger-maintained) ----
+-- A STORED generated column can't use `timestamptz + interval` (Postgres treats
+-- it as non-immutable). Use a plain column + trigger instead.
 
-alter table public.analyses
-  add column if not exists purge_after timestamptz
-  generated always as (created_at + interval '2190 days') stored;
--- 2190 days ≈ 6 years
+alter table public.analyses add column if not exists purge_after timestamptz;
+alter table public.feedback add column if not exists purge_after timestamptz;
 
-alter table public.feedback
-  add column if not exists purge_after timestamptz
-  generated always as (created_at + interval '2190 days') stored;
+create or replace function public.set_purge_after() returns trigger
+  language plpgsql set search_path = public
+as $$
+begin
+  new.purge_after := new.created_at + interval '2190 days'; -- ≈ 6 years
+  return new;
+end;
+$$;
+
+drop trigger if exists analyses_set_purge_after on public.analyses;
+create trigger analyses_set_purge_after
+  before insert or update of created_at on public.analyses
+  for each row execute function public.set_purge_after();
+
+drop trigger if exists feedback_set_purge_after on public.feedback;
+create trigger feedback_set_purge_after
+  before insert or update of created_at on public.feedback
+  for each row execute function public.set_purge_after();
+
+-- Backfill any existing rows.
+update public.analyses set purge_after = created_at + interval '2190 days' where purge_after is null;
+update public.feedback set purge_after = created_at + interval '2190 days' where purge_after is null;
 
 -- ---- Soft-delete: mark rows instead of hard-delete ----
 
-alter table public.analyses
-  add column if not exists deleted_at timestamptz default null;
-
-alter table public.feedback
-  add column if not exists deleted_at timestamptz default null;
+alter table public.analyses add column if not exists deleted_at timestamptz default null;
+alter table public.feedback add column if not exists deleted_at timestamptz default null;
 
 -- Partial index so active-row queries stay fast after many soft-deletes.
 create index if not exists analyses_active_idx
@@ -44,8 +60,7 @@ as $$
 declare
   deleted_count bigint;
 begin
-  delete from public.analyses
-  where purge_after < now();
+  delete from public.analyses where purge_after < now();
   get diagnostics deleted_count = row_count;
   return deleted_count;
 end;
@@ -57,14 +72,12 @@ as $$
 declare
   deleted_count bigint;
 begin
-  delete from public.feedback
-  where purge_after < now();
+  delete from public.feedback where purge_after < now();
   get diagnostics deleted_count = row_count;
   return deleted_count;
 end;
 $$;
 
--- Revoke from public and authenticated — only service role (pg_cron, admin) runs this.
 revoke all on function public.purge_expired_analyses() from public, authenticated;
 revoke all on function public.purge_expired_feedback() from public, authenticated;
 
@@ -75,32 +88,37 @@ as $$
 begin
   update public.analyses
   set deleted_at = now()
-  where id = p_id
-    and company_id = p_company_id
-    and deleted_at is null;
+  where id = p_id and company_id = p_company_id and deleted_at is null;
 end;
 $$;
 
--- ---- Storage: ECG upload retention ----
--- Objects in ecg-uploads are named {org_id}/{uuid}.ext.
--- The SQL below is a helper to list objects older than N days for manual
--- review or automated deletion via the Supabase Storage API.
-
-create or replace function public.list_expired_ecg_uploads(retention_days int default 2190)
-  returns table(name text, created_at timestamptz, age_days numeric)
-  language sql security definer set search_path = storage
-as $$
-  select
-    name,
-    created_at,
-    round(extract(epoch from (now() - created_at)) / 86400, 1) as age_days
-  from storage.objects
-  where bucket_id = 'ecg-uploads'
-    and created_at < now() - (retention_days || ' days')::interval
-  order by created_at;
-$$;
-
-revoke all on function public.list_expired_ecg_uploads(int) from public, authenticated;
+-- ---- Storage: ECG upload retention (guarded — only if Storage is provisioned) ----
+-- Objects in ecg-uploads are named {org_id}/{uuid}.ext. Helper lists objects
+-- older than N days for manual review or deletion via the Storage API.
+do $$
+begin
+  if exists (
+    select 1 from information_schema.tables
+    where table_schema = 'storage' and table_name = 'objects'
+  ) then
+    execute $f$
+      create or replace function public.list_expired_ecg_uploads(retention_days int default 2190)
+        returns table(name text, created_at timestamptz, age_days numeric)
+        language sql security definer set search_path = storage
+      as $body$
+        select
+          name,
+          created_at,
+          round(extract(epoch from (now() - created_at)) / 86400, 1) as age_days
+        from storage.objects
+        where bucket_id = 'ecg-uploads'
+          and created_at < now() - (retention_days || ' days')::interval
+        order by created_at;
+      $body$;
+    $f$;
+    execute $f$revoke all on function public.list_expired_ecg_uploads(int) from public, authenticated$f$;
+  end if;
+end $$;
 
 -- ---- pg_cron example (requires pg_cron extension, Supabase Pro) ----
 -- Uncomment and run once to schedule nightly purge at 02:00 UTC:

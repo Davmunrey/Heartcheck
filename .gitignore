@@ -48,3 +48,6 @@ node_modules/
 dist/
 runs/local/
 .gstack/
+
+# Local Supabase CLI scaffold (canonical migrations live in infra/supabase/)
+supabase/

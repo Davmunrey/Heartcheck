@@ -151,36 +151,35 @@ create policy "audit_log_insert_own"
 -- Service role bypasses RLS by default in Supabase.
 
 -- ---- Storage bucket (private) ----
+-- Guarded: only runs when the Supabase Storage service is provisioned, so the
+-- core schema (companies/analyses/RLS) still applies on projects without
+-- Storage. Image upload is a deferred feature; re-run this block after enabling
+-- Storage to create the bucket + policies.
+do $$
+begin
+  if exists (
+    select 1 from information_schema.tables
+    where table_schema = 'storage' and table_name = 'objects'
+  ) then
+    insert into storage.buckets (id, name, public)
+      values ('ecg-uploads', 'ecg-uploads', false)
+      on conflict (id) do nothing;
 
-insert into storage.buckets (id, name, public)
-values ('ecg-uploads', 'ecg-uploads', false)
-on conflict (id) do nothing;
+    -- Path convention: {org_id}/{uuid}.ext — first folder segment = company id
+    drop policy if exists "ecg_uploads_select" on storage.objects;
+    execute $p$create policy "ecg_uploads_select" on storage.objects for select
+      using (bucket_id = 'ecg-uploads' and (storage.foldername(name))[1] = (auth.jwt() ->> 'org_id'))$p$;
 
--- Path convention: {org_id}/{uuid}.ext — first folder segment = company id
-create policy "ecg_uploads_select"
-  on storage.objects for select
-  using (
-    bucket_id = 'ecg-uploads'
-    and (storage.foldername(name))[1] = (auth.jwt() ->> 'org_id')
-  );
+    drop policy if exists "ecg_uploads_insert" on storage.objects;
+    execute $p$create policy "ecg_uploads_insert" on storage.objects for insert
+      with check (bucket_id = 'ecg-uploads' and (storage.foldername(name))[1] = (auth.jwt() ->> 'org_id'))$p$;
 
-create policy "ecg_uploads_insert"
-  on storage.objects for insert
-  with check (
-    bucket_id = 'ecg-uploads'
-    and (storage.foldername(name))[1] = (auth.jwt() ->> 'org_id')
-  );
+    drop policy if exists "ecg_uploads_update" on storage.objects;
+    execute $p$create policy "ecg_uploads_update" on storage.objects for update
+      using (bucket_id = 'ecg-uploads' and (storage.foldername(name))[1] = (auth.jwt() ->> 'org_id'))$p$;
 
-create policy "ecg_uploads_update"
-  on storage.objects for update
-  using (
-    bucket_id = 'ecg-uploads'
-    and (storage.foldername(name))[1] = (auth.jwt() ->> 'org_id')
-  );
-
-create policy "ecg_uploads_delete"
-  on storage.objects for delete
-  using (
-    bucket_id = 'ecg-uploads'
-    and (storage.foldername(name))[1] = (auth.jwt() ->> 'org_id')
-  );
+    drop policy if exists "ecg_uploads_delete" on storage.objects;
+    execute $p$create policy "ecg_uploads_delete" on storage.objects for delete
+      using (bucket_id = 'ecg-uploads' and (storage.foldername(name))[1] = (auth.jwt() ->> 'org_id'))$p$;
+  end if;
+end $$;
