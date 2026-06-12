@@ -9,7 +9,9 @@ const MAX_BYTES = 10 * 1024 * 1024;
 type Mode = "photo" | "signal";
 
 export function AnalyzeClient() {
-  const [mode, setMode] = useState<Mode>("photo");
+  // Signal-first: the 12-lead model is the calibrated copilot (AUROC ~0.88);
+  // the photo path is a heuristic triage screen, so it isn't the default.
+  const [mode, setMode] = useState<Mode>("signal");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [photo, setPhoto] = useState<AnalysisResponse | null>(null);
@@ -56,7 +58,7 @@ export function AnalyzeClient() {
   return (
     <div className="mt-8 space-y-6">
       <div className="inline-flex rounded-lg border border-line bg-white p-1 text-sm">
-        {(["photo", "signal"] as const).map((m) => (
+        {(["signal", "photo"] as const).map((m) => (
           <button
             key={m}
             type="button"
@@ -68,10 +70,35 @@ export function AnalyzeClient() {
               mode === m ? "bg-ink text-white" : "text-ink-2 hover:text-ink"
             }`}
           >
-            {m === "photo" ? "Foto (1 derivación)" : "Señal 12 derivaciones"}
+            {m === "signal" ? "Señal 12 derivaciones" : "Foto (cribado)"}
           </button>
         ))}
       </div>
+
+      {mode === "photo" ? (
+        <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+          <strong>Cribado orientativo.</strong> La lectura por foto usa un clasificador
+          heurístico de 1 derivación (no un modelo diagnóstico entrenado), pensado para
+          un triaje rápido. Para la interpretación calibrada de 27 afecciones, usa{" "}
+          <button
+            type="button"
+            onClick={() => {
+              setMode("signal");
+              reset();
+            }}
+            className="font-semibold underline"
+          >
+            Señal 12 derivaciones
+          </button>
+          .
+        </p>
+      ) : (
+        <p className="rounded-lg border border-line bg-paper-2 p-3 text-sm text-ink-2">
+          <strong>Copiloto calibrado.</strong> Modelo de 12 derivaciones · 27 afecciones,
+          umbrales calibrados y AUROC por hallazgo. Apoyo a la decisión clínica —
+          requiere revisión médica, no es un diagnóstico autónomo.
+        </p>
+      )}
 
       <form onSubmit={onSubmit} className="space-y-4">
         {mode === "photo" ? (
@@ -117,7 +144,12 @@ export function AnalyzeClient() {
 
       {photo && (
         <div className="rounded-lg border border-line bg-white p-4 shadow-sm">
-          <p className="font-semibold">Estado: {photo.status}</p>
+          <div className="flex items-center justify-between">
+            <p className="font-semibold">Estado: {photo.status}</p>
+            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800">
+              cribado heurístico
+            </span>
+          </div>
           <p className="mt-2 text-sm text-ink-2">{photo.message}</p>
           <dl className="mt-4 grid grid-cols-2 gap-2 text-sm">
             <dt className="text-ink-3">BPM</dt>
