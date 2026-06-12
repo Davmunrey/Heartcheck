@@ -50,4 +50,5 @@ runs/local/
 .gstack/
 
 # Local Supabase CLI scaffold (canonical migrations live in infra/supabase/)
-supabase/
+# Root-anchored so it does NOT match infra/supabase/.
+/supabase/
