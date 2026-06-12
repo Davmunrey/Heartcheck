@@ -80,6 +80,44 @@ Link environment variables per environment (Preview vs Production).
 3. Analyze flow: Next.js uploads image to Supabase Storage, then `POST` to `ML_API_URL/api/v1/analyze` with `Authorization: Bearer <Clerk session JWT>` and `X-Internal-Token`.
 4. ML API validates JWT via **JWKS**, checks internal token, runs inference, writes quota/usage to Postgres using service role or pooled connection.
 
+## Deploy ahora — estado 2026-06 (single URL · org-optional · persistencia)
+
+Orden recomendado (necesita tus cuentas Supabase / Fly / Vercel):
+
+**1. Supabase (prod)**
+- Crea el proyecto; aplica migraciones (`infra/supabase/migrations/*`). La tabla
+  `analyses` ya existe ahí (historial). Copia URL, anon key, **service-role key**.
+- En Clerk: crea el JWT template `supabase` (ver [`AUTH_CLERK.md`](AUTH_CLERK.md)).
+
+**2. ML API (Fly.io)** — `apps/ml-api/fly.toml`, app `heartscan-ml-api`
+- ⚠️ **Pesos del modelo**: `apps/ml-api/weights/` está vacío y el Dockerfile lo
+  copia. El diagnóstico servido es el de 28 clases (AUROC 0.88). Antes de
+  `fly deploy`, coloca el checkpoint en `apps/ml-api/weights/` (el que carga
+  `HEARTSCAN_DIAGNOSTIC_MODEL_PATH` en local) y apunta el secret a
+  `/app/weights/<archivo>.pt`. Sin esto, prod cae al heurístico.
+- Secrets: `fly secrets set HEARTSCAN_CLERK_JWKS_URL=… HEARTSCAN_CLERK_ISSUER=… \`
+  `HEARTSCAN_ML_INTERNAL_TOKEN=<igual que Vercel> HEARTSCAN_CORS_ORIGINS=https://<tu-dominio> \`
+  `HEARTSCAN_REQUIRE_ORGANIZATION=<true B2B | false single-tenant> \`
+  `HEARTSCAN_DIAGNOSTIC_MODEL_PATH=/app/weights/<archivo>.pt HEARTSCAN_ENV=production`
+- `fly deploy`. Anota la URL privada (p. ej. `https://heartscan-ml-api.fly.dev`).
+
+**3. Web (Vercel)** — `apps/web/vercel.json` ya configurado (monorepo, npm)
+- Env (Production): `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`,
+  `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
+  **`SUPABASE_SERVICE_ROLE_KEY`** (necesario para persistir/leer historial),
+  `SUPABASE_URL`, `ML_API_URL=<URL Fly>`, `ML_API_INTERNAL_TOKEN=<igual que Fly>`,
+  `CLERK_WEBHOOK_SECRET`, claves Stripe (opcional).
+- `vercel --prod`. El navegador sólo ve este dominio; `/ml-api/*` se proxya al
+  Fly por el rewrite de `next.config.ts` (mismo origen, sin CORS).
+
+**Notas de estado:**
+- **Una sola URL** = Vercel. El ML API es privado; no expongas `:8000`.
+- **Org-optional**: con `HEARTSCAN_REQUIRE_ORGANIZATION=false` no hace falta la
+  feature Organizations de Clerk; el tenant es `clerk-user:<sub>`.
+- **Persistencia**: el historial se escribe/lee con la service-role key
+  (`apps/web/lib/analyze/history.ts`); sin ella, el análisis funciona pero no
+  guarda historial.
+
 ## Checklist before production
 
 - [ ] No default JWT secrets or `CORS_ORIGINS=*` with production env.
