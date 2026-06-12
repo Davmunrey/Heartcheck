@@ -56,6 +56,8 @@
   /* Editorial geometry — square, flat, thick borders */
   --r: 0px;
   --bw: 2px;
+  /* Keyboard focus ring (a11y) — white halo + ink ring, visible on any bg. */
+  --focus: 0 0 0 2px var(--surface), 0 0 0 4px var(--ink);
 
   /* compatibility aliases for existing components */
   --background: var(--paper);
@@ -122,6 +124,18 @@ body {
     letter-spacing: -0.01em;
   }
   ::selection { background: var(--signal); color: #fff; }
+
+  /* Visible keyboard focus on every interactive element (WCAG 2.4.7). */
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  summary:focus-visible,
+  [tabindex]:focus-visible {
+    outline: none;
+    box-shadow: var(--focus);
+  }
 }
 
 /* ============================================================

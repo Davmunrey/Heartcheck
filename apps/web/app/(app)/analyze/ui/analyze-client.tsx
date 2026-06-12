@@ -122,7 +122,7 @@ export function AnalyzeClient() {
               setFileName(f.name);
             }
           }}
-          className={`block cursor-pointer border-2 border-dashed px-6 py-10 text-center transition-colors ${
+          className={`block cursor-pointer border-2 border-dashed px-6 py-10 text-center transition-colors focus-within:border-ink ${
             dragOver ? "border-ink bg-brand-tint/40" : "border-line-2 bg-surface hover:border-ink"
           }`}
         >
@@ -130,6 +130,7 @@ export function AnalyzeClient() {
             ref={inputRef}
             name="file"
             type="file"
+            aria-label={mode === "photo" ? "Imagen de ECG" : "Señal de 12 derivaciones"}
             accept={mode === "photo" ? "image/png,image/jpeg,image/webp" : ".npy,.csv,text/csv"}
             className="sr-only"
             onChange={(e) => setFileName(e.target.files?.[0]?.name ?? null)}
