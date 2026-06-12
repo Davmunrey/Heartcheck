@@ -24,6 +24,11 @@ export default async function AnalyzePage() {
       ) : (
         <AnalyzeClient />
       )}
+      <p className="mt-10 border-t-2 border-line pt-4 text-xs leading-5 text-ink-3">
+        <span className="font-semibold text-ink-2">Privacidad:</span> no almacenamos tu imagen
+        ni tu señal. Sólo se guarda el resultado del análisis (clase, probabilidad, metadatos)
+        en tu cuenta para el historial y el audit trail.
+      </p>
     </div>
   );
 }
