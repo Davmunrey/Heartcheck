@@ -1,0 +1,39 @@
+# Render Blueprint — Axis ML API (FastAPI + PyTorch).
+# Owner / team: tea-d8m380miifgc7386peeg
+#
+# Deploy:
+#   • Dashboard: Render → New → Blueprint → connect this repo (branch main).
+#   • CLI:       render blueprint launch         (needs `render login`)
+#
+# The Next.js web app stays on Vercel and reaches this service privately via
+# ML_API_URL + the /ml-api/* rewrite (one public URL). This service is the
+# internal ML backend; lock it down with Clerk JWT + X-Internal-Token + CORS.
+services:
+  - type: web
+    name: axis-ml-api
+    runtime: docker
+    repo: https://github.com/Davmunrey/Heartcheck
+    branch: main
+    region: frankfurt          # closest to ES users; use oregon for US
+    plan: standard             # >= 2 GB RAM for PyTorch
+    dockerfilePath: ./apps/ml-api/Dockerfile
+    dockerContext: .           # repo root — Dockerfile COPYs apps/ml-api + runs/local + web_public
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      # --- non-secret config (baked) ---
+      - key: HEARTSCAN_ENV
+        value: production
+      - key: HEARTSCAN_REQUIRE_ORGANIZATION
+        value: "false"          # single-tenant; set "true" for B2B Clerk Orgs
+      - key: HEARTSCAN_DIAGNOSTIC_MODEL_PATH
+        value: /app/weights/diagnostic_ecg27.pt   # baked 28-class model (AUROC ~0.87)
+      # --- secrets: set in the Render dashboard (sync:false) ---
+      - key: HEARTSCAN_CLERK_JWKS_URL
+        sync: false             # https://<instance>.clerk.accounts.dev/.well-known/jwks.json
+      - key: HEARTSCAN_CLERK_ISSUER
+        sync: false             # https://<instance>.clerk.accounts.dev
+      - key: HEARTSCAN_ML_INTERNAL_TOKEN
+        sync: false             # MUST equal ML_API_INTERNAL_TOKEN on Vercel
+      - key: HEARTSCAN_CORS_ORIGINS
+        sync: false             # the Vercel app origin(s); NEVER "*" in production

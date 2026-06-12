@@ -89,17 +89,19 @@ Orden recomendado (necesita tus cuentas Supabase / Fly / Vercel):
   `analyses` ya existe ahí (historial). Copia URL, anon key, **service-role key**.
 - En Clerk: crea el JWT template `supabase` (ver [`AUTH_CLERK.md`](AUTH_CLERK.md)).
 
-**2. ML API (Fly.io)** — `apps/ml-api/fly.toml`, app `heartscan-ml-api`
-- ⚠️ **Pesos del modelo**: `apps/ml-api/weights/` está vacío y el Dockerfile lo
-  copia. El diagnóstico servido es el de 28 clases (AUROC 0.88). Antes de
-  `fly deploy`, coloca el checkpoint en `apps/ml-api/weights/` (el que carga
-  `HEARTSCAN_DIAGNOSTIC_MODEL_PATH` en local) y apunta el secret a
-  `/app/weights/<archivo>.pt`. Sin esto, prod cae al heurístico.
-- Secrets: `fly secrets set HEARTSCAN_CLERK_JWKS_URL=… HEARTSCAN_CLERK_ISSUER=… \`
-  `HEARTSCAN_ML_INTERNAL_TOKEN=<igual que Vercel> HEARTSCAN_CORS_ORIGINS=https://<tu-dominio> \`
-  `HEARTSCAN_REQUIRE_ORGANIZATION=<true B2B | false single-tenant> \`
-  `HEARTSCAN_DIAGNOSTIC_MODEL_PATH=/app/weights/<archivo>.pt HEARTSCAN_ENV=production`
-- `fly deploy`. Anota la URL privada (p. ej. `https://heartscan-ml-api.fly.dev`).
+**2. ML API (Render)** — Blueprint [`render.yaml`](../render.yaml) · team `tea-d8m380miifgc7386peeg`
+- El **modelo ya va horneado** en la imagen: el `Dockerfile` copia
+  `runs/local/full27/checkpoint.pt` → `/app/weights/diagnostic_ecg27.pt` y
+  `HEARTSCAN_DIAGNOSTIC_MODEL_PATH` lo apunta por defecto (28 clases, AUROC ~0.87).
+  Ya **no** cae al heurístico.
+- Desplegar: Render → **New → Blueprint** → conecta este repo (branch `main`), o
+  `render blueprint launch` tras `render login`.
+- Secrets en el dashboard (marcados `sync:false` en `render.yaml`):
+  `HEARTSCAN_CLERK_JWKS_URL`, `HEARTSCAN_CLERK_ISSUER`,
+  `HEARTSCAN_ML_INTERNAL_TOKEN` (= el de Vercel),
+  `HEARTSCAN_CORS_ORIGINS` (origen Vercel, **nunca** `*`).
+- Anota la URL pública (p. ej. `https://axis-ml-api.onrender.com`) → es el `ML_API_URL` de Vercel.
+- *(Alternativa Fly.io:* `apps/ml-api/fly.toml`, `fly secrets set …`, `fly deploy`.)*
 
 **3. Web (Vercel)** — `apps/web/vercel.json` ya configurado (monorepo, npm)
 - Env (Production): `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`,
