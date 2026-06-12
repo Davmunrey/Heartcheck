@@ -95,8 +95,14 @@ camino claro a clientes de pago. No es "todas las features imaginables" — es
 1. **Cerrar el deploy** (WS3): Render connect + 4 secrets → Vercel envs + dominio → smoke test prod. *(pendiente usuario)*
 2. ~~**Detalle de análisis + PDF en web** (WS1)~~ ✅ hecho (`/analyze/[id]` + `/api/reports/[id]`).
 3. **Tests críticos** (WS5): ✅ web (billing+parser) + ml-api (org-opcional); falta E2E del happy path.
-4. **Consentimiento de retención** (WS4): toggle "guardar imagen" + no guardar por defecto.
-5. **Onboarding primer-uso** (WS7): ECG de ejemplo + CTA en dashboard vacío (parcial).
+4. **Consentimiento de retención** (WS4): ✅ nota de privacidad honesta (no guardamos imagen/señal, sólo el resultado); falta toggle de retención cuando haya storage de imagen.
+5. **Onboarding primer-uso** (WS7): ✅ botón "imagen de ejemplo" (1-clic → análisis → historial, E2E probado) + CTA en dashboard vacío.
+
+### Pendiente de decisión/usuario
+- **Deploy**: Render connect + envs Vercel (artefactos y runbook listos).
+- **i18n ES/EN**: necesita un steer — ¿sólo ES, o ES/EN? (cambio transversal a todas las páginas).
+- **Modelo a escala / Compliance**: GPU+datos / legal.
+- **E2E Playwright**: necesita entorno CI con secretos Clerk/Supabase.
 
 ## Riesgos & dependencias
 - **Compliance es el cuello de botella** para uso clínico real (no es técnico) — empezar SaMD/DPA pronto.
