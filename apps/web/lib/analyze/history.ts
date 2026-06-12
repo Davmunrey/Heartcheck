@@ -80,6 +80,35 @@ export async function persistAnalysis(rec: AnalysisRecord): Promise<boolean> {
   }
 }
 
+export interface AnalysisDetail extends RecentAnalysis {
+  clerk_user_id: string;
+  pipeline_version: string;
+  model_version: string;
+  result_json: unknown;
+}
+
+/** One analysis by id, scoped to the tenant. null when not found / Supabase unset. */
+export async function getAnalysisById(
+  tenantId: string,
+  id: string,
+): Promise<AnalysisDetail | null> {
+  const supabase = serviceClient();
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from("analyses")
+    .select(
+      "id, created_at, status, class_label, confidence, request_id, clerk_user_id, pipeline_version, model_version, result_json",
+    )
+    .eq("company_id", tenantId)
+    .eq("id", id)
+    .maybeSingle();
+  if (error) {
+    console.error("getAnalysisById failed", error.message);
+    return null;
+  }
+  return (data as AnalysisDetail | null) ?? null;
+}
+
 /** Recent analyses for a tenant (newest first). [] when Supabase is unset. */
 export async function getRecentAnalyses(
   tenantId: string,

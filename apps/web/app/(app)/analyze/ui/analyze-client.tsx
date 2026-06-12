@@ -4,6 +4,7 @@ import { useRef, useState, useTransition } from "react";
 import type { AnalysisResponse } from "@heartscan/api-client";
 import { analyzeImageAction, analyzeSignalAction } from "../actions";
 import type { DiagnosticResponse } from "@/lib/analyze/diagnostic";
+import { PhotoResult, SignalResult } from "./analysis-result";
 
 const MAX_BYTES = 10 * 1024 * 1024;
 type Mode = "photo" | "signal";
@@ -179,110 +180,9 @@ export function AnalyzeClient() {
         </p>
       )}
 
-      {photo && (
-        <div className="border-2 border-line bg-surface p-5">
-          <div className="flex items-center justify-between">
-            <p className="font-semibold">Estado: {photo.status}</p>
-            <span className="border border-warn/40 bg-warn-tint px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-warn">
-              cribado heurístico
-            </span>
-          </div>
-          <p className="mt-2 text-sm text-ink-2">{photo.message}</p>
-          <dl className="mt-4 grid grid-cols-2 gap-2 text-sm">
-            <dt className="text-ink-3">BPM</dt>
-            <dd>{photo.bpm ?? "—"}</dd>
-            <dt className="text-ink-3">Confianza</dt>
-            <dd>{Math.round(photo.confidence_score * 100)}%</dd>
-            <dt className="text-ink-3">Clase</dt>
-            <dd>{photo.class_label}</dd>
-          </dl>
-          <p className="mt-4 text-xs text-ink-3">{photo.disclaimer}</p>
-        </div>
-      )}
+      {photo && <PhotoResult data={photo} />}
 
-      {signal && (
-        <div className="border-2 border-line bg-surface p-5">
-          <div className="flex items-center justify-between">
-            <p className="font-semibold">
-              {signal.abnormal ? "Hallazgos a revisar" : "Sin hallazgos sobre el umbral"}
-            </p>
-            <span
-              className={`inline-flex items-center gap-1.5 border px-2.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-wide ${
-                signal.abnormal ? "border-warn/40 bg-warn-tint text-warn" : "border-ok/40 bg-ok-tint text-ok"
-              }`}
-            >
-              <span className="size-1.5 rounded-full bg-current" />
-              {signal.abnormal ? "revisar" : "rango normal"}
-            </span>
-          </div>
-          {signal.requires_review && (
-            <p className="mt-3 bg-brand-tint px-3 py-2 text-sm font-medium text-brand">
-              Requiere revisión médica (hallazgo positivo o incierto).
-            </p>
-          )}
-          <table className="mt-4 w-full text-sm">
-            <thead>
-              <tr className="text-left text-ink-3">
-                <th className="pb-1">Afección</th>
-                <th className="pb-1">Probabilidad</th>
-                <th className="pb-1">Umbral</th>
-                <th className="pb-1">AUROC</th>
-                <th className="pb-1"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {(() => {
-                const relevant = [...signal.findings]
-                  .filter((f) => f.positive || f.uncertain)
-                  .sort((a, b) => Number(b.positive) - Number(a.positive) || b.probability - a.probability);
-                const normalCount = signal.findings.length - relevant.length;
-                return (
-                  <>
-                    {relevant.map((f) => (
-                      <tr key={f.code} className={f.positive ? "font-medium text-ink" : "text-ink-2"}>
-                        <td className="py-1">{f.label}</td>
-                        <td className="py-1">{Math.round(f.probability * 100)}%</td>
-                        <td className="py-1 text-ink-3">{Math.round(f.threshold * 100)}%</td>
-                        <td className="py-1 text-ink-3">{f.auroc ? f.auroc.toFixed(2) : "—"}</td>
-                        <td className="py-1">
-                          {f.positive && (
-                            <span className="rounded bg-signal-tint px-1.5 py-0.5 text-xs text-signal-700">
-                              positivo
-                            </span>
-                          )}
-                          {!f.positive && f.uncertain && (
-                            <span className="rounded bg-brand-tint px-1.5 py-0.5 text-xs text-brand">
-                              incierto
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                    {relevant.length === 0 && (
-                      <tr>
-                        <td colSpan={5} className="py-2 text-ink-2">
-                          Sin hallazgos positivos ni inciertos.
-                        </td>
-                      </tr>
-                    )}
-                    {normalCount > 0 && (
-                      <tr className="text-ink-3">
-                        <td colSpan={5} className="py-1 text-xs">
-                          + {normalCount} afecciones en rango normal (no detectadas).
-                        </td>
-                      </tr>
-                    )}
-                  </>
-                );
-              })()}
-            </tbody>
-          </table>
-          <p className="mt-3 text-xs text-ink-3">
-            Modelo {signal.model_version} · {signal.findings.length} afecciones evaluadas · AUROC {signal.macro_auroc.toFixed(2)} · {signal.n_leads} derivaciones · {signal.sampling_rate_hz} Hz
-          </p>
-          <p className="mt-2 text-xs text-ink-3">{signal.disclaimer}</p>
-        </div>
-      )}
+      {signal && <SignalResult data={signal} />}
     </div>
   );
 }

@@ -99,16 +99,22 @@ export default async function DashboardPage() {
             {analyses.map((a) => {
               const s = STATUS[a.status] ?? { label: a.status, cls: "border-line-2 bg-paper-2 text-ink-2" };
               return (
-                <li key={a.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-6 py-4">
-                  <span className={`inline-flex items-center gap-1.5 border px-2.5 py-1 text-xs font-semibold uppercase tracking-wide ${s.cls}`}>
-                    <span className="size-1.5 rounded-full bg-current" />
-                    {s.label}
-                  </span>
-                  <span className="font-medium text-ink">{a.class_label ?? "—"}</span>
-                  {a.confidence && <span className="text-sm text-ink-3">conf. {a.confidence}</span>}
-                  <span className="ml-auto font-mono text-xs text-ink-3">
-                    {new Date(a.created_at).toLocaleString("es-ES", { dateStyle: "medium", timeStyle: "short" })}
-                  </span>
+                <li key={a.id}>
+                  <Link
+                    href={`/analyze/${a.id}`}
+                    className="group flex flex-wrap items-center gap-x-4 gap-y-2 px-6 py-4 transition-colors hover:bg-paper-2"
+                  >
+                    <span className={`inline-flex items-center gap-1.5 border px-2.5 py-1 text-xs font-semibold uppercase tracking-wide ${s.cls}`}>
+                      <span className="size-1.5 rounded-full bg-current" />
+                      {s.label}
+                    </span>
+                    <span className="font-medium text-ink">{a.class_label ?? "—"}</span>
+                    {a.confidence && <span className="text-sm text-ink-3">conf. {a.confidence}</span>}
+                    <span className="ml-auto flex items-center gap-2 font-mono text-xs text-ink-3">
+                      {new Date(a.created_at).toLocaleString("es-ES", { dateStyle: "medium", timeStyle: "short" })}
+                      <span className="text-ink-2 transition-transform group-hover:translate-x-0.5">→</span>
+                    </span>
+                  </Link>
                 </li>
               );
             })}
