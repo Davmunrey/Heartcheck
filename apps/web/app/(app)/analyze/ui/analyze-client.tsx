@@ -4,12 +4,13 @@ import { useRef, useState, useTransition } from "react";
 import type { AnalysisResponse } from "@heartscan/api-client";
 import { analyzeImageAction, analyzeSignalAction } from "../actions";
 import type { DiagnosticResponse } from "@/lib/analyze/diagnostic";
+import type { Dict } from "@/lib/i18n/dictionaries";
 import { PhotoResult, SignalResult } from "./analysis-result";
 
 const MAX_BYTES = 10 * 1024 * 1024;
 type Mode = "photo" | "signal";
 
-export function AnalyzeClient() {
+export function AnalyzeClient({ t, result }: { t: Dict["analyze"]; result: Dict["result"] }) {
   // Signal-first: the 12-lead model is the calibrated copilot (AUROC ~0.88);
   // the photo path is a heuristic triage screen, so it isn't the default.
   const [mode, setMode] = useState<Mode>("signal");
@@ -27,9 +28,6 @@ export function AnalyzeClient() {
     setSignal(null);
   }
 
-  // Onboarding: load the bundled sample ECG photo (served by the ML API under
-  // /static, reachable same-origin via the /ml-api proxy rewrite) so a new user
-  // can see a result in one click.
   async function loadSample() {
     setError(null);
     try {
@@ -44,7 +42,7 @@ export function AnalyzeClient() {
         setFileName(f.name);
       }
     } catch {
-      setError("No se pudo cargar la imagen de ejemplo.");
+      setError(t.errSample);
     }
   }
 
@@ -55,11 +53,11 @@ export function AnalyzeClient() {
     const input = form.elements.namedItem("file") as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) {
-      setError(mode === "photo" ? "Elige una imagen." : "Elige una señal (.npy o .csv).");
+      setError(mode === "photo" ? t.errNoPhoto : t.errNoSignal);
       return;
     }
     if (file.size > MAX_BYTES) {
-      setError(`El archivo supera ${MAX_BYTES / (1024 * 1024)} MB.`);
+      setError(t.errSize);
       return;
     }
     const fd = new FormData();
@@ -96,16 +94,14 @@ export function AnalyzeClient() {
               mode === m ? "bg-ink text-white" : "text-ink-2 hover:text-ink"
             }`}
           >
-            {m === "signal" ? "Señal 12 derivaciones" : "Foto (cribado)"}
+            {m === "signal" ? t.tabSignal : t.tabPhoto}
           </button>
         ))}
       </div>
 
       {mode === "photo" ? (
         <p className="border-2 border-warn/40 bg-warn-tint p-3 text-sm text-warn">
-          <strong className="font-bold">Cribado orientativo.</strong> La lectura por foto usa un
-          clasificador heurístico de 1 derivación (no un modelo diagnóstico entrenado), pensado para
-          un triaje rápido. Para la interpretación calibrada de 27 afecciones, usa{" "}
+          {t.noteScreenA}
           <button
             type="button"
             onClick={() => {
@@ -115,16 +111,12 @@ export function AnalyzeClient() {
             }}
             className="font-semibold underline"
           >
-            Señal 12 derivaciones
+            {t.tabSignal}
           </button>
           .
         </p>
       ) : (
-        <p className="border-2 border-line bg-paper-2 p-3 text-sm text-ink-2">
-          <strong className="font-bold text-ink">Copiloto calibrado.</strong> Modelo de 12 derivaciones · 27 afecciones,
-          umbrales calibrados y AUROC por hallazgo. Apoyo a la decisión clínica —
-          requiere revisión médica, no es un diagnóstico autónomo.
-        </p>
+        <p className="border-2 border-line bg-paper-2 p-3 text-sm text-ink-2">{t.noteCalibrated}</p>
       )}
 
       <form onSubmit={onSubmit} className="space-y-4">
@@ -151,21 +143,17 @@ export function AnalyzeClient() {
             ref={inputRef}
             name="file"
             type="file"
-            aria-label={mode === "photo" ? "Imagen de ECG" : "Señal de 12 derivaciones"}
+            aria-label={mode === "photo" ? t.dropPhotoLabel : t.dropSignalLabel}
             accept={mode === "photo" ? "image/png,image/jpeg,image/webp" : ".npy,.csv,text/csv"}
             className="sr-only"
             onChange={(e) => setFileName(e.target.files?.[0]?.name ?? null)}
           />
           <span className="block font-mono text-[10px] uppercase tracking-[0.22em] text-ink-3">
-            {mode === "photo" ? "Imagen de ECG" : "Señal 12 derivaciones"}
+            {mode === "photo" ? t.dropPhotoLabel : t.dropSignalLabel}
           </span>
-          <span className="mt-2 block font-semibold text-ink">
-            {fileName ?? "Arrastra un archivo o haz clic para seleccionar"}
-          </span>
+          <span className="mt-2 block font-semibold text-ink">{fileName ?? t.dropPrompt}</span>
           <span className="mt-1 block text-xs text-ink-3">
-            {mode === "photo"
-              ? "PNG · JPG · WebP — máx. 10 MB"
-              : ".npy (matriz 12×N) o .csv — máx. 10 MB"}
+            {mode === "photo" ? t.dropPhotoHint : t.dropSignalHint}
           </span>
         </label>
 
@@ -175,14 +163,14 @@ export function AnalyzeClient() {
             onClick={loadSample}
             className="text-sm font-medium text-brand underline-offset-4 hover:underline"
           >
-            o prueba con una imagen de ejemplo →
+            {t.sample}
           </button>
         )}
 
         {mode === "signal" && (
           <div className="flex flex-wrap items-center gap-3">
             <label htmlFor="hz" className="text-sm text-ink-2">
-              Frecuencia de muestreo (Hz)
+              {t.sampleRate}
             </label>
             <input
               id="hz"
@@ -193,7 +181,7 @@ export function AnalyzeClient() {
               max={5000}
               className="w-28 border-2 border-line-2 px-3 py-1.5 text-sm focus:border-ink focus:outline-none"
             />
-            <span className="text-xs text-ink-3">PTB-XL records100 = 100 Hz</span>
+            <span className="text-xs text-ink-3">{t.sampleRateHint}</span>
           </div>
         )}
 
@@ -202,7 +190,7 @@ export function AnalyzeClient() {
           disabled={pending}
           className="bg-brand px-6 py-3 font-semibold text-white transition-colors hover:bg-brand-strong disabled:opacity-50"
         >
-          {pending ? "Analizando…" : "Analizar"}
+          {pending ? t.submitting : t.submit}
         </button>
       </form>
 
@@ -212,9 +200,9 @@ export function AnalyzeClient() {
         </p>
       )}
 
-      {photo && <PhotoResult data={photo} />}
+      {photo && <PhotoResult data={photo} t={result} />}
 
-      {signal && <SignalResult data={signal} />}
+      {signal && <SignalResult data={signal} t={result} />}
     </div>
   );
 }

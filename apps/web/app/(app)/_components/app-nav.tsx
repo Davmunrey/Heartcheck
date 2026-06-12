@@ -3,14 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const links = [
-  { href: "/dashboard", label: "Panel" },
-  { href: "/analyze", label: "Analizar" },
-  { href: "/settings/billing", label: "Billing" },
-];
-
-export function AppNav() {
+export function AppNav({ labels }: { labels: { panel: string; analyze: string; billing: string } }) {
   const pathname = usePathname();
+  const links = [
+    { href: "/dashboard", label: labels.panel },
+    { href: "/analyze", label: labels.analyze },
+    { href: "/settings/billing", label: labels.billing },
+  ];
   return (
     <nav className="flex gap-5 text-sm">
       {links.map((l) => {

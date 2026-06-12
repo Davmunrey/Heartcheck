@@ -2,7 +2,14 @@
 
 import { useState, useTransition } from "react";
 
-export function BillingControls({ planId }: { planId?: string }) {
+interface Labels {
+  subscribe: string;
+  subscribing: string;
+  portal: string;
+  portalOpening: string;
+}
+
+export function BillingControls({ planId, labels }: { planId?: string; labels: Labels }) {
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);
 
@@ -32,7 +39,7 @@ export function BillingControls({ planId }: { planId?: string }) {
           onClick={() => post("/api/billing/checkout", { planId })}
           className="w-full bg-brand px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-strong disabled:opacity-50"
         >
-          {pending ? "Redirigiendo…" : "Suscribirse"}
+          {pending ? labels.subscribing : labels.subscribe}
         </button>
       ) : (
         <button
@@ -41,7 +48,7 @@ export function BillingControls({ planId }: { planId?: string }) {
           onClick={() => post("/api/billing/portal")}
           className="border-2 border-ink px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-ink hover:text-white disabled:opacity-50"
         >
-          {pending ? "Abriendo…" : "Abrir portal Stripe"}
+          {pending ? labels.portalOpening : labels.portal}
         </button>
       )}
       {message && <p className="text-sm text-ink-2">{message}</p>}
