@@ -34,6 +34,7 @@ this index.
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) — components, data flow, public endpoints.
 - [`BRAND.md`](BRAND.md) — Axis brand, design tokens, naming rule.
 - [`ROADMAP_2026.md`](ROADMAP_2026.md) — **current audit + MVP + annual roadmap (2026/27)**.
+- [`PRODUCT_PLAN_100.md`](PRODUCT_PLAN_100.md) — **full execution plan to product-100% (workstreams, scorecard, sprint)**.
 - [`SAAS_WEB_ROADMAP.md`](SAAS_WEB_ROADMAP.md) — long-term SaaS plan (older).
 - [`CANONICAL_PROJECT_PATH.md`](CANONICAL_PROJECT_PATH.md) — repo location convention.
 - [`E2E_CLIENTS.md`](E2E_CLIENTS.md) — running web SPA, web static and mobile against the same backend.
