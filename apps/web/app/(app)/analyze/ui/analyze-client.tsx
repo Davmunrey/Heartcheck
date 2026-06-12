@@ -27,6 +27,27 @@ export function AnalyzeClient() {
     setSignal(null);
   }
 
+  // Onboarding: load the bundled sample ECG photo (served by the ML API under
+  // /static, reachable same-origin via the /ml-api proxy rewrite) so a new user
+  // can see a result in one click.
+  async function loadSample() {
+    setError(null);
+    try {
+      const res = await fetch("/ml-api/static/sample_ecg.png");
+      if (!res.ok) throw new Error("fetch failed");
+      const blob = await res.blob();
+      const f = new File([blob], "sample_ecg.png", { type: "image/png" });
+      const dt = new DataTransfer();
+      dt.items.add(f);
+      if (inputRef.current) {
+        inputRef.current.files = dt.files;
+        setFileName(f.name);
+      }
+    } catch {
+      setError("No se pudo cargar la imagen de ejemplo.");
+    }
+  }
+
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     reset();
@@ -147,6 +168,16 @@ export function AnalyzeClient() {
               : ".npy (matriz 12×N) o .csv — máx. 10 MB"}
           </span>
         </label>
+
+        {mode === "photo" && (
+          <button
+            type="button"
+            onClick={loadSample}
+            className="text-sm font-medium text-brand underline-offset-4 hover:underline"
+          >
+            o prueba con una imagen de ejemplo →
+          </button>
+        )}
 
         {mode === "signal" && (
           <div className="flex flex-wrap items-center gap-3">
