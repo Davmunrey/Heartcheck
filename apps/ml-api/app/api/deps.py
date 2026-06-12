@@ -140,14 +140,18 @@ async def require_analyze_auth(
                     )
                 org = x_organization_id.strip()
             if not org:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail={
-                        "error_code": "ORG_REQUIRED",
-                        "message": "Active Clerk Organization required (JWT org_id or X-Organization-Id)",
-                        "request_id": rid,
-                    },
-                )
+                if settings.require_organization:
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail={
+                            "error_code": "ORG_REQUIRED",
+                            "message": "Active Clerk Organization required (JWT org_id or X-Organization-Id)",
+                            "request_id": rid,
+                        },
+                    )
+                # Org-optional (single-tenant) mode: derive the tenant from the
+                # verified Clerk user id so each user is isolated without an org.
+                org = f"clerk-user:{claims.user_id}"
             if settings.ml_internal_token and not _internal_token_ok(settings, x_internal_token):
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,

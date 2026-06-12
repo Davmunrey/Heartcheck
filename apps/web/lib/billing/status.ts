@@ -20,12 +20,15 @@ function serviceClient() {
 }
 
 export async function getBillingStatus(): Promise<BillingStatus> {
-  const { orgId } = await auth();
-  if (!orgId) {
+  const { orgId, userId } = await auth();
+  // Org-optional: fall back to the Clerk user as the tenant when no Clerk
+  // Organization is active. Only truly signed-out requests are blocked.
+  const tenantId = orgId ?? (userId ? `clerk-user:${userId}` : null);
+  if (!tenantId) {
     return {
       orgId: null,
       plan: "none",
-      subscriptionStatus: "missing_org",
+      subscriptionStatus: "signed_out",
       trialEndsAt: null,
       trialDaysLeft: null,
       stripeCustomerId: null,
@@ -35,7 +38,7 @@ export async function getBillingStatus(): Promise<BillingStatus> {
 
   const fallbackEnd = trialEndsAt().toISOString();
   const fallback: BillingStatus = {
-    orgId,
+    orgId: tenantId,
     plan: "trial",
     subscriptionStatus: "trialing",
     trialEndsAt: fallbackEnd,
@@ -50,7 +53,7 @@ export async function getBillingStatus(): Promise<BillingStatus> {
   const { data } = await supabase
     .from("companies")
     .select("plan, stripe_customer_id, subscription_status, trial_ends_at")
-    .eq("id", orgId)
+    .eq("id", tenantId)
     .maybeSingle();
 
   if (!data) return fallback;
@@ -60,7 +63,7 @@ export async function getBillingStatus(): Promise<BillingStatus> {
   const plan = String(data.plan ?? "trial");
 
   return {
-    orgId,
+    orgId: tenantId,
     plan,
     subscriptionStatus: status,
     trialEndsAt: data.trial_ends_at ?? fallbackEnd,

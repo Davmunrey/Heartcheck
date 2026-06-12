@@ -1,11 +1,9 @@
-import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
 import { AnalyzeClient } from "./ui/analyze-client";
 import { getBillingStatus } from "@/lib/billing/status";
 
 export default async function AnalyzePage() {
-  const { orgId } = await auth();
-  if (!orgId) redirect("/onboarding/create-organization");
+  // Org-optional: no Clerk Organization required. getBillingStatus() falls back
+  // to a per-user tenant, and the ML API derives the tenant from the Clerk user.
   const billing = await getBillingStatus();
 
   return (

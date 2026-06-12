@@ -12,6 +12,10 @@ class Settings(BaseSettings):
 
     api_key: str = "dev-key-change-me"
     cors_origins: str = "*"
+    # When set, the ml-api stops serving its own landing/console and redirects
+    # `/` and `/app` to the Next.js web app, so the whole product lives on one
+    # URL. Leave empty to keep serving the bundled web_public/ (tests, Docker).
+    web_app_url: str = ""
     max_upload_bytes: int = 10 * 1024 * 1024
     pipeline_version: str = "0.1.0"
     model_path: str | None = None
@@ -36,6 +40,10 @@ class Settings(BaseSettings):
     ml_internal_token: str | None = None
     # Email/password auth routes (tests / local dev). Disable in Clerk-only prod.
     auth_legacy_enabled: bool = False
+    # Require an active Clerk Organization on /analyze (B2B multi-tenant, RLS by
+    # org_id). Set false for single-tenant / no-Organizations setups: the tenant
+    # is then derived per-user from the Clerk `sub` (company_id=`clerk-user:<id>`).
+    require_organization: bool = True
 
     # Hard-case storage (plan v2 §G2). Disabled until legal review approves the
     # consent UX. When enabled, images flagged for review are encrypted with

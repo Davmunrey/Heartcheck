@@ -92,6 +92,19 @@
 
     <script>
       const TOKEN_KEY = "heartscan_access_token";
+      // API origin. Normally same-origin (the API serves this page at /app).
+      // Dev convenience: if opened from the static mirror (e.g. a bare
+      // `python -m http.server` on a non-API port, or file://), route API and
+      // static calls to the local API so the console still works. In
+      // production this page is served by the API itself, so API_BASE === "".
+      const API_BASE = (() => {
+        const { hostname, port, protocol } = location;
+        const isLocal = hostname === "localhost" || hostname === "127.0.0.1";
+        if (protocol === "file:") return "http://localhost:8000";
+        if (isLocal && port && port !== "8000") return "http://localhost:8000";
+        return "";
+      })();
+      const apiUrl = (p) => API_BASE + p;
       function esc(s) {
         if (s == null) return "";
         const d = document.createElement("div");
@@ -126,7 +139,7 @@
         if (!lastAnalysis) return;
         status.textContent = "Generando PDF…";
         try {
-          const res = await fetch("/api/v1/reports/pdf", {
+          const res = await fetch(apiUrl("/api/v1/reports/pdf"), {
             method: "POST",
             headers: authHeadersJson(),
             body: JSON.stringify({
@@ -174,7 +187,7 @@
         }
         authStatus.textContent = "Registrando…";
         try {
-          const res = await fetch("/api/v1/auth/register", {
+          const res = await fetch(apiUrl("/api/v1/auth/register"), {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email: em, password: pw }),
@@ -199,7 +212,7 @@
         }
         authStatus.textContent = "Iniciando sesión…";
         try {
-          const res = await fetch("/api/v1/auth/login", {
+          const res = await fetch(apiUrl("/api/v1/auth/login"), {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email: em, password: pw }),
@@ -226,7 +239,7 @@
 
       sample.addEventListener("click", async () => {
         try {
-          const res = await fetch("/static/sample_ecg.png");
+          const res = await fetch(apiUrl("/static/sample_ecg.png"));
           const blob = await res.blob();
           const f = new File([blob], "sample_ecg.png", { type: "image/png" });
           const dt = new DataTransfer();
@@ -260,7 +273,7 @@
           headers["X-API-Key"] = apikey.value || "dev-key-change-me";
         }
         try {
-          const res = await fetch("/api/v1/analyze", {
+          const res = await fetch(apiUrl("/api/v1/analyze"), {
             method: "POST",
             headers,
             body: fd,

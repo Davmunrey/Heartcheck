@@ -17,6 +17,9 @@ def _test_env_and_db() -> None:
     # Tests use legacy JWT + API key. Must override .env/.env.local (pydantic merges files + env).
     os.environ["HEARTSCAN_CLERK_JWKS_URL"] = ""
     os.environ["HEARTSCAN_CLERK_ISSUER"] = ""
+    # SPA-serving mode (no single-URL redirect) so web_spa tests are deterministic
+    # regardless of a developer's local HEARTSCAN_WEB_APP_URL.
+    os.environ["HEARTSCAN_WEB_APP_URL"] = ""
 
     from app.core.config import get_settings
     from app.db.session import get_engine

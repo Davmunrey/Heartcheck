@@ -10,7 +10,8 @@ const SIGNAL_MAX_BYTES = 10 * 1024 * 1024;
 export async function analyzeImageAction(formData: FormData): Promise<AnalysisResponse> {
   const { userId, orgId, getToken } = await auth();
   if (!userId) throw new Error("Unauthorized");
-  if (!orgId) throw new Error("Selecciona una organización (Clerk) antes de analizar.");
+  // Org is optional (single-tenant mode): when no Clerk Organization is active
+  // the ML API derives the tenant from the verified Clerk user id.
 
   const file = validateAnalyzeFile(formData.get("file"));
 
@@ -32,7 +33,7 @@ export async function analyzeImageAction(formData: FormData): Promise<AnalysisRe
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
-        "X-Organization-Id": orgId,
+        ...(orgId ? { "X-Organization-Id": orgId } : {}),
         ...(internal ? { "X-Internal-Token": internal } : {}),
         "Accept-Language": "es",
       },
@@ -65,7 +66,8 @@ export async function analyzeImageAction(formData: FormData): Promise<AnalysisRe
 export async function analyzeSignalAction(formData: FormData): Promise<DiagnosticResponse> {
   const { userId, orgId, getToken } = await auth();
   if (!userId) throw new Error("Unauthorized");
-  if (!orgId) throw new Error("Selecciona una organización (Clerk) antes de analizar.");
+  // Org is optional (single-tenant mode): when no Clerk Organization is active
+  // the ML API derives the tenant from the verified Clerk user id.
 
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {
@@ -102,7 +104,7 @@ export async function analyzeSignalAction(formData: FormData): Promise<Diagnosti
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
-        "X-Organization-Id": orgId,
+        ...(orgId ? { "X-Organization-Id": orgId } : {}),
         ...(internal ? { "X-Internal-Token": internal } : {}),
         "Accept-Language": "es",
       },

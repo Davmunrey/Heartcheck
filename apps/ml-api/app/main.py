@@ -5,7 +5,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from slowapi import _rate_limit_exceeded_handler
@@ -202,17 +202,34 @@ def create_app() -> FastAPI:
     if (web_root / "legal").is_dir():
         app.mount("/legal", StaticFiles(directory=web_root / "legal"), name="legal")
 
-    @app.get("/", include_in_schema=False)
-    def spa_landing() -> FileResponse:
-        return FileResponse(web_root / "index.html")
+    web_app_url = settings.web_app_url.rstrip("/")
+    if web_app_url:
+        # Single-URL mode: the Next.js app is the only user-facing surface.
+        # The ml-api becomes API-only and bounces its legacy landing/console
+        # to the web app so there is exactly one product URL.
+        @app.get("/", include_in_schema=False)
+        def spa_landing() -> RedirectResponse:
+            return RedirectResponse(web_app_url, status_code=307)
 
-    @app.get("/app", include_in_schema=False)
-    def spa_web_app() -> FileResponse:
-        return FileResponse(web_root / "app.html")
+        @app.get("/app", include_in_schema=False)
+        def spa_web_app() -> RedirectResponse:
+            return RedirectResponse(f"{web_app_url}/analyze", status_code=307)
 
-    @app.get("/faq.html", include_in_schema=False)
-    def faq_page() -> FileResponse:
-        return FileResponse(web_root / "faq.html")
+        @app.get("/faq.html", include_in_schema=False)
+        def faq_page() -> RedirectResponse:
+            return RedirectResponse(f"{web_app_url}/faq", status_code=307)
+    else:
+        @app.get("/", include_in_schema=False)
+        def spa_landing() -> FileResponse:
+            return FileResponse(web_root / "index.html")
+
+        @app.get("/app", include_in_schema=False)
+        def spa_web_app() -> FileResponse:
+            return FileResponse(web_root / "app.html")
+
+        @app.get("/faq.html", include_in_schema=False)
+        def faq_page() -> FileResponse:
+            return FileResponse(web_root / "faq.html")
 
     @app.exception_handler(Exception)
     async def global_exc(request: Request, exc: Exception):
