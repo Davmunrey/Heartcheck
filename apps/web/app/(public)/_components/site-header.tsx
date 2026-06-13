@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { AuthNav, AuthNavMobile } from "./auth-nav";
+
 const navLinks = [
   { href: "/copilot", label: "Copilot" },
   { href: "/security", label: "Seguridad" },
@@ -52,15 +54,7 @@ export function SiteHeader() {
               {link.label}
             </Link>
           ))}
-          <Link href="/sign-in" className="text-ink-2 transition-colors hover:text-brand">
-            Entrar
-          </Link>
-          <Link
-            href="/sign-up"
-            className="bg-brand px-4 py-2 font-semibold text-white transition-colors hover:bg-brand-strong"
-          >
-            Trial 7 días
-          </Link>
+          <AuthNav />
         </nav>
 
         {/* Mobile menu — no-JS <details> disclosure */}
@@ -77,12 +71,7 @@ export function SiteHeader() {
                 {link.label}
               </Link>
             ))}
-            <Link href="/sign-in" className="px-3 py-2 text-sm text-ink-2 hover:bg-paper-2 hover:text-brand">
-              Entrar
-            </Link>
-            <Link href="/sign-up" className="mt-1 bg-brand px-3 py-2 text-center text-sm font-semibold text-white hover:bg-brand-strong">
-              Trial 7 días
-            </Link>
+            <AuthNavMobile />
           </div>
         </details>
       </div>
