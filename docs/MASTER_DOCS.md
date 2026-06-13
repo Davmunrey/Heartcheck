@@ -45,6 +45,8 @@ this index.
 
 ## 2. ML pipeline and evaluation
 
+- [`PHOTO_MODEL_PLAN.md`](PHOTO_MODEL_PLAN.md) — **plan to train the photo model (finetune_image via extractor) + workflow**.
+
 - [`ML_STANDALONE_PIPELINE.md`](ML_STANDALONE_PIPELINE.md) — `ml/` package overview.
 - [`ml_eval.md`](ml_eval.md) — evaluation harness, metrics, release gate.
 - [`algorithms/quality_gate.md`](algorithms/quality_gate.md) — extraction quality v1 + v2 thresholds.

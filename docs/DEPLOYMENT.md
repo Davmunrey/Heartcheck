@@ -112,11 +112,13 @@ Orden recomendado (necesita tus cuentas Supabase / Fly / Vercel):
 - `vercel --prod`. El navegador sólo ve este dominio; `/ml-api/*` se proxya al
   Fly por el rewrite de `next.config.ts` (mismo origen, sin CORS).
 
-**Subidas grandes (>4.5 MB):** los Server Actions usan `bodySizeLimit: 12mb`
-(`next.config.ts`) — OK en local/Render. ⚠️ En **Vercel**, las funciones
-serverless capan el body en ~4.5 MB pase lo que pase. Para ECG >4.5 MB en prod:
-subir directo al ML API (Render) o a object storage (Supabase Storage con URL
-firmada), evitando el salto por Vercel. Pendiente si se necesita >4.5 MB.
+**Subidas grandes (resuelto):** el navegador sube el ECG **directo al ML API**
+vía el rewrite same-origin `/ml-api/*` (proxy de edge en Vercel → sin cap de
+4.5 MB), autenticado con el JWT de Clerk; sólo el JSON de resultado (pequeño)
+pasa por un server action para persistir. Soporta 10 MB en cualquier host. El
+`bodySizeLimit: 12mb` queda como red de seguridad. (Nota: el rate-limit del ML
+API es por IP — todos los requests llegan desde el proxy; en escala, keyear por
+usuario Clerk.)
 
 **Notas de estado:**
 - **Una sola URL** = Vercel. El ML API es privado; no expongas `:8000`.
