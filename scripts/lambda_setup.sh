@@ -133,7 +133,20 @@ cat <<EOF
 ============================================================================
 [lambda_setup] DONE. Ready for a real training run.
 
-Recommended first run (tier-1 signals + image fine-tune, ~3-5 h on A100):
+>>> SIGNAL model -> AUROC >=0.92 (the real product lever). One command:
+    pretrain the deep backbone on CODE-15 (345k), then fine-tune the
+    5-superclass head on the ptb_xl+cinc2020 500Hz blend. Self-bootstraps
+    all data with DOWNLOAD=1 (~56 GB, ~6-10 h on A100):
+
+  DOWNLOAD=1 PRETRAIN_EPOCHS=10 FT_EPOCHS=25 \\
+    ./scripts/pretrain_finetune_code15.sh
+  # output: runs/local/deep_code15_ft/checkpoint.pt  (eval vs champion 0.608)
+
+  scp ubuntu@<gpu_ip>:~/Heartcheck/runs/local/deep_code15_ft/checkpoint.pt \\
+    ./runs/local/deep_code15_ft/checkpoint.pt
+  # promote: point HEARTSCAN_DIAGNOSTIC_MODEL_PATH at it (local .env + Render)
+
+--- Alternative: lighter tier-1 blend + image fine-tune (~3-5 h on A100) ---
 
   EPOCHS=30 BATCH_SIZE=256 WORKERS=8 \\
   IMAGE_DATASETS="ecg_image_database ptb_xl_image_17k" \\
@@ -141,10 +154,7 @@ Recommended first run (tier-1 signals + image fine-tune, ~3-5 h on A100):
   MODEL_VERSION=ecg-resnet1d-v1.0.0 \\
   ./scripts/train_autonomous.sh
 
-When it finishes, scp the promoted checkpoint and YAML back to your laptop:
-
-  scp ubuntu@<lambda_ip>:~/Heartcheck/apps/ml-api/weights/ecg-resnet1d-v1.0.0.pt* ./apps/ml-api/weights/
-
-Then redeploy ml-api:  fly deploy -c apps/ml-api/fly.toml
+  scp ubuntu@<gpu_ip>:~/Heartcheck/apps/ml-api/weights/ecg-resnet1d-v1.0.0.pt* ./apps/ml-api/weights/
+  # then redeploy ml-api:  fly deploy -c apps/ml-api/fly.toml  (or Render)
 ============================================================================
 EOF
