@@ -96,11 +96,17 @@ Autonomous variant (idempotent, cron/CI): `scripts/train_autonomous.sh`
 
 ## What's autonomous vs needs you
 
-- **I can scaffold now (no GPU):** the manifest+split+label-map for the photo
-  3-class task, wire `finetune_image.py` flags, the eval harness invocation, and
-  a `scripts/train_photo.sh` one-shot — all runnable when data+compute are ready.
-- **Needs you / compute:** the actual training run (GPU; `ECG_Image_data` is
-  local but `ptb_xl_image_17k` may need download), and the promote decision.
+- **Scaffolded ✓ (no GPU):** [`scripts/train_photo.sh`](../scripts/train_photo.sh) —
+  one-shot, idempotent: (optional) download → manifest (3-class via
+  `map_ptbxl_codes`) → **patient-disjoint split** → `finetune_image` →
+  `evaluate_checkpoint` (test) → promote hint. Every command + flag validated
+  against the live CLIs; runnable when data+compute are ready.
+  ```bash
+  DOWNLOAD=1 EPOCHS=8 PRETRAINED=runs/local/full27/checkpoint.pt ./scripts/train_photo.sh
+  ```
+- **Needs you / compute:** the dataset downloads (`ecg_image_database` ~60 GB,
+  `ptb_xl_image_17k` ~20 GB — both CC BY 4.0, PhysioNet/zip), the GPU training
+  run, and the promote decision (review `eval_test.json` AUROC).
 
 ## Recommendation
 
