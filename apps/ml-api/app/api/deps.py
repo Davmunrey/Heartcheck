@@ -152,15 +152,12 @@ async def require_analyze_auth(
                 # Org-optional (single-tenant) mode: derive the tenant from the
                 # verified Clerk user id so each user is isolated without an org.
                 org = f"clerk-user:{claims.user_id}"
-            if settings.ml_internal_token and not _internal_token_ok(settings, x_internal_token):
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail={
-                        "error_code": "INVALID_INTERNAL_TOKEN",
-                        "message": "X-Internal-Token required or invalid",
-                        "request_id": rid,
-                    },
-                )
+            # NOTE: a valid Clerk RS256 JWT (verified via JWKS) is sufficient auth.
+            # The internal token is only required to trust the out-of-band
+            # X-Organization-Id header (handled above), NOT for every request —
+            # this lets the browser upload ECGs DIRECTLY to the ML API (via the
+            # Next /ml-api proxy) without a server hop, avoiding platform body
+            # limits. Tenant comes from the JWT (org_id or clerk-user:<sub>).
             return AnalyzeAuth(
                 company_id=org,
                 clerk_user_id=claims.user_id,

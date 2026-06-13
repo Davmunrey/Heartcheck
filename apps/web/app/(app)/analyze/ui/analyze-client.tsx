@@ -1,10 +1,11 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import type { AnalysisResponse } from "@heartscan/api-client";
-import { analyzeImageAction, analyzeSignalAction } from "../actions";
-import type { DiagnosticResponse } from "@/lib/analyze/diagnostic";
+import { useAuth } from "@clerk/nextjs";
+import { parseAnalysisResponse, type AnalysisResponse } from "@heartscan/api-client";
+import { parseDiagnosticResponse, type DiagnosticResponse } from "@/lib/analyze/diagnostic";
 import type { Dict } from "@/lib/i18n/dictionaries";
+import { persistPhotoResult, persistSignalResult } from "../actions";
 import { PhotoResult, SignalResult } from "./analysis-result";
 
 const MAX_BYTES = 10 * 1024 * 1024;
@@ -14,6 +15,7 @@ export function AnalyzeClient({ t, result }: { t: Dict["analyze"]; result: Dict[
   // Signal-first: the 12-lead model is the calibrated copilot (AUROC ~0.88);
   // the photo path is a heuristic triage screen, so it isn't the default.
   const [mode, setMode] = useState<Mode>("signal");
+  const { getToken } = useAuth();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [photo, setPhoto] = useState<AnalysisResponse | null>(null);
@@ -60,17 +62,47 @@ export function AnalyzeClient({ t, result }: { t: Dict["analyze"]; result: Dict[
       setError(t.errSize);
       return;
     }
-    const fd = new FormData();
-    fd.append("file", file);
+    const hz = (form.elements.namedItem("sampling_rate_hz") as HTMLInputElement)?.value;
 
     startTransition(async () => {
       try {
+        const token = await getToken();
+        if (!token) throw new Error("Sesión no disponible. Vuelve a iniciar sesión.");
+        const fd = new FormData();
+        fd.append("file", file);
+        const path = mode === "photo" ? "/ml-api/api/v1/analyze" : "/ml-api/api/v1/analyze/signal";
+        if (mode === "signal") fd.append("sampling_rate_hz", hz || "500");
+        // Direct upload to the ML API via the same-origin /ml-api proxy: the
+        // file never passes through a server action, so there is no platform
+        // body-size limit. Auth is the Clerk JWT (verified by the ML API).
+        const res = await fetch(path, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Accept-Language": typeof navigator !== "undefined" ? navigator.language.slice(0, 2) : "es",
+          },
+          body: fd,
+        });
+        if (!res.ok) {
+          const body = (await res.json().catch(() => null)) as { detail?: unknown } | null;
+          const detail = body?.detail;
+          const msg =
+            detail && typeof detail === "object" && "message" in detail
+              ? String((detail as { message?: unknown }).message)
+              : typeof detail === "string"
+                ? detail
+                : `Error ${res.status}`;
+          throw new Error(msg);
+        }
+        const json = await res.json();
         if (mode === "photo") {
-          setPhoto(await analyzeImageAction(fd));
+          const a = await parseAnalysisResponse(json);
+          setPhoto(a);
+          try { await persistPhotoResult(a); } catch { /* history is non-fatal */ }
         } else {
-          const hz = (form.elements.namedItem("sampling_rate_hz") as HTMLInputElement)?.value;
-          fd.append("sampling_rate_hz", hz || "500");
-          setSignal(await analyzeSignalAction(fd));
+          const d = parseDiagnosticResponse(json);
+          setSignal(d);
+          try { await persistSignalResult(d); } catch { /* history is non-fatal */ }
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : String(err));

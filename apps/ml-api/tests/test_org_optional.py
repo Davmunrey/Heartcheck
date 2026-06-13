@@ -69,13 +69,31 @@ def test_org_from_trusted_header(monkeypatch) -> None:
     assert auth.company_id == "org_42"
 
 
-def test_internal_token_required_when_configured(monkeypatch) -> None:
+def test_jwt_alone_is_sufficient_without_internal_token(monkeypatch) -> None:
+    # A valid Clerk JWT (no internal token, no org header) is enough — enables
+    # direct browser upload. Tenant comes from the verified user id.
     _patch_clerk(monkeypatch, org_id=None)
     settings = Settings(clerk_jwks_url=_JWKS, ml_internal_token="tok", require_organization=False)
+    auth = asyncio.run(
+        require_analyze_auth(_request(), settings, None, authorization="Bearer x")
+    )
+    assert auth.company_id == "clerk-user:user_x"
+
+
+def test_org_header_rejected_without_valid_internal_token(monkeypatch) -> None:
+    # The out-of-band X-Organization-Id header is still only trusted with a
+    # matching internal token (defense for the server-to-server path).
+    _patch_clerk(monkeypatch, org_id=None)
+    settings = Settings(clerk_jwks_url=_JWKS, ml_internal_token="tok", require_organization=True)
     with pytest.raises(HTTPException) as exc:
         asyncio.run(
             require_analyze_auth(
-                _request(), settings, None, authorization="Bearer x", x_internal_token="WRONG"
+                _request(),
+                settings,
+                None,
+                authorization="Bearer x",
+                x_internal_token="WRONG",
+                x_organization_id="org_42",
             )
         )
     assert exc.value.status_code == 401
