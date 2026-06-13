@@ -6,6 +6,16 @@ const nextConfig: NextConfig = {
   transpilePackages: ["@heartscan/api-client"],
   // Don't leak the framework/version (fingerprinting). [security: A05]
   poweredByHeader: false,
+  // Server Actions default to a 1 MB body limit; ECG uploads go up to 10 MB
+  // (lib/analyze/validation MAX_ANALYZE_FILE_SIZE). Raise it with headroom for
+  // multipart overhead. NOTE: on Vercel, serverless functions still cap the
+  // request body at ~4.5 MB — for >4.5 MB uploads in prod, see DEPLOYMENT.md
+  // (upload direct to the ML API / object storage, bypassing the Vercel hop).
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "12mb",
+    },
+  },
   turbopack: {
     // Keep workspace root anchored to this monorepo; avoids Next auto-picking
     // unrelated lockfiles from parent folders on developer machines.
