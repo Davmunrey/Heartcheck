@@ -15,6 +15,22 @@ pretrain on Apple MPS. **Do the pretraining in the cloud; fine-tune locally.**
 
 Only `backbone.pt` (~27 MB) crosses the wire. The 50 GB corpus stays in the cloud.
 
+## Run on Colab — one click (recommended, no laptop GPU)
+
+The repo ships two ready-to-run Colab notebooks. Click, set
+**Runtime → Change runtime type → GPU**, then run the cells top to bottom.
+Each writes its output to Google Drive (cell with `USE_DRIVE`), so a Colab
+session disconnect doesn't lose a multi-hour run.
+
+| Notebook | Produces | Open |
+|---|---|---|
+| `notebooks/cloud_pretrain_code15.ipynb` | `backbone.pt` (deep CODE-15 backbone, ~27 MB) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Davmunrey/Heartcheck/blob/main/notebooks/cloud_pretrain_code15.ipynb) |
+| `notebooks/cloud_train_27class.ipynb` | `full27/checkpoint.pt` (served 27-class model + per-class AUROC) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Davmunrey/Heartcheck/blob/main/notebooks/cloud_train_27class.ipynb) |
+
+Run the **pretrain** notebook first; bring its `backbone.pt` into the
+**27-class** notebook (upload it in that notebook's cell 4). The sections below
+are the equivalent shell-script path for non-Colab boxes (Lambda/RunPod/EC2).
+
 ## 1. On the cloud GPU box (one command)
 
 Any CUDA box works — Colab Pro, Lambda, RunPod, Vast.ai, EC2 g5/p3. ~24 GB VRAM
